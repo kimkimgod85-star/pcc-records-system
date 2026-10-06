@@ -31,6 +31,14 @@ const inputClass =
 const initials = (name: string) =>
   name.split(' ').filter(Boolean).slice(0, 2).map(part => part[0]?.toUpperCase()).join('') || '?';
 
+function NoIdTag() {
+  return (
+    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-600/20 dark:bg-amber-500/10 dark:text-amber-300 dark:ring-amber-400/30">
+      No ID
+    </span>
+  );
+}
+
 function RoleTag({ role }: { role: string }) {
   const student = role === 'student';
   return (
@@ -82,6 +90,7 @@ export default function AdminUsers() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
+  const [missingIdOnly, setMissingIdOnly] = useState(false);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<{ name: string; studentId: string; role: 'student' | 'alumni' }>({ name: '', studentId: '', role: 'student' });
   const [savingEdit, setSavingEdit] = useState(false);
@@ -111,8 +120,9 @@ export default function AdminUsers() {
       u.studentId.toLowerCase().includes(query);
     const matchRole = roleFilter === 'all' || u.role === roleFilter;
     const matchStatus = statusFilter === 'all' || u.status === statusFilter;
-    return matchSearch && matchRole && matchStatus;
+    return matchSearch && matchRole && matchStatus && (!missingIdOnly || !u.studentId.trim());
   });
+  const missingIdCount = users.filter(u => !u.studentId.trim()).length;
 
   const activeCount = users.filter(u => u.status === 'active').length;
   const studentCount = users.filter(u => u.role === 'student').length;
@@ -234,6 +244,20 @@ export default function AdminUsers() {
         <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
           <Segmented options={ROLE_TABS} value={roleFilter} onChange={setRoleFilter} />
           <Segmented options={STATUS_TABS} value={statusFilter} onChange={setStatusFilter} />
+          {missingIdCount > 0 && (
+            <button
+              type="button"
+              onClick={() => setMissingIdOnly(v => !v)}
+              aria-pressed={missingIdOnly}
+              className={`sm:ml-auto inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
+                missingIdOnly
+                  ? 'bg-amber-500 border-amber-500 text-white'
+                  : 'bg-amber-50 border-amber-200 text-amber-800 hover:bg-amber-100 dark:bg-amber-900/20 dark:border-amber-800 dark:text-amber-300'
+              }`}
+            >
+              No Student ID ({missingIdCount})
+            </button>
+          )}
         </div>
       </div>
 
@@ -270,6 +294,7 @@ export default function AdminUsers() {
                   <p className="text-xs text-gray-500 dark:text-gray-400 break-all mt-0.5">{user.email}</p>
                   <div className="flex flex-wrap items-center gap-2 mt-2">
                     <RoleTag role={user.role} />
+                    {!user.studentId.trim() && <NoIdTag />}
                     <span className="text-xs text-gray-500 dark:text-gray-400">
                       {user.requests} request{user.requests === 1 ? '' : 's'}
                     </span>
@@ -314,7 +339,9 @@ export default function AdminUsers() {
                           </div>
                         </td>
                         <td className={`px-5 py-3.5 ${selected ? 'hidden' : 'hidden md:table-cell'}`}>
-                          <span className="text-sm font-mono text-gray-700 dark:text-gray-300">{user.studentId || '—'}</span>
+                          {user.studentId.trim()
+                            ? <span className="text-sm font-mono text-gray-700 dark:text-gray-300">{user.studentId}</span>
+                            : <NoIdTag />}
                         </td>
                         <td className="px-5 py-3.5">
                           <RoleTag role={user.role} />
