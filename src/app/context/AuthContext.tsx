@@ -177,6 +177,18 @@ async function createProfileFromAuthUser(authUser: AuthUser) {
   if (error) throw error;
 }
 
+// Used after a password, email code, or reset code proves the person owns this account.
+// Finishes a missing profile, e.g. for someone who only ever signed in with Google.
+async function mapOrCreateProfile(authUser: AuthUser) {
+  try {
+    return await mapAuthUser(authUser);
+  } catch (err) {
+    if (!(err instanceof Error) || err.message !== UNREGISTERED_GOOGLE_MESSAGE) throw err;
+    await createProfileFromAuthUser(authUser);
+    return mapAuthUser(authUser);
+  }
+}
+
 export async function completePendingGoogleRegistration(authUser: AuthUser) {
   const draft = readGoogleRegisterDraft();
   if (!draft) return false;
@@ -448,16 +460,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { success: false, error: explainPasswordError(updateError.message) };
       }
       try {
-        let mapped: User;
-        try {
-          mapped = await mapAuthUser(data.user);
-        } catch (err) {
-          // The reset code proves they own this email, so finish a missing profile
-          // (e.g. someone who only ever signed in with Google).
-          if (!(err instanceof Error) || err.message !== UNREGISTERED_GOOGLE_MESSAGE) throw err;
-          await createProfileFromAuthUser(data.user);
-          mapped = await mapAuthUser(data.user);
-        }
+        const mapped = await mapOrCreateProfile(data.user);
         setUser(mapped);
         return { success: true, user: mapped };
       } catch (err) {
