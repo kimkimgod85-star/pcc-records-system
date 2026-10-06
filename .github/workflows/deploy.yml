@@ -36,7 +36,11 @@ jobs:
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
 
       # GitHub Pages has no rewrites, so serve the app for every unknown path.
-      - run: cp dist/index.html dist/404.html
+      # Public pages get real files so Google sees 200 instead of the 404 fallback.
+      - run: |
+          cp dist/index.html dist/404.html
+          cp dist/index.html dist/login.html
+          cp dist/index.html dist/register.html
 
       - uses: actions/upload-pages-artifact@v4
         with:
