@@ -1,6 +1,6 @@
 import { requireSupabase } from './supabase';
 import { addNotification } from './notifications';
-import { tableMissing } from './status';
+import { formatLongDate, tableMissing } from './status';
 import { subscribeLocalAndRemote } from './realtime';
 
 const EVENT = 'pcc-scheduling-updated';
@@ -296,8 +296,8 @@ export async function upsertBooking(
     userId: input.userId,
     type: 'schedule',
     title: 'Pickup scheduled',
-    message: `Pickup for ${input.requestType} is set on ${input.date} at ${input.time}.`,
-    link: '/schedule',
+    message: `${input.requestType} (${input.requestId}) · ${formatLongDate(input.date)} at ${input.time} · Registrar’s Office. Bring a valid ID.`,
+    link: `/track?request=${encodeURIComponent(input.requestId)}`,
   });
 
   const booking = mapBooking({ ...data, request_code: input.requestId } as Record<string, unknown>);

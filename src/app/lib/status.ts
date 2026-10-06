@@ -77,7 +77,7 @@ export function timeAgo(iso: string) {
 
 export function paymentLabel(status: PaymentStatus, method?: string | null) {
   if (status === 'verified') return method === 'cashier' ? 'Paid at Cashier' : method === 'gcash' ? 'Paid via GCash' : 'Paid';
-  if (status === 'pending') return method === 'cashier' ? 'Pay at Cashier' : 'Payment pending';
+  if (status === 'pending') return method === 'cashier' ? 'Receipt submitted · awaiting verification' : 'Paid · awaiting verification';
   if (status === 'pay_later') return 'Pay later';
   if (status === 'rejected') return 'Payment rejected';
   return 'Not yet paid';

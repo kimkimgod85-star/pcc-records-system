@@ -2,7 +2,9 @@ import { requireSupabase } from './supabase';
 import type { ProcessingUrgency } from './scheduling';
 import { addNotification } from './notifications';
 import { subscribeLocalAndRemote } from './realtime';
+import { formatPeso } from './documents';
 import {
+  formatLongDate,
   isPaymentStatus,
   isRequestStatus,
   tableMissing,
@@ -11,6 +13,14 @@ import {
 } from './status';
 
 const EVENT = 'pcc-requests-updated';
+
+export function trackLink(code: string) {
+  return `/track?request=${encodeURIComponent(code)}`;
+}
+
+function copies(quantity: number) {
+  return `${quantity} ${quantity === 1 ? 'copy' : 'copies'}`;
+}
 
 export interface StudentRequest {
   uuid: string;
@@ -126,8 +136,8 @@ export async function createRequest(input: {
     userId: input.userId,
     type: 'approved',
     title: 'Request submitted',
-    message: `Your ${created.type} request (${created.id}) was sent to the Registrar for review.`,
-    link: '/track',
+    message: `${created.type} (${created.id}) · ${copies(created.quantity)} · ${formatPeso(created.amount)}${created.urgency === 'rush' ? ' · Rush' : ''}. The Registrar will review it within 1–2 business days.`,
+    link: trackLink(created.id),
   });
   emit();
   return created;
@@ -149,20 +159,29 @@ export async function updateRequest(uuid: string, patch: Record<string, unknown>
 export async function updateRequestStatus(uuid: string, status: RequestStatus, userId?: string, type?: string, code?: string) {
   const updated = await updateRequest(uuid, { status });
   if (userId) {
-    const titles: Record<RequestStatus, string> = {
-      pending: 'Request reset to review',
-      approved: 'Request approved',
-      processing: 'Document is being prepared',
-      ready: 'Document ready for pickup',
-      completed: 'Request completed',
-      rejected: 'Request rejected',
+    const doc = `${updated.type || type || 'Your document'} (${updated.id || code})`;
+    const paymentNote =
+      updated.paymentStatus === 'verified' ? ' Your payment is already verified, so there is nothing else to pay.'
+      : updated.paymentStatus === 'pending' ? ' Your payment was received and is waiting for verification.'
+      : updated.paymentStatus === 'pay_later' ? ''
+      : ` Please pay ${formatPeso(updated.amount)} so it can be processed.`;
+    const pickup = updated.pickupDate
+      ? ` Pickup: ${formatLongDate(updated.pickupDate)}${updated.pickupTime ? ` at ${updated.pickupTime}` : ''}. Bring a valid ID.`
+      : ' Schedule your pickup to claim it. Bring a valid ID.';
+    const notices: Record<RequestStatus, { title: string; message: string }> = {
+      pending: { title: 'Request back under review', message: `${doc} is being reviewed again by the Registrar.` },
+      approved: { title: 'Request approved', message: `${doc} was approved.${paymentNote}` },
+      processing: { title: 'Document is being prepared', message: `${doc} is now being prepared by the Registrar.` },
+      ready: { title: 'Ready for pickup', message: `${doc} is ready at the Registrar’s Office.${pickup}` },
+      completed: { title: 'Request completed', message: `${doc} was claimed. Thank you!` },
+      rejected: { title: 'Request rejected', message: `${doc} was not approved. Please contact the Registrar’s Office for details.` },
     };
     await addNotification({
       userId,
-      type: status === 'rejected' ? 'payment' : status === 'ready' ? 'ready' : 'approved',
-      title: titles[status],
-      message: `${type || 'Your document'} (${code || updated.id}) is now ${titles[status].toLowerCase()}.`,
-      link: '/track',
+      type: status === 'rejected' ? 'payment' : status === 'ready' ? 'ready' : status === 'completed' ? 'completed' : 'approved',
+      title: notices[status].title,
+      message: notices[status].message,
+      link: status === 'ready' && !updated.pickupDate ? `/schedule?request=${encodeURIComponent(updated.id)}` : trackLink(updated.id),
     });
   }
   return updated;

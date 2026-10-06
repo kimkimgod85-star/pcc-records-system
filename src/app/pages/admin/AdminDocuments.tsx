@@ -4,6 +4,7 @@ import {
   formatPeso,
   fetchDocumentCatalog,
   persistDocumentCatalog,
+  repriceUnpaidRequests,
   subscribeDocumentCatalog,
   describeCatalogChanges,
   DEFAULT_DOCUMENTS,
@@ -20,11 +21,40 @@ const cloneCatalog = (catalog: DocumentCatalog): DocumentCatalog => ({
 const inputClass =
   'px-3 py-2 bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-600 rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500';
 
+/** Lets the field be cleared and retyped; the price only changes once the text is a valid number. */
+function PriceInput({ value, onChange, className, label }: { value: number; onChange: (value: number) => void; className?: string; label: string }) {
+  const [text, setText] = useState(String(value));
+
+  useEffect(() => {
+    if (Number(text) !== value) setText(String(value));
+  }, [value]);
+
+  return (
+    <input
+      type="text"
+      inputMode="decimal"
+      aria-label={label}
+      value={text}
+      onFocus={e => e.target.select()}
+      onChange={e => {
+        const next = e.target.value.replace(/[^\d.]/g, '').replace(/(\..*)\./g, '$1');
+        setText(next);
+        if (next !== '' && Number.isFinite(Number(next))) onChange(Number(next));
+      }}
+      onBlur={() => {
+        if (text === '' || !Number.isFinite(Number(text))) setText(String(value));
+      }}
+      className={className}
+    />
+  );
+}
+
 export default function AdminDocuments() {
   const [saved, setSaved] = useState<DocumentCatalog>({ documents: DEFAULT_DOCUMENTS.map(item => ({ ...item })), rushFee: 100 });
   const [draft, setDraft] = useState<DocumentCatalog>(() => cloneCatalog(saved));
   const [loaded, setLoaded] = useState(false);
   const [notify, setNotify] = useState(true);
+  const [reprice, setReprice] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [newDoc, setNewDoc] = useState({ name: '', description: '', icon: '📄', fee: 100 });
@@ -123,6 +153,17 @@ export default function AdminDocuments() {
       setSaved(cloneCatalog(stored));
       setDraft(cloneCatalog(stored));
 
+      let repriced = 0;
+      let repriceFailed = false;
+      if (reprice && changes.some(item => item.kind === 'price' || item.kind === 'rush')) {
+        try {
+          repriced = await repriceUnpaidRequests(stored);
+        } catch (err) {
+          console.warn(err);
+          repriceFailed = true;
+        }
+      }
+
       let notified = 0;
       let notifyFailed = false;
       if (notify && summary.length) {
@@ -139,14 +180,13 @@ export default function AdminDocuments() {
         }
       }
 
-      setMessage({
-        type: notifyFailed ? 'error' : 'success',
-        text: notifyFailed
-          ? 'Prices saved, but notifications could not be sent. Students will still see the new prices.'
-          : notify && summary.length
-          ? `Prices saved. ${notified} student${notified === 1 ? '' : 's'} notified.`
-          : 'Prices saved. Students now see the new prices.',
-      });
+      const parts = ['Prices saved. Students now see the new prices.'];
+      if (repriced) parts.push(`${repriced} unpaid request${repriced === 1 ? '' : 's'} updated to the new price.`);
+      if (repriceFailed) parts.push('Unpaid requests could not be updated.');
+      if (notify && summary.length) {
+        parts.push(notifyFailed ? 'Notifications could not be sent.' : `${notified} student${notified === 1 ? '' : 's'} notified.`);
+      }
+      setMessage({ type: notifyFailed || repriceFailed ? 'error' : 'success', text: parts.join(' ') });
     } catch (err) {
       setMessage({ type: 'error', text: err instanceof Error ? `Could not save: ${err.message}` : 'Could not save prices.' });
     } finally {
@@ -164,7 +204,7 @@ export default function AdminDocuments() {
         </h1>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
           Edit prices, then click <span className="font-semibold">Save changes</span>. Students see the new fees right away on the request page.
-          Requests already submitted keep their original price.
+          Paid requests always keep the price they paid.
         </p>
       </div>
 
@@ -197,13 +237,11 @@ export default function AdminDocuments() {
               <span className="text-xs text-gray-400 line-through">{formatPeso(saved.rushFee)}</span>
             )}
             <span className="text-sm text-gray-500">₱</span>
-            <input
-              type="number"
-              min={0}
-              inputMode="decimal"
+            <PriceInput
+              label="Rush fee"
               value={draft.rushFee}
-              onChange={e => { setMessage(null); setDraft(prev => ({ ...prev, rushFee: e.target.value === '' ? 0 : Number(e.target.value) })); }}
-              className={`w-28 ${inputClass}`}
+              onChange={rushFee => { setMessage(null); setDraft(prev => ({ ...prev, rushFee })); }}
+              className={`w-28 ${inputClass} ${Number(saved.rushFee) !== Number(draft.rushFee) ? 'ring-2 ring-amber-400' : ''}`}
             />
           </div>
         </div>
@@ -261,12 +299,10 @@ export default function AdminDocuments() {
                       <span className="text-xs text-gray-400 line-through">{formatPeso(original!.fee)}</span>
                     )}
                     <span>₱</span>
-                    <input
-                      type="number"
-                      min={0}
-                      inputMode="decimal"
+                    <PriceInput
+                      label={`${doc.name} price`}
                       value={doc.fee}
-                      onChange={e => updateDoc(doc.code, { fee: e.target.value === '' ? 0 : Number(e.target.value) })}
+                      onChange={fee => updateDoc(doc.code, { fee })}
                       className={`w-24 ${inputClass} ${priceChanged ? 'ring-2 ring-amber-400' : ''}`}
                     />
                   </label>
@@ -321,13 +357,10 @@ export default function AdminDocuments() {
             placeholder="Short description"
             className={inputClass}
           />
-          <input
-            type="number"
-            min={0}
-            inputMode="decimal"
+          <PriceInput
+            label="New document price"
             value={newDoc.fee}
-            onChange={e => setNewDoc({ ...newDoc, fee: Number(e.target.value) })}
-            placeholder="Price"
+            onChange={fee => setNewDoc(prev => ({ ...prev, fee }))}
             className={inputClass}
           />
           <button
@@ -362,6 +395,18 @@ export default function AdminDocuments() {
                   <Bell className="w-3.5 h-3.5" />
                   Notify all students about this update
                 </label>
+                {changes.some(item => item.kind === 'price' || item.kind === 'rush') && (
+                  <label className="mt-1 flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={reprice}
+                      onChange={e => setReprice(e.target.checked)}
+                      className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <Banknote className="w-3.5 h-3.5" />
+                    Apply new prices to requests that are not paid yet
+                  </label>
+                )}
               </div>
               <div className="flex gap-2">
                 <button

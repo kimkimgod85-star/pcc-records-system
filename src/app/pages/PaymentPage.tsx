@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { ChevronRight, Upload, CheckCircle, Clock, Smartphone, MapPin, X } from 'lucide-react';
 import { formatPeso, fetchDocumentCatalog } from '../lib/documents';
-import { fetchRequests, subscribeRequests } from '../lib/requests';
+import { fetchRequests, subscribeRequests, type StudentRequest } from '../lib/requests';
 import { submitPayment } from '../lib/payments';
 import { useAuth } from '../context/AuthContext';
 
@@ -80,30 +80,76 @@ function ProofUpload({
 
 const MAX_PROOF_BYTES = 5 * 1024 * 1024;
 
+function PaidRow({ item, highlight = false }: { item: StudentRequest; highlight?: boolean }) {
+  const verified = item.paymentStatus === 'verified';
+  return (
+    <div className={`p-3 sm:p-4 rounded-xl border flex items-start gap-3 ${
+      highlight
+        ? verified
+          ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
+          : 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800'
+        : 'bg-white dark:bg-slate-800 border-gray-100 dark:border-slate-700'
+    }`}>
+      <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${
+        verified ? 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400' : 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
+      }`}>
+        {verified ? <CheckCircle className="w-4 h-4" /> : <Clock className="w-4 h-4" />}
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+          <p className="text-sm font-medium text-gray-900 dark:text-white">{item.type}</p>
+          <span className="text-sm font-semibold text-gray-900 dark:text-white">{formatPeso(item.amount)}</span>
+        </div>
+        <p className="text-xs text-gray-500 dark:text-gray-400 font-mono mt-0.5">{item.id}</p>
+        <p className={`text-xs mt-1.5 ${verified ? 'text-green-700 dark:text-green-300' : 'text-blue-700 dark:text-blue-300'}`}>
+          {verified
+            ? 'Payment verified. You’re fully paid, so there is nothing else to pay.'
+            : 'Payment received. Waiting for the Registrar to verify it. You don’t need to pay again.'}
+        </p>
+        <Link
+          to={`/track?request=${encodeURIComponent(item.id)}`}
+          className="inline-block mt-2 text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline"
+        >
+          Track this request
+        </Link>
+      </div>
+    </div>
+  );
+}
+
 export default function PaymentPage() {
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const requestedId = searchParams.get('request');
-  const [payable, setPayable] = useState<{ id: string; uuid: string; type: string; amountValue: number; amount: string }[]>([]);
+  const [requests, setRequests] = useState<StudentRequest[]>([]);
+  const [loaded, setLoaded] = useState(false);
   const [formError, setFormError] = useState('');
 
   useEffect(() => {
     if (!user) return;
     const refresh = () => {
       Promise.all([fetchRequests(user.id), fetchDocumentCatalog()]).then(([items]) => {
-        const unpaid = items.filter(item => item.paymentStatus !== 'verified' && item.status !== 'rejected');
-        setPayable(unpaid.map(item => ({
-          id: item.id,
-          uuid: item.uuid,
-          type: item.type,
-          amountValue: item.amount,
-          amount: formatPeso(item.amount),
-        })));
+        setRequests(items);
+        setLoaded(true);
       });
     };
     refresh();
     return subscribeRequests(refresh);
   }, [user]);
+
+  const open = requests.filter(item => item.status !== 'rejected' && item.status !== 'completed');
+  const payable = open
+    .filter(item => item.paymentStatus === 'unpaid' || item.paymentStatus === 'rejected' || item.paymentStatus === 'pay_later')
+    .map(item => ({
+      id: item.id,
+      uuid: item.uuid,
+      type: item.type,
+      amountValue: item.amount,
+      amount: formatPeso(item.amount),
+      retry: item.paymentStatus === 'rejected',
+    }));
+  const alreadyPaid = requests.filter(item => item.paymentStatus === 'pending' || item.paymentStatus === 'verified');
+  const focused = requestedId ? alreadyPaid.find(item => item.id === requestedId) : undefined;
 
   const initialRequest = payable.find(r => r.id === requestedId)?.id || payable[0]?.id || '';
   const [selectedRequest, setSelectedRequest] = useState('');
@@ -151,10 +197,10 @@ export default function PaymentPage() {
   };
 
   useEffect(() => {
-    if (!selectedRequest && payable.length) {
+    if (payable.length && !payable.some(r => r.id === selectedRequest)) {
       setSelectedRequest(payable.find(r => r.id === requestedId)?.id || payable[0].id);
     }
-  }, [payable, requestedId, selectedRequest]);
+  }, [payable.map(r => r.id).join(), requestedId, selectedRequest]);
 
   if (submitted) {
     return (
@@ -200,15 +246,37 @@ export default function PaymentPage() {
         </p>
       </div>
 
+      {focused && (
+        <div className="mb-5">
+          <PaidRow item={focused} highlight />
+        </div>
+      )}
+
+      {loaded && payable.length === 0 && (
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm p-6 text-center mb-5">
+          <CheckCircle className="w-10 h-10 text-green-500 mx-auto mb-2" />
+          <p className="font-semibold text-gray-900 dark:text-white">Nothing to pay right now</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            {alreadyPaid.length
+              ? 'Your requests are already paid or waiting for verification.'
+              : 'You have no unpaid requests. Submit a document request first.'}
+          </p>
+          <Link
+            to={alreadyPaid.length ? '/track' : '/request'}
+            className="inline-block mt-4 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-medium"
+          >
+            {alreadyPaid.length ? 'Track my requests' : 'Request a document'}
+          </Link>
+        </div>
+      )}
+
+      {payable.length > 0 && (
       <form onSubmit={handleSubmit} className="space-y-5">
         {/* Select Request */}
         <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm p-5">
           <h2 className="font-semibold text-gray-900 dark:text-white text-sm mb-3" style={{ fontFamily: 'Poppins, sans-serif' }}>
             Select Request to Pay
           </h2>
-          {payable.length === 0 ? (
-            <p className="text-sm text-gray-500 dark:text-gray-400">No unpaid requests. Submit a document request first.</p>
-          ) : (
           <div className="space-y-2">
             {payable.map(r => (
               <button
@@ -221,17 +289,19 @@ export default function PaymentPage() {
                     : 'border-gray-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-700'
                 }`}
               >
-                <div className="flex items-center justify-between">
-                  <div>
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
                     <p className="text-sm font-medium text-gray-900 dark:text-white">{r.type}</p>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 font-mono">{r.id}</p>
+                    {r.retry && (
+                      <p className="text-xs text-red-600 dark:text-red-400 mt-1">Previous proof was not accepted. Please submit again.</p>
+                    )}
                   </div>
-                  <span className="text-sm font-semibold text-blue-600 dark:text-blue-400">{r.amount}</span>
+                  <span className="text-sm font-semibold text-blue-600 dark:text-blue-400 flex-shrink-0">{r.amount}</span>
                 </div>
               </button>
             ))}
           </div>
-          )}
         </div>
 
         {/* Payment Method */}
@@ -383,6 +453,18 @@ export default function PaymentPage() {
             : 'Submit Receipt'}
         </button>
       </form>
+      )}
+
+      {alreadyPaid.some(item => item.id !== focused?.id) && (
+        <div className="mt-6">
+          <h2 className="font-semibold text-gray-900 dark:text-white text-sm mb-3" style={{ fontFamily: 'Poppins, sans-serif' }}>
+            Already paid
+          </h2>
+          <div className="space-y-2">
+            {alreadyPaid.filter(item => item.id !== focused?.id).map(item => <PaidRow key={item.id} item={item} />)}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
 import {
   Search, ChevronRight, Clock, CheckCircle, Package,
   Star, FileText, Calendar, CreditCard, AlertCircle
@@ -8,6 +8,7 @@ import { useAuth } from '../context/AuthContext';
 import { fetchRequests, subscribeRequests, type StudentRequest } from '../lib/requests';
 import { formatLongDate, paymentLabel, statusToStep } from '../lib/status';
 import { useRevealOnSmallScreen } from '../lib/useRevealOnSmallScreen';
+import { formatPeso } from '../lib/documents';
 
 function toTrackItem(r: StudentRequest) {
   return {
@@ -18,10 +19,62 @@ function toTrackItem(r: StudentRequest) {
     pickupDate: formatLongDate(r.pickupDate),
     pickupTime: r.pickupTime || 'TBD',
     currentStep: statusToStep(r.status),
+    status: r.status,
+    amount: formatPeso(r.amount),
+    quantity: r.quantity,
     payment: paymentLabel(r.paymentStatus, r.paymentMethod),
     paymentStatus: r.paymentStatus,
     notes: r.notes,
   };
+}
+
+function PaymentNotice({ item }: { item: ReturnType<typeof toTrackItem> }) {
+  if (item.status === 'rejected') {
+    return (
+      <div className="mt-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl flex items-start gap-2">
+        <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
+        <p className="text-xs text-red-700 dark:text-red-300">This request was not approved. Please contact the Registrar’s Office for details.</p>
+      </div>
+    );
+  }
+  if (item.paymentStatus === 'verified') {
+    return (
+      <div className="mt-3 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl flex items-start gap-2">
+        <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
+        <p className="text-xs text-green-700 dark:text-green-300">Payment of {item.amount} verified. You’re fully paid, so there is nothing else to pay.</p>
+      </div>
+    );
+  }
+  if (item.paymentStatus === 'pending') {
+    return (
+      <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl flex items-start gap-2">
+        <Clock className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
+        <p className="text-xs text-blue-700 dark:text-blue-300">Payment of {item.amount} received. Waiting for the Registrar to verify it. You don’t need to pay again.</p>
+      </div>
+    );
+  }
+  if (item.paymentStatus === 'pay_later' || item.status === 'completed') return null;
+  const rejected = item.paymentStatus === 'rejected';
+  return (
+    <div className={`mt-3 p-3 rounded-xl border flex flex-wrap items-center gap-2 ${
+      rejected
+        ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
+        : 'bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800'
+    }`}>
+      <AlertCircle className={`w-4 h-4 flex-shrink-0 ${rejected ? 'text-red-500' : 'text-orange-500'}`} />
+      <p className={`flex-1 min-w-[10rem] text-xs ${rejected ? 'text-red-700 dark:text-red-300' : 'text-orange-700 dark:text-orange-300'}`}>
+        {rejected
+          ? 'Your proof of payment could not be verified. Please upload it again.'
+          : `Payment of ${item.amount} is needed to process this request.`}
+      </p>
+      <Link
+        to={`/payment?request=${encodeURIComponent(item.id)}`}
+        className={`text-xs font-semibold hover:underline ${rejected ? 'text-red-700 dark:text-red-300' : 'text-orange-700 dark:text-orange-300'}`}
+      >
+        {rejected ? 'Submit again' : 'Pay now'}
+      </Link>
+    </div>
+  );
 }
 
 const STEPS = [
@@ -43,6 +96,8 @@ const lineColor = (step: number, idx: number) =>
 
 export default function TrackingPage() {
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
+  const requestParam = searchParams.get('request');
   const [searchId, setSearchId] = useState('');
   const [items, setItems] = useState<ReturnType<typeof toTrackItem>[]>([]);
   const [selectedRequest, setSelectedRequest] = useState<ReturnType<typeof toTrackItem> | null>(null);
@@ -55,12 +110,24 @@ export default function TrackingPage() {
       fetchRequests(user.id).then(list => {
         const mapped = list.map(toTrackItem);
         setItems(mapped);
-        setSelectedRequest(prev => mapped.find(item => item.id === prev?.id) || mapped[0] || null);
+        setSelectedRequest(prev =>
+          mapped.find(item => item.id === prev?.id) ||
+          mapped.find(item => item.id === requestParam) ||
+          mapped[0] ||
+          null,
+        );
       });
     };
     refresh();
     return subscribeRequests(refresh);
   }, [user]);
+
+  useEffect(() => {
+    const match = requestParam && items.find(item => item.id === requestParam);
+    if (!match) return;
+    setSelectedRequest(match);
+    setPickCount(n => n + 1);
+  }, [requestParam, items.length]);
 
   const filtered = searchId
     ? items.filter(r =>
@@ -127,8 +194,10 @@ export default function TrackingPage() {
               >
                 <div className="flex items-start justify-between gap-2 mb-2">
                   <span className="text-xs font-mono font-semibold text-blue-600 dark:text-blue-400">{req.id}</span>
-                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[step]}`}>
-                    {statusLabels[step]}
+                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                    req.status === 'rejected' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' : statusColors[step]
+                  }`}>
+                    {req.status === 'rejected' ? 'Rejected' : statusLabels[step]}
                   </span>
                 </div>
                 <p className="text-sm font-medium text-gray-900 dark:text-white">{req.type}</p>
@@ -213,7 +282,8 @@ export default function TrackingPage() {
             </h3>
             <div className="grid grid-cols-2 gap-3 text-sm">
               {[
-                { icon: FileText, label: 'Document', value: selectedRequest.type },
+                { icon: FileText, label: 'Document', value: `${selectedRequest.type} · ${selectedRequest.quantity} ${selectedRequest.quantity === 1 ? 'copy' : 'copies'}` },
+                { icon: CreditCard, label: 'Amount', value: selectedRequest.amount },
                 { icon: Calendar, label: 'Submitted', value: selectedRequest.submitted },
                 { icon: Calendar, label: 'Last Updated', value: selectedRequest.updated },
                 { icon: Clock, label: 'Pickup Date', value: selectedRequest.pickupDate },
@@ -235,17 +305,7 @@ export default function TrackingPage() {
                 <p className="text-sm text-gray-700 dark:text-gray-300 mt-1">{selectedRequest.notes}</p>
               </div>
             )}
-            {selectedRequest.paymentStatus !== 'verified' && selectedRequest.paymentStatus !== 'pay_later' && (
-              <div className="mt-3 p-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-xl flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 text-orange-500 flex-shrink-0" />
-                <div className="flex-1">
-                  <p className="text-xs text-orange-700 dark:text-orange-300">Payment required to proceed.</p>
-                </div>
-                <Link to="/payment" className="text-xs text-orange-700 dark:text-orange-300 font-medium hover:underline">
-                  Pay Now
-                </Link>
-              </div>
-            )}
+            <PaymentNotice item={selectedRequest} />
           </div>
         </div>
         )}

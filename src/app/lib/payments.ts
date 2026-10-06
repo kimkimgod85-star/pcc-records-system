@@ -2,7 +2,7 @@ import { requireSupabase } from './supabase';
 import { addNotification } from './notifications';
 import { formatPeso } from './documents';
 import { formatShortDate, tableMissing } from './status';
-import { updateRequest } from './requests';
+import { trackLink, updateRequest } from './requests';
 import { listenRealtime } from './realtime';
 
 const EVENT = 'pcc-payments-updated';
@@ -112,39 +112,46 @@ export async function submitPayment(input: {
     payment_method: input.method,
   });
 
+  const record = mapRow(data as Record<string, unknown>);
   await addNotification({
     userId: input.userId,
     type: 'payment',
     title: input.method === 'gcash' ? 'GCash payment submitted' : 'Cashier receipt submitted',
-    message: input.method === 'gcash'
-      ? 'Your payment was sent for registrar verification.'
-      : 'Your official receipt was sent for registrar verification.',
-    link: '/track',
+    message: `${record.amount} for ${record.document} (${record.reqId})${input.refNo ? ` · ${input.method === 'gcash' ? 'Ref' : 'OR'} ${input.refNo}` : ''}. Waiting for Registrar verification. You don’t need to pay again.`,
+    link: trackLink(record.reqId),
   });
 
   window.dispatchEvent(new Event(EVENT));
-  return mapRow(data as Record<string, unknown>);
+  return record;
 }
 
 export async function updatePaymentStatus(uuid: string, status: 'pending' | 'verified' | 'rejected', requestUuid: string, userId: string) {
   const client = requireSupabase();
-  const { error } = await client.from('payments').update({ status }).eq('id', uuid);
+  const { data: payment, error } = await client
+    .from('payments')
+    .update({ status })
+    .eq('id', uuid)
+    .select('amount, ref_no, method')
+    .single();
   if (error) throw error;
 
-  await updateRequest(requestUuid, {
+  const request = await updateRequest(requestUuid, {
     payment_status: status === 'verified' ? 'verified' : status === 'rejected' ? 'rejected' : 'pending',
   });
 
+  const doc = `${request.type} (${request.id})`;
+  const amount = formatPeso(Number(payment?.amount ?? request.amount));
+  const ref = payment?.ref_no ? ` · ${payment.method === 'cashier' ? 'OR' : 'Ref'} ${payment.ref_no}` : '';
   await addNotification({
     userId,
     type: status === 'verified' ? 'approved' : 'payment',
-    title: status === 'verified' ? 'Payment verified' : status === 'rejected' ? 'Payment rejected' : 'Payment pending',
+    title: status === 'verified' ? 'Payment verified' : status === 'rejected' ? 'Payment rejected' : 'Payment under review',
     message: status === 'verified'
-      ? 'Your payment was verified. Processing can continue.'
+      ? `${amount} for ${doc}${ref} is confirmed. You’re fully paid, so there is nothing else to pay.`
       : status === 'rejected'
-      ? 'Your payment proof was rejected. Please submit again.'
-      : 'Your payment is waiting for verification.',
-    link: '/payment',
+      ? `Your proof of payment for ${doc}${ref} could not be verified. Please upload a clear photo of your payment again.`
+      : `Your payment of ${amount} for ${doc} is waiting for Registrar verification. You don’t need to pay again.`,
+    link: status === 'rejected' ? `/payment?request=${encodeURIComponent(request.id)}` : trackLink(request.id),
   });
   window.dispatchEvent(new Event(EVENT));
 }

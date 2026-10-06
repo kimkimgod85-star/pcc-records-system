@@ -84,29 +84,76 @@ export async function persistDocumentCatalog(next: DocumentCatalog) {
     })),
   };
   const client = requireSupabase();
-  const { error: rushError } = await client.from('app_settings').upsert({ key: 'rush_fee', value: catalog.rushFee });
-  if (rushError) throw rushError;
+  const { data: rushRows, error: rushError } = await client
+    .from('app_settings')
+    .upsert({ key: 'rush_fee', value: catalog.rushFee }, { onConflict: 'key' })
+    .select('key');
+  if (rushError) throw explainCatalogError(rushError);
+  if (!rushRows?.length) throw explainCatalogError();
 
-  const { data: existing } = await client.from('documents').select('code');
+  const { data: savedDocs, error } = await client
+    .from('documents')
+    .upsert(
+      catalog.documents.map((item, index) => ({
+        code: item.code,
+        name: item.name,
+        description: item.description,
+        icon: item.icon,
+        fee: item.fee,
+        available: item.available,
+        sort_order: index + 1,
+      })),
+      { onConflict: 'code' },
+    )
+    .select('code');
+  if (error) throw explainCatalogError(error);
+  if ((savedDocs?.length || 0) < catalog.documents.length) throw explainCatalogError();
+
+  const { data: existing, error: listError } = await client.from('documents').select('code');
+  if (listError) throw explainCatalogError(listError);
   const keep = new Set(catalog.documents.map(item => item.code));
   const extras = (existing || []).map(item => item.code).filter(code => !keep.has(code));
-  if (extras.length) await client.from('documents').delete().in('code', extras);
+  if (extras.length) {
+    const { error: deleteError } = await client.from('documents').delete().in('code', extras);
+    if (deleteError) throw explainCatalogError(deleteError);
+  }
 
-  const { error } = await client.from('documents').upsert(
-    catalog.documents.map((item, index) => ({
-      code: item.code,
-      name: item.name,
-      description: item.description,
-      icon: item.icon,
-      fee: item.fee,
-      available: item.available,
-      sort_order: index + 1,
-    })),
-  );
-  if (error) throw error;
   cached = catalog;
   emit();
   return catalog;
+}
+
+function explainCatalogError(error?: { message?: string; code?: string }) {
+  if (!error || error.code === '42501' || /row-level security|permission denied/i.test(error.message || '')) {
+    return new Error('Your account is not allowed to change prices. Sign in with a Registrar/Admin account (role "admin" in the Supabase profiles table).');
+  }
+  return new Error(error.message || 'Could not save prices.');
+}
+
+/** Recomputes the amount of requests that have not been paid yet, so students pay the current price. */
+export async function repriceUnpaidRequests(catalog: DocumentCatalog) {
+  const client = requireSupabase();
+  const { data, error } = await client
+    .from('document_requests')
+    .select('id, document_code, document_name, quantity, urgency, amount, payment_status, status')
+    .in('payment_status', ['unpaid', 'rejected', 'pay_later'])
+    .not('status', 'in', '(rejected,completed)');
+  if (error) throw error;
+
+  let updated = 0;
+  for (const row of data || []) {
+    const doc = catalog.documents.find(item => item.code === row.document_code || item.name === row.document_name);
+    if (!doc) continue;
+    const amount = doc.fee * Math.max(1, Number(row.quantity) || 1) + (row.urgency === 'rush' ? catalog.rushFee : 0);
+    if (Number(row.amount) === amount) continue;
+    const { error: updateError } = await client
+      .from('document_requests')
+      .update({ amount, updated_at: new Date().toISOString() })
+      .eq('id', row.id);
+    if (updateError) throw updateError;
+    updated++;
+  }
+  return updated;
 }
 
 export interface CatalogChange {
