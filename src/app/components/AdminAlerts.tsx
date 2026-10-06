@@ -82,47 +82,66 @@ export function AdminAlertSettings({ userId, collapsed }: { userId: string; coll
     }
   };
 
-  const rowClass = `w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors ${collapsed ? 'justify-center' : ''}`;
-  const pill = (on: boolean) =>
-    `ml-auto px-2 py-0.5 rounded-full text-[11px] font-semibold ${on ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' : 'bg-gray-100 text-gray-500 dark:bg-slate-700 dark:text-gray-400'}`;
+  const phoneLabel = permission === 'unsupported' ? 'Not supported' : permission === 'denied' ? 'Blocked' : active ? 'On' : 'Off';
 
   return (
     <>
-      <button type="button" onClick={toggleSound} className={rowClass} title="New request sound">
-        {soundOn ? <Volume2 className="w-4 h-4 flex-shrink-0" /> : <VolumeX className="w-4 h-4 flex-shrink-0" />}
-        {!collapsed && (
-          <>
-            <span className="text-sm">Alert sound</span>
-            <span className={pill(soundOn)}>{soundOn ? 'On' : 'Off'}</span>
-          </>
-        )}
-      </button>
-      {soundOn && !collapsed && (
-        <button
-          type="button"
-          onClick={() => playOfficeChime(true)}
-          className="w-full flex items-center gap-3 px-3 py-1.5 rounded-xl text-xs text-blue-600 dark:text-blue-400 hover:bg-gray-100 dark:hover:bg-slate-700"
-        >
-          <BellRing className="w-3.5 h-3.5 flex-shrink-0" /> Play test sound
-        </button>
-      )}
-      {permission !== 'unsupported' && (
-        <button
-          type="button"
-          onClick={togglePhone}
-          disabled={busy || permission === 'denied'}
-          className={`${rowClass} disabled:opacity-60`}
-          title={permission === 'denied' ? 'Notifications are blocked in this browser’s site settings' : 'Phone / desktop alerts'}
-        >
-          <Smartphone className="w-4 h-4 flex-shrink-0" />
-          {!collapsed && (
-            <>
-              <span className="text-sm">Device alerts</span>
-              <span className={pill(active)}>{permission === 'denied' ? 'Blocked' : active ? 'On' : 'Off'}</span>
-            </>
-          )}
-        </button>
-      )}
+      <SettingTile
+        collapsed={collapsed}
+        on={soundOn}
+        label="Sound"
+        title={soundOn ? 'Alert sound is on (click to turn off)' : 'Alert sound is off (click to turn on and play a test)'}
+        icon={soundOn ? Volume2 : VolumeX}
+        onClick={toggleSound}
+      />
+      <SettingTile
+        collapsed={collapsed}
+        on={active}
+        label="Alerts"
+        title={`Device alerts: ${phoneLabel}`}
+        icon={Smartphone}
+        onClick={togglePhone}
+        disabled={busy || permission === 'denied' || permission === 'unsupported'}
+      />
     </>
+  );
+}
+
+export function SettingTile({
+  collapsed,
+  on,
+  label,
+  title,
+  icon: Icon,
+  onClick,
+  disabled = false,
+}: {
+  collapsed: boolean;
+  on: boolean;
+  label: string;
+  title: string;
+  icon: typeof BellRing;
+  onClick: () => void;
+  disabled?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      title={title}
+      aria-pressed={on}
+      className={`relative flex items-center justify-center rounded-xl transition-colors disabled:opacity-50 ${
+        collapsed ? 'w-full py-2.5' : 'flex-col gap-1 py-2'
+      } ${
+        on
+          ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+          : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-700'
+      }`}
+    >
+      <Icon className="w-[18px] h-[18px] flex-shrink-0" />
+      {!collapsed && <span className="text-xs font-medium leading-none">{label}</span>}
+      <span className={`absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full ${on ? 'bg-green-500' : 'bg-gray-300 dark:bg-slate-600'}`} />
+    </button>
   );
 }

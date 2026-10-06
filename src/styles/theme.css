@@ -183,3 +183,30 @@
     line-height: 1.5;
   }
 }
+
+/* Admin portal: no tiny text and no faint grey, for staff with weaker eyesight.
+   Elements with breakpoint or hover text variants are skipped so those variants still apply. */
+.admin-readable .text-xs:not([class*="sm:text-"], [class*="md:text-"], [class*="lg:text-"], [class*="hover:text-"]) {
+  font-size: 0.875rem;
+  line-height: 1.35rem;
+}
+.admin-readable .text-sm:not([class*="sm:text-"], [class*="md:text-"], [class*="lg:text-"], [class*="hover:text-"]) {
+  font-size: 0.9375rem;
+  line-height: 1.45rem;
+}
+.admin-readable :is(.text-\[10px\], .text-\[11px\], .text-\[12px\]):not([class*="sm:text-"], [class*="md:text-"], [class*="lg:text-"], [class*="hover:text-"]) {
+  font-size: 0.8125rem;
+}
+html:not(.dark) .admin-readable .text-gray-400:not([class*="sm:text-"], [class*="md:text-"], [class*="lg:text-"], [class*="hover:text-"]) {
+  color: var(--color-gray-500);
+}
+html:not(.dark) .admin-readable .text-gray-500:not([class*="sm:text-"], [class*="md:text-"], [class*="lg:text-"], [class*="hover:text-"]) {
+  color: var(--color-gray-600);
+}
+
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}

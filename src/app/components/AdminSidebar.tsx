@@ -7,7 +7,7 @@ import {
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import { withBase } from '../lib/basePath';
-import { AdminAlertSettings } from './AdminAlerts';
+import { AdminAlertSettings, SettingTile } from './AdminAlerts';
 
 const PCC_LOGO_URL = withBase('PCC%20LOGO.png');
 
@@ -41,7 +41,7 @@ export function AdminSidebar() {
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
       {/* Logo */}
-      <div className={`flex items-center gap-2.5 p-4 border-b border-gray-200 dark:border-slate-700 ${collapsed ? 'justify-center' : ''}`}>
+      <div className={`flex items-center gap-2.5 px-4 py-3 border-b border-gray-200 dark:border-slate-700 flex-shrink-0 ${collapsed ? 'justify-center' : ''}`}>
         <img
           src={PCC_LOGO_URL}
           alt="PCC logo"
@@ -60,58 +60,60 @@ export function AdminSidebar() {
       </div>
 
       {/* Nav Items */}
-      <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
+      <nav className="flex-1 min-h-0 px-3 py-2 space-y-0.5 overflow-y-auto no-scrollbar">
         {navItems.map(item => (
           <Link
             key={item.href}
             to={item.href}
             onClick={() => setMobileOpen(false)}
-            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${
+            title={collapsed ? item.label : undefined}
+            className={`flex items-center gap-3 px-3 py-2 rounded-xl transition-all ${
               isActive(item.href)
                 ? 'bg-primary text-white shadow-sm'
-                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-700 hover:text-gray-900 dark:hover:text-white'
+                : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 hover:text-gray-900 dark:hover:text-white'
             } ${collapsed ? 'justify-center' : ''}`}
           >
-            <item.icon className="w-4 h-4 flex-shrink-0" />
-            {!collapsed && <span className="text-sm">{item.label}</span>}
+            <item.icon className="w-[18px] h-[18px] flex-shrink-0" />
+            {!collapsed && <span className="text-[0.95rem] font-medium">{item.label}</span>}
             {!collapsed && isActive(item.href) && <ChevronRight className="w-3 h-3 ml-auto" />}
           </Link>
         ))}
       </nav>
 
       {/* Bottom Actions */}
-      <div className="p-3 border-t border-gray-200 dark:border-slate-700 space-y-1">
+      <div className="px-3 py-2.5 border-t border-gray-200 dark:border-slate-700 space-y-2 flex-shrink-0">
         {/* User Info */}
         {!collapsed && (
-          <div className="px-3 py-2 mb-2">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 bg-primary rounded-full flex items-center justify-center flex-shrink-0">
-                <span className="text-xs text-white font-medium">{user?.name?.charAt(0)}</span>
-              </div>
-              <div className="min-w-0">
-                <p className="text-xs font-medium text-gray-900 dark:text-white truncate">{user?.name}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user?.email}</p>
-              </div>
+          <div className="flex items-center gap-2.5 px-2 py-1">
+            <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center flex-shrink-0">
+              <span className="text-sm text-white font-semibold">{user?.name?.charAt(0)}</span>
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-gray-900 dark:text-white truncate leading-tight">{user?.name}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 truncate leading-tight mt-0.5">{user?.email}</p>
             </div>
           </div>
         )}
 
-        {user && <AdminAlertSettings userId={user.id} collapsed={collapsed} />}
-
-        <button
-          onClick={toggleTheme}
-          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors ${collapsed ? 'justify-center' : ''}`}
-        >
-          {theme === 'dark' ? <Sun className="w-4 h-4 flex-shrink-0" /> : <Moon className="w-4 h-4 flex-shrink-0" />}
-          {!collapsed && <span className="text-sm">{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>}
-        </button>
+        <div className={collapsed ? 'flex flex-col gap-1' : 'grid grid-cols-3 gap-1.5'}>
+          {user && <AdminAlertSettings userId={user.id} collapsed={collapsed} />}
+          <SettingTile
+            collapsed={collapsed}
+            on={theme === 'dark'}
+            label={theme === 'dark' ? 'Light' : 'Dark'}
+            title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+            icon={theme === 'dark' ? Sun : Moon}
+            onClick={toggleTheme}
+          />
+        </div>
 
         <button
           onClick={handleLogout}
-          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors ${collapsed ? 'justify-center' : ''}`}
+          title={collapsed ? 'Logout' : undefined}
+          className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors ${collapsed ? 'justify-center' : ''}`}
         >
-          <LogOut className="w-4 h-4 flex-shrink-0" />
-          {!collapsed && <span className="text-sm">Logout</span>}
+          <LogOut className="w-[18px] h-[18px] flex-shrink-0" />
+          {!collapsed && <span className="text-[0.95rem] font-medium">Logout</span>}
         </button>
       </div>
     </div>
