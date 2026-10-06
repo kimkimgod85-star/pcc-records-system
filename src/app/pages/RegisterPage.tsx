@@ -9,23 +9,12 @@ import { withBase } from '../lib/basePath';
 const PCC_LOGO_URL = withBase('PCC%20LOGO.png');
 const PCC_BG_URL = withBase('PCC1.jpg');
 
-function GoogleMark() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
-      <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.6 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 8 3l5.7-5.7C34.2 6.1 29.4 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20c11.4 0 19.6-8 19.6-19.5 0-1.3-.1-2.3-.4-3.5z" />
-      <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 16 19 12 24 12c3.1 0 5.8 1.1 8 3l5.7-5.7C34.2 6.1 29.4 4 24 4 16.3 4 9.7 8.3 6.3 14.7z" />
-      <path fill="#4CAF50" d="M24 44c5.2 0 10-1.7 13.6-4.7l-6.3-5.3C29.3 35.9 26.8 37 24 37c-5.3 0-9.7-3.4-11.3-8.1l-6.5 5C9.6 39.6 16.2 44 24 44z" />
-      <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-1.1 3.2-3.5 5.8-6.7 7.3l6.3 5.3C38.2 37.4 44 32 44 24c0-1.3-.1-2.3-.4-3.5z" />
-    </svg>
-  );
-}
-
 const fieldClass =
   'w-full px-3.5 py-2 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-700 focus:border-blue-700 text-sm';
 
 export default function RegisterPage() {
   const navigate = useNavigate();
-  const { register, loginWithGoogle } = useAuth();
+  const { register } = useAuth();
 
   const [form, setForm] = useState({
     fullName: '',
@@ -76,24 +65,6 @@ export default function RegisterPage() {
       return;
     }
     window.setTimeout(() => navigate('/welcome'), 1200);
-  };
-
-  const handleGoogle = async () => {
-    setError('');
-    if (!form.fullName.trim()) {
-      setError('Enter your full name first, then continue with Google.');
-      return;
-    }
-    setLoading(true);
-    const result = await loginWithGoogle('register', {
-      fullName: form.fullName,
-      studentId: form.studentId,
-      role: form.role,
-    });
-    if (!result.success) {
-      setLoading(false);
-      setError(result.error || 'Google sign-in failed.');
-    }
   };
 
   if (success && needsConfirm) {
@@ -264,26 +235,7 @@ export default function RegisterPage() {
               </button>
             </form>
 
-            <div className="flex items-center gap-3 my-3">
-              <div className="h-px flex-1 bg-gray-200 dark:bg-slate-600" />
-              <span className="text-[12px] uppercase tracking-wide text-gray-400">or</span>
-              <div className="h-px flex-1 bg-gray-200 dark:bg-slate-600" />
-            </div>
-
-            <button
-              type="button"
-              disabled={loading}
-              onClick={handleGoogle}
-              className="w-full flex items-center justify-center gap-3 py-2.5 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-gray-800 dark:text-gray-200 text-sm font-medium hover:bg-gray-50 dark:hover:bg-slate-800 disabled:opacity-60"
-            >
-              <GoogleMark />
-              Create account with Google
-            </button>
-            <p className="mt-2 text-center text-xs text-gray-500 dark:text-gray-400">
-              Fill your name and Student / Alumni first. Google will not skip registration.
-            </p>
-
-            <p className="mt-3 text-center text-sm text-gray-500 dark:text-gray-400">
+            <p className="mt-4 text-center text-sm text-gray-500 dark:text-gray-400">
               Already registered?{' '}
               <Link to="/login" className="text-blue-800 dark:text-blue-300 hover:underline font-semibold">
                 Sign in
