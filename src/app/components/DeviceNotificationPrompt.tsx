@@ -4,9 +4,10 @@ import {
   disableDeviceNotifications,
   enableDeviceNotifications,
   isIOSBrowserTab,
-  showDeviceNotification,
+  syncPushSubscription,
   useDeviceNotificationState,
 } from '../lib/deviceNotifications';
+import { addNotification } from '../lib/notifications';
 
 const DISMISS_KEY = 'pcc-device-notif-dismissed';
 
@@ -24,13 +25,21 @@ export function DeviceNotificationCard({ userId }: { userId: string }) {
     }
   };
 
-  const sendTest = () =>
-    showDeviceNotification({
-      id: `test-${Date.now()}`,
-      title: 'Notifications are on',
-      body: 'You’ll get updates from the PCC Registrar on this device.',
-      url: '/notifications',
-    });
+  const sendTest = async () => {
+    setBusy(true);
+    try {
+      await syncPushSubscription(userId);
+      await addNotification({
+        userId,
+        type: 'info',
+        title: 'Notifications are on',
+        message: 'You’ll get updates from the PCC Registrar on this device.',
+        link: '/notifications',
+      });
+    } finally {
+      setBusy(false);
+    }
+  };
 
   let body: ReactNode;
   if (permission === 'unsupported') {
@@ -55,9 +64,10 @@ export function DeviceNotificationCard({ userId }: { userId: string }) {
         <button
           type="button"
           onClick={sendTest}
-          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-slate-700 dark:text-gray-200 dark:hover:bg-slate-600"
+          disabled={busy}
+          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-slate-700 dark:text-gray-200 dark:hover:bg-slate-600 disabled:opacity-60"
         >
-          <Send className="w-3.5 h-3.5" /> Send a test
+          {busy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />} Send a test
         </button>
         <button
           type="button"
@@ -101,7 +111,7 @@ export function DeviceNotificationCard({ userId }: { userId: string }) {
           </span>
         </div>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5 mb-3">
-          Get a pop-up on this phone or computer the moment your request or payment is updated, even when this tab is in the background.
+          Get a pop-up on this phone or computer the moment your request or payment is updated, even when the site is closed.
         </p>
         {body}
       </div>

@@ -5,6 +5,9 @@ import { withBase } from './basePath';
 const PREF_KEY = 'pcc-device-notif';
 const PREF_EVENT = 'pcc-device-notif-changed';
 const ICON = withBase('PCC%20LOGO.png');
+const VAPID_PUBLIC_KEY =
+  import.meta.env.VITE_VAPID_PUBLIC_KEY ||
+  'BCapBNK7HDQT3wwsktF7Q3gnx626mz9GgafdqIc4uBqBgXFEw9BfZOhneeqx1cEWJWLvYYUw51uvw0_a7QzPM50';
 
 export type DevicePermission = NotificationPermission | 'unsupported';
 
@@ -46,22 +49,80 @@ let registration: Promise<ServiceWorkerRegistration | null> | null = null;
 function getRegistration() {
   if (!registration) {
     registration = 'serviceWorker' in navigator
-      ? navigator.serviceWorker.register(withBase('sw.js')).then(() => navigator.serviceWorker.ready).catch(() => null)
+      ? navigator.serviceWorker
+          .register(withBase('sw.js'), { updateViaCache: 'none' })
+          .then(() => navigator.serviceWorker.ready)
+          .catch(() => null)
       : Promise.resolve(null);
   }
   return registration;
+}
+
+function urlBase64ToUint8Array(base64: string) {
+  const padded = (base64 + '='.repeat((4 - (base64.length % 4)) % 4)).replace(/-/g, '+').replace(/_/g, '/');
+  const raw = atob(padded);
+  const bytes = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
+  return bytes;
+}
+
+function pushSupported() {
+  return 'serviceWorker' in navigator && 'PushManager' in window;
+}
+
+/** Subscribes this browser to Web Push and saves it, so notifications arrive even when the site is closed. */
+export async function syncPushSubscription(userId: string) {
+  if (!pushSupported() || !isSupabaseConfigured || getDevicePermission() !== 'granted') return false;
+  const reg = await getRegistration();
+  if (!reg) return false;
+  try {
+    const key = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
+    let sub = await reg.pushManager.getSubscription();
+    const current = sub?.options.applicationServerKey;
+    if (sub && current && new Uint8Array(current).toString() !== key.toString()) {
+      await sub.unsubscribe();
+      sub = null;
+    }
+    if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: key });
+    const json = sub.toJSON();
+    if (!json.endpoint || !json.keys?.p256dh || !json.keys?.auth) return false;
+    const { error } = await requireSupabase()
+      .from('push_subscriptions')
+      .upsert(
+        { endpoint: json.endpoint, user_id: userId, p256dh: json.keys.p256dh, auth: json.keys.auth },
+        { onConflict: 'endpoint,user_id' },
+      );
+    if (error) throw error;
+    return true;
+  } catch (error) {
+    console.warn('Could not turn on push notifications', error);
+    return false;
+  }
+}
+
+async function removePushSubscription(userId: string) {
+  if (!pushSupported() || !isSupabaseConfigured) return;
+  try {
+    const reg = await navigator.serviceWorker.getRegistration(withBase(''));
+    const sub = await reg?.pushManager.getSubscription();
+    if (!sub) return;
+    await requireSupabase().from('push_subscriptions').delete().eq('endpoint', sub.endpoint).eq('user_id', userId);
+  } catch (error) {
+    console.warn(error);
+  }
 }
 
 export async function enableDeviceNotifications(userId: string): Promise<DevicePermission> {
   if (!deviceNotificationsSupported()) return 'unsupported';
   const permission = Notification.permission === 'default' ? await Notification.requestPermission() : Notification.permission;
   writePref(userId, permission === 'granted');
-  if (permission === 'granted') await getRegistration();
+  if (permission === 'granted') await syncPushSubscription(userId);
   return permission;
 }
 
 export function disableDeviceNotifications(userId: string) {
   writePref(userId, false);
+  void removePushSubscription(userId);
 }
 
 export async function showDeviceNotification(input: { id: string; title: string; body: string; url?: string }) {
@@ -116,7 +177,7 @@ export function useDeviceNotificationListener(userId?: string) {
 
   useEffect(() => {
     if (!userId || !active || !isSupabaseConfigured) return;
-    void getRegistration();
+    void syncPushSubscription(userId);
     const client = requireSupabase();
     const channel = client
       .channel(`pcc-device-notif-${userId}-${Math.random().toString(36).slice(2)}`)
@@ -125,7 +186,6 @@ export function useDeviceNotificationListener(userId?: string) {
         { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${userId}` },
         payload => {
           const row = payload.new as { id?: string; title?: string; message?: string; link?: string };
-          if (document.visibilityState === 'visible' && document.hasFocus()) return;
           void showDeviceNotification({
             id: String(row.id || Date.now()),
             title: row.title || 'PCC Records',
