@@ -7,6 +7,7 @@ import {
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import { withBase } from '../lib/basePath';
+import { AdminAlertSettings } from './AdminAlerts';
 
 const PCC_LOGO_URL = withBase('PCC%20LOGO.png');
 
@@ -94,6 +95,8 @@ export function AdminSidebar() {
             </div>
           </div>
         )}
+
+        {user && <AdminAlertSettings userId={user.id} collapsed={collapsed} />}
 
         <button
           onClick={toggleTheme}
