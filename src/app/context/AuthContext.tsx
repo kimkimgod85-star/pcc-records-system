@@ -330,7 +330,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     if (isSupabaseConfigured) {
-      await requireSupabase().auth.signOut();
+      await requireSupabase().auth.signOut({ scope: 'local' });
     }
     setUser(null);
     try {
