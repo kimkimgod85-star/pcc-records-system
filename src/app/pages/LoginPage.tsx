@@ -40,9 +40,10 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [verifyEmail, setVerifyEmail] = useState<string | null>(null);
   const [loginCodeEmail, setLoginCodeEmail] = useState<string | null>(null);
-  const [forgotOpen, setForgotOpen] = useState(() => searchParams.get('forgot') === '1');
+  const [forgotState, setForgotOpen] = useState(() => searchParams.get('forgot') === '1');
   const portal: LoginPortal = ['staff', 'admin', 'registrar'].includes(searchParams.get('as') || '') ? 'staff' : 'student';
   const isStaff = portal === 'staff';
+  const forgotOpen = forgotState && !isStaff;
 
   const switchPortal = (next: LoginPortal) => {
     if (next === portal) return;
@@ -218,9 +219,11 @@ export default function LoginPage() {
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <label className="text-sm font-medium text-gray-800 dark:text-gray-200">Password</label>
-                  <button type="button" onClick={handleForgot} className="text-xs font-medium text-blue-800 dark:text-blue-300 hover:underline">
-                    Forgot password?
-                  </button>
+                  {!isStaff && (
+                    <button type="button" onClick={handleForgot} className="text-xs font-medium text-blue-800 dark:text-blue-300 hover:underline">
+                      Forgot password?
+                    </button>
+                  )}
                 </div>
                 <div className="relative">
                   <Lock className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
