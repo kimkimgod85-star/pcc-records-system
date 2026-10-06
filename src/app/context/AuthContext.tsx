@@ -37,7 +37,9 @@ export const UNREGISTERED_GOOGLE_MESSAGE =
 interface AuthContextType {
   user: User | null;
   ready: boolean;
-  login: (email: string, password: string, portal?: LoginPortal) => Promise<{ success: boolean; error?: string; user?: User; needsVerification?: boolean }>;
+  login: (email: string, password: string, portal?: LoginPortal) => Promise<{ success: boolean; error?: string; user?: User; needsVerification?: boolean; needsLoginCode?: boolean }>;
+  verifyLoginCode: (email: string, code: string, trustThisDevice: boolean) => Promise<{ success: boolean; error?: string; user?: User }>;
+  resendLoginCode: (email: string) => Promise<{ success: boolean; error?: string }>;
   register: (input: RegisterInput) => Promise<{ success: boolean; error?: string; needsEmailConfirm?: boolean }>;
   verifyEmailCode: (email: string, code: string) => Promise<{ success: boolean; error?: string; user?: User }>;
   resendEmailCode: (email: string) => Promise<{ success: boolean; error?: string }>;
@@ -55,6 +57,8 @@ const AuthContext = createContext<AuthContextType>({
   register: async () => ({ success: false }),
   verifyEmailCode: async () => ({ success: false }),
   resendEmailCode: async () => ({ success: false }),
+  verifyLoginCode: async () => ({ success: false }),
+  resendLoginCode: async () => ({ success: false }),
   loginWithGoogle: async () => ({ success: false }),
   resetPassword: async () => ({ success: false }),
   resetPasswordWithCode: async () => ({ success: false }),
@@ -175,6 +179,35 @@ async function createProfileFromAuthUser(authUser: AuthUser) {
     status: 'active',
   });
   if (error) throw error;
+}
+
+const TRUSTED_DEVICE_DAYS = 30;
+const trustedDeviceKey = (userId: string) => `pcc-trusted-device:${userId}`;
+
+// Built-in staff accounts use placeholder emails that cannot receive a code.
+const NO_INBOX_DOMAINS = ['@pcc.edu'];
+
+function isTrustedDevice(userId: string) {
+  try {
+    const until = Number(localStorage.getItem(trustedDeviceKey(userId)) || 0);
+    return until > Date.now();
+  } catch {
+    return false;
+  }
+}
+
+function trustDevice(userId: string) {
+  try {
+    localStorage.setItem(trustedDeviceKey(userId), String(Date.now() + TRUSTED_DEVICE_DAYS * 86_400_000));
+  } catch {
+    /* storage unavailable */
+  }
+}
+
+function needsLoginCode(user: User) {
+  const email = user.email.toLowerCase();
+  if (NO_INBOX_DOMAINS.some(domain => email.endsWith(domain))) return false;
+  return !isTrustedDevice(user.id);
 }
 
 // Used after a password, email code, or reset code proves the person owns this account.
@@ -299,7 +332,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { success: false, error: explainAuthError(error?.message || 'Login failed.') };
     }
     try {
-      const mapped = await mapAuthUser(data.user);
+      const mapped = await mapOrCreateProfile(data.user);
       const isStaff = mapped.role === 'admin';
       if (portal && (portal === 'staff') !== isStaff) {
         await client.auth.signOut({ scope: 'local' });
@@ -311,6 +344,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             : 'This is a Student / Alumni account. Please use the Student / Alumni login.',
         };
       }
+
+      if (needsLoginCode(mapped)) {
+        await client.auth.signOut({ scope: 'local' });
+        setUser(null);
+        const { error: otpError } = await client.auth.signInWithOtp({
+          email: mapped.email || email.trim(),
+          options: { shouldCreateUser: false },
+        });
+        if (otpError) return { success: false, error: explainAuthError(otpError.message) };
+        return { success: false, needsLoginCode: true };
+      }
+
       setUser(mapped);
       return { success: true, user: mapped };
     } catch (err) {
@@ -359,7 +404,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { success: false, error: explainAuthError(error?.message || 'Could not verify the code.') };
     }
     try {
-      const mapped = await mapAuthUser(data.user);
+      const mapped = await mapOrCreateProfile(data.user);
       setUser(mapped);
       return { success: true, user: mapped };
     } catch (err) {
@@ -367,6 +412,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(null);
       return { success: false, error: explainAuthError(err instanceof Error ? err.message : 'Could not verify the code.') };
     }
+  };
+
+  const verifyLoginCode = async (email: string, code: string, trustThisDevice: boolean) => {
+    if (!isSupabaseConfigured) return missingConfig();
+    const client = requireSupabase();
+    loginInProgress.current = true;
+    try {
+      const { data, error } = await client.auth.verifyOtp({
+        email: email.trim(),
+        token: code.replace(/\s/g, ''),
+        type: 'email',
+      });
+      if (error || !data.user) {
+        return { success: false, error: explainAuthError(error?.message || 'Could not verify the code.') };
+      }
+      try {
+        const mapped = await mapOrCreateProfile(data.user);
+        if (trustThisDevice) trustDevice(mapped.id);
+        setUser(mapped);
+        return { success: true, user: mapped };
+      } catch (err) {
+        await client.auth.signOut({ scope: 'local' });
+        setUser(null);
+        return { success: false, error: explainAuthError(err instanceof Error ? err.message : 'Could not verify the code.') };
+      }
+    } finally {
+      loginInProgress.current = false;
+    }
+  };
+
+  const resendLoginCode = async (email: string) => {
+    if (!isSupabaseConfigured) return missingConfig();
+    const { error } = await requireSupabase().auth.signInWithOtp({
+      email: email.trim(),
+      options: { shouldCreateUser: false },
+    });
+    if (error) return { success: false, error: explainAuthError(error.message) };
+    return { success: true };
   };
 
   const resendEmailCode = async (email: string) => {
@@ -486,7 +569,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, ready, login, register, verifyEmailCode, resendEmailCode, loginWithGoogle, resetPassword, resetPasswordWithCode, logout, isAuthenticated: !!user }}>
+    <AuthContext.Provider value={{ user, ready, login, register, verifyEmailCode, resendEmailCode, verifyLoginCode, resendLoginCode, loginWithGoogle, resetPassword, resetPasswordWithCode, logout, isAuthenticated: !!user }}>
       {children}
     </AuthContext.Provider>
   );

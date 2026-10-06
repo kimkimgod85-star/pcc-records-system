@@ -6,6 +6,8 @@ const RESEND_SECONDS = 60;
 
 interface Props {
   email: string;
+  /** 'signup' confirms a new account; 'login' is the sign-in code sent after the password. */
+  purpose?: 'signup' | 'login';
   /** Send a fresh code as soon as this screen opens (used when signing in to an unverified account). */
   sendOnOpen?: boolean;
   onVerified?: (user?: User) => void;
@@ -13,8 +15,10 @@ interface Props {
   backLabel?: string;
 }
 
-export function EmailCodeVerify({ email, sendOnOpen, onVerified, onBack, backLabel = 'Back to Sign in' }: Props) {
-  const { verifyEmailCode, resendEmailCode } = useAuth();
+export function EmailCodeVerify({ email, purpose = 'signup', sendOnOpen, onVerified, onBack, backLabel = 'Back to Sign in' }: Props) {
+  const { verifyEmailCode, resendEmailCode, verifyLoginCode, resendLoginCode } = useAuth();
+  const isLogin = purpose === 'login';
+  const [trustThisDevice, setTrustThisDevice] = useState(false);
   const [code, setCode] = useState('');
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
@@ -35,7 +39,7 @@ export function EmailCodeVerify({ email, sendOnOpen, onVerified, onBack, backLab
     setError('');
     setInfo('');
     setSending(true);
-    const result = await resendEmailCode(email);
+    const result = isLogin ? await resendLoginCode(email) : await resendEmailCode(email);
     setSending(false);
     if (result.success) {
       setInfo(`A new code was sent to ${email}.`);
@@ -65,7 +69,9 @@ export function EmailCodeVerify({ email, sendOnOpen, onVerified, onBack, backLab
     setError('');
     setInfo('');
     setVerifying(true);
-    const result = await verifyEmailCode(email, clean);
+    const result = isLogin
+      ? await verifyLoginCode(email, clean, trustThisDevice)
+      : await verifyEmailCode(email, clean);
     setVerifying(false);
     if (!result.success) {
       setError(result.error || 'Could not verify the code.');
@@ -81,7 +87,7 @@ export function EmailCodeVerify({ email, sendOnOpen, onVerified, onBack, backLab
         <div className="w-14 h-14 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-3">
           <CheckCircle className="w-7 h-7 text-green-600 dark:text-green-400" />
         </div>
-        <p className="font-semibold text-gray-900 dark:text-white">Email verified</p>
+        <p className="font-semibold text-gray-900 dark:text-white">{isLogin ? 'Code accepted' : 'Email verified'}</p>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Opening your account…</p>
       </div>
     );
@@ -93,11 +99,13 @@ export function EmailCodeVerify({ email, sendOnOpen, onVerified, onBack, backLab
         <MailCheck className="w-6 h-6 text-blue-700 dark:text-blue-300" />
       </div>
       <h1 className="text-gray-900 dark:text-white" style={{ fontFamily: 'Poppins, sans-serif', fontSize: '1.45rem', fontWeight: 600 }}>
-        Verify your email
+        {isLogin ? 'Check your email' : 'Verify your email'}
       </h1>
       <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 mb-5 leading-relaxed">
-        We sent a verification code to <span className="font-semibold text-gray-900 dark:text-white break-all">{email}</span>.
-        Enter it below to prove this email is yours. Check your Spam or Promotions folder if you don’t see it.
+        {isLogin ? 'For your security, we sent a sign-in code to ' : 'We sent a verification code to '}
+        <span className="font-semibold text-gray-900 dark:text-white break-all">{email}</span>.
+        {isLogin ? ' Enter it below to finish signing in.' : ' Enter it below to prove this email is yours.'}
+        {' '}Check your Spam or Promotions folder if you don’t see it.
       </p>
 
       {error && (
@@ -131,13 +139,28 @@ export function EmailCodeVerify({ email, sendOnOpen, onVerified, onBack, backLab
           />
         </div>
 
+        {isLogin && (
+          <label className="flex items-start gap-2.5 text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={trustThisDevice}
+              onChange={e => setTrustThisDevice(e.target.checked)}
+              className="mt-0.5 w-4 h-4 rounded border-gray-300 text-blue-700 focus:ring-blue-700"
+            />
+            <span>
+              Don’t ask for a code on this device for 30 days
+              <span className="block text-xs text-gray-500 dark:text-gray-400">Only tick this on your own phone or computer.</span>
+            </span>
+          </label>
+        )}
+
         <button
           type="submit"
           disabled={verifying}
           className="w-full flex items-center justify-center gap-2 py-2.5 disabled:opacity-60 text-white rounded-lg font-semibold bg-blue-800 hover:bg-blue-900 transition-colors"
         >
           {verifying && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
-          {verifying ? 'Checking…' : 'Verify and continue'}
+          {verifying ? 'Checking…' : isLogin ? 'Sign in' : 'Verify and continue'}
         </button>
       </form>
 

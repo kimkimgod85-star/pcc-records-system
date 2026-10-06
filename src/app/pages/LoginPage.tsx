@@ -39,6 +39,7 @@ export default function LoginPage() {
   const [info, setInfo] = useState('');
   const [loading, setLoading] = useState(false);
   const [verifyEmail, setVerifyEmail] = useState<string | null>(null);
+  const [loginCodeEmail, setLoginCodeEmail] = useState<string | null>(null);
   const [forgotOpen, setForgotOpen] = useState(() => searchParams.get('forgot') === '1');
   const portal: LoginPortal = ['staff', 'admin', 'registrar'].includes(searchParams.get('as') || '') ? 'staff' : 'student';
   const isStaff = portal === 'staff';
@@ -63,6 +64,7 @@ export default function LoginPage() {
     const result = await login(form.email, form.password, portal);
     setLoading(false);
     if (result.success) goToApp(result.user?.role, result.user?.id);
+    else if (result.needsLoginCode) setLoginCodeEmail(form.email.trim());
     else if (result.needsVerification) setVerifyEmail(form.email.trim());
     else setError(result.error || 'Login failed.');
   };
@@ -130,6 +132,16 @@ export default function LoginPage() {
                 initialEmail={form.email}
                 onDone={done => goToApp(done?.role, done?.id)}
                 onBack={() => setForgotOpen(false)}
+              />
+            ) : loginCodeEmail ? (
+              <EmailCodeVerify
+                email={loginCodeEmail}
+                purpose="login"
+                onVerified={verified => goToApp(verified?.role, verified?.id)}
+                onBack={() => {
+                  setLoginCodeEmail(null);
+                  setForm(f => ({ ...f, password: '' }));
+                }}
               />
             ) : verifyEmail ? (
               <EmailCodeVerify
