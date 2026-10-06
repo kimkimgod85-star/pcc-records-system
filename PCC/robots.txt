@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /dashboard
+Disallow: /auth/
+
+Sitemap: https://www.pccsched.online/sitemap.xml

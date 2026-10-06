@@ -30,7 +30,8 @@ jobs:
       - name: Build
         run: npm run build
         env:
-          VITE_BASE: /${{ github.event.repository.name }}/
+          # Served from the custom domain www.pccsched.online, so the app lives at the root.
+          VITE_BASE: /
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
 
