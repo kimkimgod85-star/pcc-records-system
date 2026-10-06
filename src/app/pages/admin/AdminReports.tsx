@@ -43,6 +43,7 @@ import {
   REPORT_KINDS,
   type ReportKind,
   type PaperSize,
+  type SavedFile,
   type Orientation,
 } from '../../lib/reportExport';
 import { useAuth } from '../../context/AuthContext';
@@ -117,6 +118,7 @@ export default function AdminReports() {
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState('');
   const [exportDone, setExportDone] = useState(false);
+  const [savedFile, setSavedFile] = useState<SavedFile | null>(null);
 
   useEffect(() => {
     const refresh = () => {
@@ -229,8 +231,10 @@ export default function AdminReports() {
           preparedBy: user?.name || '',
           currency: format === 'pdf' ? 'PHP ' : '₱',
         });
-        if (format === 'pdf') await exportReportPdf(model, paper, orientation, `${fileBase()}.pdf`);
-        else await exportReportDocx(model, paper, orientation, `${fileBase()}.docx`);
+        const file = format === 'pdf'
+          ? await exportReportPdf(model, paper, orientation, `${fileBase()}.pdf`)
+          : await exportReportDocx(model, paper, orientation, `${fileBase()}.docx`);
+        setSavedFile(file);
       }
       setExportDone(true);
       window.setTimeout(() => setExportDone(false), 2500);
@@ -599,6 +603,32 @@ export default function AdminReports() {
               {exporting ? 'Preparing file…' : exportDone ? 'Downloaded' : `Download ${FORMATS.find(f => f.value === format)?.label}`}
             </button>
           </div>
+
+          {savedFile && format !== 'csv' && (
+            <div className="p-3 rounded-xl bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+              <Check className="w-4 h-4 text-green-600 flex-shrink-0 hidden sm:block" />
+              <p className="flex-1 min-w-0 text-sm text-green-800 dark:text-green-200 break-all">
+                <span className="font-medium">{savedFile.filename}</span> is ready. If the download did not start, open it here.
+              </p>
+              <div className="flex gap-2 flex-shrink-0">
+                <a
+                  href={savedFile.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 sm:flex-none text-center px-3 py-2 rounded-lg text-sm font-semibold bg-white dark:bg-slate-800 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-700 hover:bg-green-100 dark:hover:bg-slate-700"
+                >
+                  Open
+                </a>
+                <a
+                  href={savedFile.url}
+                  download={savedFile.filename}
+                  className="flex-1 sm:flex-none text-center px-3 py-2 rounded-lg text-sm font-semibold bg-green-600 hover:bg-green-700 text-white"
+                >
+                  Save
+                </a>
+              </div>
+            </div>
+          )}
         </div>
       </section>
 

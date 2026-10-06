@@ -241,21 +241,70 @@ async function loadLogo(): Promise<Logo> {
   }
 }
 
-function saveBlob(blob: Blob, filename: string) {
+export interface SavedFile {
+  url: string;
+  filename: string;
+}
+
+let lastUrl = '';
+
+/** The URL stays valid until the next export, so slow downloads and the "Open file" fallback keep working. */
+function saveBlob(blob: Blob, filename: string): SavedFile {
+  if (lastUrl) URL.revokeObjectURL(lastUrl);
   const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  lastUrl = url;
+  const standalone = window.matchMedia?.('(display-mode: standalone)').matches;
+  if (!standalone) {
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    link.rel = 'noopener';
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  }
+  return { url, filename };
 }
 
 /* ---------- PDF ---------- */
 
 export async function exportReportPdf(model: ReportModel, paper: PaperSize, orientation: Orientation, filename: string) {
-  const [{ jsPDF }, { autoTable }, logo] = await Promise.all([import('jspdf'), import('jspdf-autotable'), loadLogo()]);
+  const doc = await buildReportPdf(model, paper, orientation, await loadLogo());
+  return saveBlob(doc.output('blob'), filename);
+}
+
+/** The built-in PDF fonts only cover Latin-1 plus a few symbols (’ – • …); anything else would print as garbage. */
+function pdfSafe(text: string) {
+  return text
+    .replace(/₱\s?/g, 'PHP ')
+    .replace(/[→⇒]/g, '->')
+    .replace(/[^\x20-\x7E\u00A0-\u00FF\u2013\u2014\u2018\u2019\u201C\u201D\u2022\u2026\u20AC\n]/g, '');
+}
+
+function pdfSafeModel(model: ReportModel): ReportModel {
+  const rows = (list: string[][]) => list.map(row => row.map(pdfSafe));
+  return {
+    ...model,
+    title: pdfSafe(model.title),
+    period: pdfSafe(model.period),
+    generatedAt: pdfSafe(model.generatedAt),
+    preparedBy: pdfSafe(model.preparedBy),
+    summary: model.summary.map(([a, b]) => [pdfSafe(a), pdfSafe(b)]),
+    tables: model.tables.map(table => ({
+      ...table,
+      heading: pdfSafe(table.heading),
+      note: table.note ? pdfSafe(table.note) : undefined,
+      columns: table.columns.map(pdfSafe),
+      rows: rows(table.rows),
+      total: table.total?.map(pdfSafe),
+    })),
+  };
+}
+
+export async function buildReportPdf(input: ReportModel, paper: PaperSize, orientation: Orientation, logo: Logo) {
+  const model = pdfSafeModel(input);
+  const [{ jsPDF }, { autoTable }] = await Promise.all([import('jspdf'), import('jspdf-autotable')]);
   const doc = new jsPDF({ unit: 'pt', format: paper, orientation });
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
@@ -427,7 +476,7 @@ export async function exportReportPdf(model: ReportModel, paper: PaperSize, orie
     doc.text(`Page ${i} of ${pages}`, pageW - margin, pageH - margin + 26, { align: 'right' });
   }
 
-  doc.save(filename);
+  return doc;
 }
 
 /* ---------- Word (.docx) ---------- */
@@ -628,5 +677,5 @@ export async function exportReportDocx(model: ReportModel, paper: PaperSize, ori
     }],
   });
 
-  saveBlob(await Packer.toBlob(file), filename);
+  return saveBlob(await Packer.toBlob(file), filename);
 }
