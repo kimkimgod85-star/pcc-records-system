@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import type { Session, User as AuthUser } from '@supabase/supabase-js';
 import { isSupabaseConfigured, isGoogleAuthEnabled, requireSupabase } from '../lib/supabase';
 import { withBase } from '../lib/basePath';
@@ -28,6 +28,8 @@ export interface GoogleRegisterDraft {
   role: 'student' | 'alumni';
 }
 
+export type LoginPortal = 'student' | 'staff';
+
 export const GOOGLE_REGISTER_KEY = 'pcc-google-register';
 export const UNREGISTERED_GOOGLE_MESSAGE =
   'No PCC account yet. Create an account on Register first, then you can sign in with Google.';
@@ -35,7 +37,7 @@ export const UNREGISTERED_GOOGLE_MESSAGE =
 interface AuthContextType {
   user: User | null;
   ready: boolean;
-  login: (email: string, password: string) => Promise<{ success: boolean; error?: string; user?: User; needsVerification?: boolean }>;
+  login: (email: string, password: string, portal?: LoginPortal) => Promise<{ success: boolean; error?: string; user?: User; needsVerification?: boolean }>;
   register: (input: RegisterInput) => Promise<{ success: boolean; error?: string; needsEmailConfirm?: boolean }>;
   verifyEmailCode: (email: string, code: string) => Promise<{ success: boolean; error?: string; user?: User }>;
   resendEmailCode: (email: string) => Promise<{ success: boolean; error?: string }>;
@@ -180,6 +182,8 @@ export async function completePendingGoogleRegistration(authUser: AuthUser) {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [ready, setReady] = useState(false);
+  // While login() checks the account type, ignore the auth listener so the user is not set early.
+  const loginInProgress = useRef(false);
 
   useEffect(() => {
     if (!isSupabaseConfigured) {
@@ -191,6 +195,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     let alive = true;
 
   const applySession = async (session: Session | null) => {
+      if (session?.user && loginInProgress.current) return;
       if (!session?.user) {
         if (alive) setUser(null);
         return;
@@ -234,9 +239,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     error: 'Supabase is not set up yet. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in .env.local, then restart npm run dev.',
   });
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string, portal?: LoginPortal) => {
     if (!isSupabaseConfigured) return missingConfig();
     const client = requireSupabase();
+    loginInProgress.current = true;
+    try {
+      return await signInWithPortal(client, email, password, portal);
+    } finally {
+      loginInProgress.current = false;
+    }
+  };
+
+  const signInWithPortal = async (
+    client: ReturnType<typeof requireSupabase>,
+    email: string,
+    password: string,
+    portal?: LoginPortal,
+  ) => {
     const { data, error } = await client.auth.signInWithPassword({ email: email.trim(), password });
     if (error?.message.toLowerCase().includes('email not confirmed')) {
       return { success: false, needsVerification: true, error: explainAuthError(error.message) };
@@ -246,10 +265,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     try {
       const mapped = await mapAuthUser(data.user);
+      const isStaff = mapped.role === 'admin';
+      if (portal && (portal === 'staff') !== isStaff) {
+        await client.auth.signOut({ scope: 'local' });
+        setUser(null);
+        return {
+          success: false,
+          error: isStaff
+            ? 'This is an Admin / Registrar account. Please use the Admin / Registrar login.'
+            : 'This is a Student / Alumni account. Please use the Student / Alumni login.',
+        };
+      }
       setUser(mapped);
       return { success: true, user: mapped };
     } catch (err) {
-      await client.auth.signOut();
+      await client.auth.signOut({ scope: 'local' });
       setUser(null);
       return { success: false, error: explainAuthError(err instanceof Error ? err.message : 'Login failed.') };
     }

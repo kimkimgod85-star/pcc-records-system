@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
-import { Eye, EyeOff, AlertCircle, LogIn, ArrowLeft, Mail, Lock } from 'lucide-react';
-import { UNREGISTERED_GOOGLE_MESSAGE, useAuth } from '../context/AuthContext';
+import { Eye, EyeOff, AlertCircle, LogIn, ArrowLeft, Mail, Lock, GraduationCap, ShieldCheck } from 'lucide-react';
+import { UNREGISTERED_GOOGLE_MESSAGE, useAuth, type LoginPortal } from '../context/AuthContext';
 import { Header } from '../components/Header';
 import { EmailCodeVerify } from '../components/EmailCodeVerify';
 import { studentHome } from './WelcomePage';
@@ -28,7 +28,7 @@ const fieldClass =
 export default function LoginPage() {
   const { login, loginWithGoogle, resetPassword } = useAuth();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [form, setForm] = useState({ email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
@@ -38,6 +38,15 @@ export default function LoginPage() {
   const [info, setInfo] = useState('');
   const [loading, setLoading] = useState(false);
   const [verifyEmail, setVerifyEmail] = useState<string | null>(null);
+  const portal: LoginPortal = ['staff', 'admin', 'registrar'].includes(searchParams.get('as') || '') ? 'staff' : 'student';
+  const isStaff = portal === 'staff';
+
+  const switchPortal = (next: LoginPortal) => {
+    if (next === portal) return;
+    setError('');
+    setInfo('');
+    setSearchParams(next === 'staff' ? { as: 'staff' } : {}, { replace: true });
+  };
 
   const goToApp = (role?: string, userId?: string) => {
     if (role === 'admin') navigate(userId ? adminHome(userId) : '/admin');
@@ -49,7 +58,7 @@ export default function LoginPage() {
     setError('');
     setInfo('');
     setLoading(true);
-    const result = await login(form.email, form.password);
+    const result = await login(form.email, form.password, portal);
     setLoading(false);
     if (result.success) goToApp(result.user?.role, result.user?.id);
     else if (result.needsVerification) setVerifyEmail(form.email.trim());
@@ -125,11 +134,39 @@ export default function LoginPage() {
               />
             ) : (
             <>
+            <div role="tablist" aria-label="Choose login type" className="grid grid-cols-2 gap-1 p-1 mb-5 rounded-lg bg-gray-100 dark:bg-slate-900">
+              {([
+                { value: 'student', label: 'Student / Alumni', icon: GraduationCap },
+                { value: 'staff', label: 'Admin / Registrar', icon: ShieldCheck },
+              ] as const).map(tab => {
+                const active = portal === tab.value;
+                return (
+                  <button
+                    key={tab.value}
+                    type="button"
+                    role="tab"
+                    aria-selected={active}
+                    onClick={() => switchPortal(tab.value)}
+                    className={`flex items-center justify-center gap-1.5 px-2 py-2 rounded-md text-xs sm:text-sm font-semibold transition-colors ${
+                      active
+                        ? 'bg-white dark:bg-slate-700 text-blue-800 dark:text-white shadow-sm'
+                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
+                    }`}
+                  >
+                    <tab.icon className="w-4 h-4 flex-shrink-0" />
+                    <span className="truncate">{tab.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+
             <h1 className="text-gray-900 dark:text-white" style={{ fontFamily: 'Poppins, sans-serif', fontSize: '1.45rem', fontWeight: 600 }}>
-              Sign in
+              {isStaff ? 'Staff sign in' : 'Sign in'}
             </h1>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 mb-5">
-              Use your PCC account to request and track records.
+              {isStaff
+                ? 'For Registrar’s Office staff and administrators only.'
+                : 'Use your PCC account to request and track records.'}
             </p>
 
             {error && (
@@ -193,10 +230,16 @@ export default function LoginPage() {
                 className="w-full flex items-center justify-center gap-2 py-2.5 disabled:opacity-60 text-white rounded-lg font-semibold bg-blue-800 hover:bg-blue-900 transition-colors"
               >
                 {loading ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <LogIn className="w-4 h-4" />}
-                {loading ? 'Signing in...' : 'Sign in'}
+                {loading ? 'Signing in...' : isStaff ? 'Sign in as staff' : 'Sign in'}
               </button>
             </form>
 
+            {isStaff ? (
+              <p className="mt-4 text-center text-xs text-gray-500 dark:text-gray-400">
+                Staff accounts are created by the system administrator.
+              </p>
+            ) : (
+            <>
             <div className="flex items-center gap-3 my-4">
               <div className="h-px flex-1 bg-gray-200 dark:bg-slate-600" />
               <span className="text-[12px] uppercase tracking-wide text-gray-400">or</span>
@@ -222,6 +265,8 @@ export default function LoginPage() {
                 Create an account
               </Link>
             </p>
+            </>
+            )}
             </>
             )}
           </div>

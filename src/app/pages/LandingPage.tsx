@@ -92,26 +92,26 @@ export default function LandingPage() {
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute -top-40 -right-40 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl" />
           <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-blue-400/20 rounded-full blur-3xl" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-white/5 rounded-full" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(600px,130vw)] aspect-square bg-white/5 rounded-full" />
         </div>
 
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28">
-          <div className="text-center max-w-3xl mx-auto">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur rounded-full text-blue-100 text-sm mb-6">
-              <BadgeCheck className="w-4 h-4 text-sky-300" />
-              Official Records Management System of PCC
+        <div className="relative max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 py-14 sm:py-28">
+          <div className="flex flex-col items-center text-center max-w-3xl mx-auto">
+            <div className="inline-flex items-center justify-center gap-1.5 sm:gap-2 max-w-full px-3 sm:px-4 py-1.5 sm:py-2 bg-white/10 backdrop-blur rounded-full ring-1 ring-white/20 text-blue-50 text-[0.7rem] min-[380px]:text-xs sm:text-sm font-medium mb-5 sm:mb-6">
+              <BadgeCheck className="w-4 h-4 text-sky-300 flex-shrink-0" />
+              <span className="leading-snug whitespace-nowrap">Official Records Management System of PCC</span>
             </div>
 
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl text-white mb-6 leading-tight" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 700 }}>
+            <h1 className="text-[1.75rem] min-[380px]:text-3xl sm:text-4xl lg:text-5xl text-white mb-4 sm:mb-6 leading-tight text-balance" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 700 }}>
               Web-Based School Records
-              <span className="block text-blue-200"> Request & Scheduling</span>
+              <span className="block text-blue-200 mt-1 sm:mt-0">Request &amp; Scheduling</span>
             </h1>
 
-            <p className="text-lg text-blue-100 mb-10 leading-relaxed">
+            <p className="text-[0.95rem] sm:text-lg text-blue-100 mb-8 sm:mb-10 leading-relaxed max-w-md sm:max-w-none text-pretty">
               Request school documents online and schedule pickup easily. No more long queues — manage your academic records from anywhere, anytime.
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <div className="flex flex-col sm:flex-row gap-3 justify-center w-full max-w-xs sm:max-w-none">
               <Link
                 to="/register"
                 className="inline-flex items-center justify-center gap-2 px-7 py-3.5 bg-white text-blue-800 rounded-xl hover:bg-blue-800 hover:text-white transition-colors shadow-lg text-base sm:text-lg font-semibold"
