@@ -4,7 +4,7 @@ import { withBase } from './basePath';
 
 const PREF_KEY = 'pcc-device-notif';
 const PREF_EVENT = 'pcc-device-notif-changed';
-const ICON = withBase('PCC%20LOGO.png');
+const ICON = withBase('favicon-192.png');
 const VAPID_PUBLIC_KEY =
   import.meta.env.VITE_VAPID_PUBLIC_KEY ||
   'BCapBNK7HDQT3wwsktF7Q3gnx626mz9GgafdqIc4uBqBgXFEw9BfZOhneeqx1cEWJWLvYYUw51uvw0_a7QzPM50';

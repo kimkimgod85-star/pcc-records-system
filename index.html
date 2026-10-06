@@ -4,9 +4,11 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#1e40af" />
-    <link rel="icon" type="image/png" href="/PCC%20LOGO.png" />
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
+    <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png" />
     <link rel="manifest" href="/manifest.webmanifest" />
-    <link rel="apple-touch-icon" href="/PCC%20LOGO.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="PCC Records" />
     <title>PCC Records – Pagadian Capitol Colleges Registrar Online Request</title>
@@ -20,9 +22,56 @@
     <meta property="og:url" content="https://www.pccsched.online/" />
     <meta property="og:image" content="https://www.pccsched.online/PCC1.jpg" />
     <meta name="twitter:card" content="summary_large_image" />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "WebSite",
+            "@id": "https://www.pccsched.online/#website",
+            "name": "PCC Records",
+            "alternateName": ["PCC Sched", "Pagadian Capitol Colleges Records Request System"],
+            "url": "https://www.pccsched.online/",
+            "inLanguage": "en",
+            "publisher": { "@id": "https://www.pccsched.online/#organization" }
+          },
+          {
+            "@type": "CollegeOrUniversity",
+            "@id": "https://www.pccsched.online/#organization",
+            "name": "Pagadian Capitol Colleges",
+            "alternateName": "PCC",
+            "url": "https://www.pccsched.online/",
+            "logo": "https://www.pccsched.online/favicon-512.png",
+            "image": "https://www.pccsched.online/PCC1.jpg",
+            "email": "registrar@pcci.ph.education",
+            "telephone": "+63 918 727 2849",
+            "address": {
+              "@type": "PostalAddress",
+              "streetAddress": "Rizal Avenue, Tuburan District",
+              "addressLocality": "Pagadian City",
+              "postalCode": "7016",
+              "addressCountry": "PH"
+            },
+            "sameAs": ["https://www.facebook.com/profile.php?id=100063921040273"]
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <main style="font-family: system-ui, sans-serif; max-width: 40rem; margin: 4rem auto; padding: 0 1.25rem; color: #1f2937">
+        <h1>PCC Records – Pagadian Capitol Colleges Registrar Online Request</h1>
+        <p>
+          The official records management system of Pagadian Capitol Colleges. Students and alumni can request
+          school records such as the Transcript of Records (TOR), Certificate of Enrollment, Diploma copy, and
+          Good Moral Certificate online, pay through GCash or the cashier, schedule a pickup date, and track
+          their request status from the Registrar's Office.
+        </p>
+        <p>Office of the Registrar · Rizal Avenue, Tuburan District, Pagadian City · Mon–Sat 8:00 AM – 4:00 PM</p>
+      </main>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

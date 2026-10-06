@@ -1,7 +1,7 @@
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', event => event.waitUntil(self.clients.claim()));
 
-const ICON = new URL('PCC%20LOGO.png', self.registration.scope).href;
+const ICON = new URL('favicon-192.png', self.registration.scope).href;
 
 self.addEventListener('push', event => {
   let data = {};
