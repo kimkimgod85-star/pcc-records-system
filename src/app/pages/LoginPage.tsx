@@ -4,6 +4,7 @@ import { Eye, EyeOff, AlertCircle, LogIn, ArrowLeft, Mail, Lock, GraduationCap, 
 import { UNREGISTERED_GOOGLE_MESSAGE, useAuth, type LoginPortal } from '../context/AuthContext';
 import { Header } from '../components/Header';
 import { EmailCodeVerify } from '../components/EmailCodeVerify';
+import { ForgotPassword } from '../components/ForgotPassword';
 import { studentHome } from './WelcomePage';
 import { adminHome } from './admin/AdminWelcomePage';
 import { withBase } from '../lib/basePath';
@@ -26,7 +27,7 @@ const fieldClass =
   'w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-700 focus:border-blue-700 text-sm';
 
 export default function LoginPage() {
-  const { login, loginWithGoogle, resetPassword } = useAuth();
+  const { login, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -38,6 +39,7 @@ export default function LoginPage() {
   const [info, setInfo] = useState('');
   const [loading, setLoading] = useState(false);
   const [verifyEmail, setVerifyEmail] = useState<string | null>(null);
+  const [forgotOpen, setForgotOpen] = useState(false);
   const portal: LoginPortal = ['staff', 'admin', 'registrar'].includes(searchParams.get('as') || '') ? 'staff' : 'student';
   const isStaff = portal === 'staff';
 
@@ -65,12 +67,10 @@ export default function LoginPage() {
     else setError(result.error || 'Login failed.');
   };
 
-  const handleForgot = async () => {
+  const handleForgot = () => {
     setError('');
     setInfo('');
-    const result = await resetPassword(form.email);
-    if (result.success) setInfo('If that email has an account, a reset link was sent.');
-    else setError(result.error || 'Could not send reset email.');
+    setForgotOpen(true);
   };
 
   const handleGoogle = async () => {
@@ -125,7 +125,13 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {verifyEmail ? (
+            {forgotOpen ? (
+              <ForgotPassword
+                initialEmail={form.email}
+                onDone={done => goToApp(done?.role, done?.id)}
+                onBack={() => setForgotOpen(false)}
+              />
+            ) : verifyEmail ? (
               <EmailCodeVerify
                 email={verifyEmail}
                 sendOnOpen

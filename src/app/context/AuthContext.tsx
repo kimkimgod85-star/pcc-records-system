@@ -43,6 +43,7 @@ interface AuthContextType {
   resendEmailCode: (email: string) => Promise<{ success: boolean; error?: string }>;
   loginWithGoogle: (intent?: 'login' | 'register', draft?: GoogleRegisterDraft) => Promise<{ success: boolean; error?: string }>;
   resetPassword: (email: string) => Promise<{ success: boolean; error?: string }>;
+  resetPasswordWithCode: (email: string, code: string, newPassword: string) => Promise<{ success: boolean; error?: string; user?: User }>;
   logout: () => Promise<void>;
   isAuthenticated: boolean;
 }
@@ -56,6 +57,7 @@ const AuthContext = createContext<AuthContextType>({
   resendEmailCode: async () => ({ success: false }),
   loginWithGoogle: async () => ({ success: false }),
   resetPassword: async () => ({ success: false }),
+  resetPasswordWithCode: async () => ({ success: false }),
   logout: async () => {},
   isAuthenticated: false,
 });
@@ -84,6 +86,13 @@ function explainAuthError(message: string) {
     return message;
   }
   return message;
+}
+
+export function explainPasswordError(message: string) {
+  const m = message.toLowerCase();
+  if (m.includes('different from the old')) return 'Your new password must be different from your old password.';
+  if (m.includes('at least') || m.includes('weak') || m.includes('short')) return 'Password is too weak. Use at least 6 characters.';
+  return explainAuthError(message);
 }
 
 function mapRole(value: unknown): UserRole {
@@ -400,10 +409,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!email.trim()) return { success: false, error: 'Enter your email first, then click Forgot password.' };
     const client = requireSupabase();
     const { error } = await client.auth.resetPasswordForEmail(email.trim(), {
-      redirectTo: `${window.location.origin}${withBase('auth/callback')}`,
+      redirectTo: `${window.location.origin}${withBase('auth/callback')}?type=recovery`,
     });
     if (error) return { success: false, error: explainAuthError(error.message) };
     return { success: true };
+  };
+
+  const resetPasswordWithCode = async (email: string, code: string, newPassword: string) => {
+    if (!isSupabaseConfigured) return missingConfig();
+    const client = requireSupabase();
+    loginInProgress.current = true;
+    try {
+      const { data, error } = await client.auth.verifyOtp({
+        email: email.trim(),
+        token: code.replace(/\s/g, ''),
+        type: 'recovery',
+      });
+      if (error || !data.user) {
+        return { success: false, error: explainAuthError(error?.message || 'Could not verify the code.') };
+      }
+      const { error: updateError } = await client.auth.updateUser({ password: newPassword });
+      if (updateError) {
+        await client.auth.signOut({ scope: 'local' });
+        return { success: false, error: explainPasswordError(updateError.message) };
+      }
+      try {
+        const mapped = await mapAuthUser(data.user);
+        setUser(mapped);
+        return { success: true, user: mapped };
+      } catch (err) {
+        await client.auth.signOut({ scope: 'local' });
+        setUser(null);
+        return { success: false, error: explainAuthError(err instanceof Error ? err.message : 'Could not sign in.') };
+      }
+    } finally {
+      loginInProgress.current = false;
+    }
   };
 
   const logout = async () => {
@@ -419,7 +460,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, ready, login, register, verifyEmailCode, resendEmailCode, loginWithGoogle, resetPassword, logout, isAuthenticated: !!user }}>
+    <AuthContext.Provider value={{ user, ready, login, register, verifyEmailCode, resendEmailCode, loginWithGoogle, resetPassword, resetPasswordWithCode, logout, isAuthenticated: !!user }}>
       {children}
     </AuthContext.Provider>
   );
