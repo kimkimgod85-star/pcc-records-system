@@ -49,7 +49,7 @@ export function ForgotPassword({ initialEmail = '', onDone, onBack }: Props) {
       return;
     }
     setStep('code');
-    setInfo(`If ${email.trim()} has an account, we sent a reset code to it.`);
+    setInfo(`Reset code sent to ${email.trim()}. Check your Inbox and Spam folder. If nothing arrives in 2 minutes, make sure this is the email you registered with.`);
   };
 
   const submit = async (e: React.FormEvent) => {

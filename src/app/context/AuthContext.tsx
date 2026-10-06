@@ -163,6 +163,20 @@ async function mapAuthUser(authUser: AuthUser): Promise<User> {
   };
 }
 
+async function createProfileFromAuthUser(authUser: AuthUser) {
+  const meta = authUser.user_metadata || {};
+  const role = meta.role === 'alumni' ? 'alumni' : 'student';
+  const { error } = await requireSupabase().from('profiles').upsert({
+    id: authUser.id,
+    email: authUser.email,
+    full_name: meta.full_name || meta.name || (authUser.email || 'User').split('@')[0],
+    student_id: meta.student_id || '',
+    role,
+    status: 'active',
+  });
+  if (error) throw error;
+}
+
 export async function completePendingGoogleRegistration(authUser: AuthUser) {
   const draft = readGoogleRegisterDraft();
   if (!draft) return false;
@@ -434,7 +448,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { success: false, error: explainPasswordError(updateError.message) };
       }
       try {
-        const mapped = await mapAuthUser(data.user);
+        let mapped: User;
+        try {
+          mapped = await mapAuthUser(data.user);
+        } catch (err) {
+          // The reset code proves they own this email, so finish a missing profile
+          // (e.g. someone who only ever signed in with Google).
+          if (!(err instanceof Error) || err.message !== UNREGISTERED_GOOGLE_MESSAGE) throw err;
+          await createProfileFromAuthUser(data.user);
+          mapped = await mapAuthUser(data.user);
+        }
         setUser(mapped);
         return { success: true, user: mapped };
       } catch (err) {
