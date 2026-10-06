@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { isSupabaseConfigured, requireSupabase } from './supabase';
+import { withBase } from './basePath';
 
 const PREF_KEY = 'pcc-device-notif';
 const PREF_EVENT = 'pcc-device-notif-changed';
-const ICON = '/PCC%20LOGO.png';
+const ICON = withBase('PCC%20LOGO.png');
 
 export type DevicePermission = NotificationPermission | 'unsupported';
 
@@ -45,7 +46,7 @@ let registration: Promise<ServiceWorkerRegistration | null> | null = null;
 function getRegistration() {
   if (!registration) {
     registration = 'serviceWorker' in navigator
-      ? navigator.serviceWorker.register('/sw.js').then(() => navigator.serviceWorker.ready).catch(() => null)
+      ? navigator.serviceWorker.register(withBase('sw.js')).then(() => navigator.serviceWorker.ready).catch(() => null)
       : Promise.resolve(null);
   }
   return registration;
@@ -70,7 +71,7 @@ export async function showDeviceNotification(input: { id: string; title: string;
     icon: ICON,
     badge: ICON,
     tag: input.id,
-    data: { url: input.url || '/notifications' },
+    data: { url: withBase(input.url || '/notifications') },
   };
   const reg = await getRegistration();
   if (reg) {
@@ -80,7 +81,7 @@ export async function showDeviceNotification(input: { id: string; title: string;
   const notice = new Notification(input.title, options);
   notice.onclick = () => {
     window.focus();
-    window.location.assign(input.url || '/notifications');
+    window.location.assign(withBase(input.url || '/notifications'));
     notice.close();
   };
 }

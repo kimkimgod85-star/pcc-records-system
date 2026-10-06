@@ -4,6 +4,8 @@ import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 
 export default defineConfig({
+  // Set VITE_BASE=/pcc-records-system/ when building for GitHub Pages.
+  base: process.env.VITE_BASE || '/',
   // Serve files from the `PCC/` folder as static assets (logo/background).
   // Example URLs: `/PCC%20LOGO.png`, `/PCC1.jpg`
   publicDir: 'PCC',

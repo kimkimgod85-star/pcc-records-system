@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import type { Session, User as AuthUser } from '@supabase/supabase-js';
 import { isSupabaseConfigured, isGoogleAuthEnabled, requireSupabase } from '../lib/supabase';
+import { withBase } from '../lib/basePath';
 
 export type UserRole = 'student' | 'alumni' | 'admin';
 
@@ -305,7 +306,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { error } = await client.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback?intent=${intent}`,
+        redirectTo: `${window.location.origin}${withBase('auth/callback')}?intent=${intent}`,
         queryParams: { prompt: 'select_account' },
       },
     });
@@ -321,7 +322,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!email.trim()) return { success: false, error: 'Enter your email first, then click Forgot password.' };
     const client = requireSupabase();
     const { error } = await client.auth.resetPasswordForEmail(email.trim(), {
-      redirectTo: `${window.location.origin}/auth/callback`,
+      redirectTo: `${window.location.origin}${withBase('auth/callback')}`,
     });
     if (error) return { success: false, error: explainAuthError(error.message) };
     return { success: true };

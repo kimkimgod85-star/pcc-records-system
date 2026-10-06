@@ -21,6 +21,7 @@ import AdminUsers from './pages/admin/AdminUsers';
 import AdminReports from './pages/admin/AdminReports';
 import AdminDocuments from './pages/admin/AdminDocuments';
 import AdminWelcomePage from './pages/admin/AdminWelcomePage';
+import { ROUTER_BASENAME } from './lib/basePath';
 
 export const router = createBrowserRouter([
   {
@@ -59,4 +60,4 @@ export const router = createBrowserRouter([
       },
     ],
   },
-]);
+], { basename: ROUTER_BASENAME });

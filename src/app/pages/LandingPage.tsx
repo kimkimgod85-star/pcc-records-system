@@ -6,8 +6,9 @@ import {
 } from 'lucide-react';
 import { Header } from '../components/Header';
 import { Footer } from '../components/Footer';
+import { withBase } from '../lib/basePath';
 
-const PCC_BG_URL = '/PCC1.jpg';
+const PCC_BG_URL = withBase('PCC1.jpg');
 
 const features = [
   {

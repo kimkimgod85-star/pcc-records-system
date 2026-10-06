@@ -5,6 +5,7 @@ import {
   ArrowRight, LayoutDashboard, ShieldCheck, Lightbulb,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { withBase } from '../../lib/basePath';
 
 const SKIP_KEY = 'pcc-skip-admin-welcome';
 
@@ -138,7 +139,7 @@ export default function AdminWelcomePage() {
         <div className="relative flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="flex flex-col sm:flex-row sm:items-center gap-5">
             <div className="w-20 h-20 rounded-2xl bg-white/95 p-2 shadow-lg flex items-center justify-center flex-shrink-0">
-              <img src="/PCC%20LOGO.png" alt="PCC logo" className="max-h-full w-auto object-contain" />
+              <img src={withBase('PCC%20LOGO.png')} alt="PCC logo" className="max-h-full w-auto object-contain" />
             </div>
             <div>
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/10 ring-1 ring-white/20 text-blue-100 text-xs font-medium mb-2">

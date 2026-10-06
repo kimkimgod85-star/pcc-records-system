@@ -1,8 +1,9 @@
 import { Link } from 'react-router';
 import { MapPin, Mail, Phone, Facebook } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { withBase } from '../lib/basePath';
 
-const PCC_LOGO_URL = '/PCC%20LOGO.png';
+const PCC_LOGO_URL = withBase('PCC%20LOGO.png');
 
 export function Footer() {
   const { isAuthenticated, user } = useAuth();

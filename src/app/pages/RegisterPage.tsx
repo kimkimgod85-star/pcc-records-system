@@ -3,9 +3,10 @@ import { Link, useNavigate } from 'react-router';
 import { Eye, EyeOff, AlertCircle, CheckCircle, ArrowLeft } from 'lucide-react';
 import { Header } from '../components/Header';
 import { useAuth } from '../context/AuthContext';
+import { withBase } from '../lib/basePath';
 
-const PCC_LOGO_URL = '/PCC%20LOGO.png';
-const PCC_BG_URL = '/PCC1.jpg';
+const PCC_LOGO_URL = withBase('PCC%20LOGO.png');
+const PCC_BG_URL = withBase('PCC1.jpg');
 
 function GoogleMark() {
   return (

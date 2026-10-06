@@ -6,8 +6,9 @@ import {
 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
+import { withBase } from '../lib/basePath';
 
-const PCC_LOGO_URL = '/PCC%20LOGO.png';
+const PCC_LOGO_URL = withBase('PCC%20LOGO.png');
 
 export function AdminSidebar() {
   const { theme, toggleTheme } = useTheme();

@@ -7,8 +7,9 @@ import {
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import { useUnreadNotifications } from '../lib/useUnreadNotifications';
+import { withBase } from '../lib/basePath';
 
-const PCC_LOGO_URL = '/PCC%20LOGO.png';
+const PCC_LOGO_URL = withBase('PCC%20LOGO.png');
 
 interface HeaderProps {
   variant?: 'landing' | 'app';

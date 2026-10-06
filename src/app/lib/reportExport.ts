@@ -1,5 +1,6 @@
 import { summarize, type ReportRecord } from './reports';
 import { formatISODate } from './scheduling';
+import { withBase } from './basePath';
 
 export type ReportKind = 'full' | 'requests' | 'payments' | 'students';
 export type PaperSize = 'letter' | 'legal' | 'a4';
@@ -212,7 +213,7 @@ export function buildReportModel(input: {
 const SCHOOL = 'PAGADIAN CAPITOL COLLEGES';
 const OFFICE = 'Office of the Registrar';
 const SYSTEM = 'Web-Based School Records Request & Scheduling System';
-const LOGO_URL = '/PCC%20LOGO.png';
+const LOGO_URL = withBase('PCC%20LOGO.png');
 
 type Logo = { dataUrl: string; bytes: ArrayBuffer; ratio: number } | null;
 

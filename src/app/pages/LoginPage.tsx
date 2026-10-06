@@ -5,9 +5,10 @@ import { UNREGISTERED_GOOGLE_MESSAGE, useAuth } from '../context/AuthContext';
 import { Header } from '../components/Header';
 import { studentHome } from './WelcomePage';
 import { adminHome } from './admin/AdminWelcomePage';
+import { withBase } from '../lib/basePath';
 
-const PCC_LOGO_URL = '/PCC%20LOGO.png';
-const PCC_BG_URL = '/PCC1.jpg';
+const PCC_LOGO_URL = withBase('PCC%20LOGO.png');
+const PCC_BG_URL = withBase('PCC1.jpg');
 
 function GoogleMark() {
   return (
