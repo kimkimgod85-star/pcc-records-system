@@ -111,6 +111,7 @@ create trigger on_auth_user_created
 create or replace function public.protect_profile_role()
 returns trigger
 language plpgsql
+set search_path = ''
 as $$
 begin
   if tg_op = 'UPDATE' and new.role is distinct from old.role then
@@ -385,6 +386,7 @@ alter table public.academic_calendars replica identity full;
 create or replace function public.enable_realtime(tbl text)
 returns void
 language plpgsql
+set search_path = ''
 as $$
 begin
   execute format('alter publication supabase_realtime add table %I.%I', 'public', tbl);
@@ -393,6 +395,8 @@ exception
   when undefined_object then null;
 end;
 $$;
+
+revoke execute on function public.enable_realtime(text) from public, anon, authenticated;
 
 select public.enable_realtime('profiles');
 select public.enable_realtime('documents');

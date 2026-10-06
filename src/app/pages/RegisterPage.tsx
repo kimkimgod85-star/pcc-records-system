@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { Eye, EyeOff, AlertCircle, CheckCircle, ArrowLeft } from 'lucide-react';
 import { Header } from '../components/Header';
+import { EmailCodeVerify } from '../components/EmailCodeVerify';
 import { useAuth } from '../context/AuthContext';
 import { withBase } from '../lib/basePath';
 
@@ -95,6 +96,21 @@ export default function RegisterPage() {
     }
   };
 
+  if (success && needsConfirm) {
+    return (
+      <div className="min-h-svh bg-gray-50 dark:bg-slate-950 flex items-center justify-center px-4 py-8">
+        <div className="w-full max-w-md bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-xl p-5 sm:p-7">
+          <EmailCodeVerify
+            email={form.email.trim()}
+            onVerified={() => navigate('/welcome')}
+            onBack={() => navigate('/login')}
+            backLabel="Go to Sign in"
+          />
+        </div>
+      </div>
+    );
+  }
+
   if (success) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-slate-950 flex items-center justify-center px-4">
@@ -103,18 +119,9 @@ export default function RegisterPage() {
             <CheckCircle className="w-8 h-8 text-green-600 dark:text-green-400" />
           </div>
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
-            {needsConfirm ? 'Account created' : 'Registration Successful!'}
+            Registration Successful!
           </h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            {needsConfirm
-              ? 'Supabase still requires email confirmation. Open Authentication → Providers → Email, turn Confirm email OFF, Save, then Sign in with this email and password.'
-              : 'Opening your dashboard...'}
-          </p>
-          {needsConfirm && (
-            <Link to="/login" className="inline-block mt-4 text-sm font-semibold text-blue-800 hover:underline">
-              Go to Sign in
-            </Link>
-          )}
+          <p className="text-sm text-gray-500 dark:text-gray-400">Opening your dashboard...</p>
         </div>
       </div>
     );

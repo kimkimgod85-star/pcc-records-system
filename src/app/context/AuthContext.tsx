@@ -35,8 +35,10 @@ export const UNREGISTERED_GOOGLE_MESSAGE =
 interface AuthContextType {
   user: User | null;
   ready: boolean;
-  login: (email: string, password: string) => Promise<{ success: boolean; error?: string; user?: User }>;
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string; user?: User; needsVerification?: boolean }>;
   register: (input: RegisterInput) => Promise<{ success: boolean; error?: string; needsEmailConfirm?: boolean }>;
+  verifyEmailCode: (email: string, code: string) => Promise<{ success: boolean; error?: string; user?: User }>;
+  resendEmailCode: (email: string) => Promise<{ success: boolean; error?: string }>;
   loginWithGoogle: (intent?: 'login' | 'register', draft?: GoogleRegisterDraft) => Promise<{ success: boolean; error?: string }>;
   resetPassword: (email: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
@@ -48,6 +50,8 @@ const AuthContext = createContext<AuthContextType>({
   ready: false,
   login: async () => ({ success: false }),
   register: async () => ({ success: false }),
+  verifyEmailCode: async () => ({ success: false }),
+  resendEmailCode: async () => ({ success: false }),
   loginWithGoogle: async () => ({ success: false }),
   resetPassword: async () => ({ success: false }),
   logout: async () => {},
@@ -60,7 +64,13 @@ function explainAuthError(message: string) {
     return 'Google is still off in Supabase. Open Authentication → Providers → Google, turn it ON, add Google Client ID and Secret, then Save.';
   }
   if (m.includes('email not confirmed')) {
-    return 'Your account exists, but email confirmation is still ON in Supabase. Open Authentication → Providers → Email, turn Confirm email OFF, Save, then Sign in again.';
+    return 'Please verify your email first. Enter the code we sent to your inbox.';
+  }
+  if (m.includes('expired') || (m.includes('invalid') && m.includes('token')) || m.includes('otp')) {
+    return 'That code is wrong or has expired. Check the latest email, or send a new code.';
+  }
+  if (m.includes('rate limit') || m.includes('for security purposes')) {
+    return 'Too many codes requested. Please wait a minute, then try again.';
   }
   if (m.includes('invalid login')) {
     return 'Wrong email or password. Create an account on Register first if you have not.';
@@ -228,6 +238,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!isSupabaseConfigured) return missingConfig();
     const client = requireSupabase();
     const { data, error } = await client.auth.signInWithPassword({ email: email.trim(), password });
+    if (error?.message.toLowerCase().includes('email not confirmed')) {
+      return { success: false, needsVerification: true, error: explainAuthError(error.message) };
+    }
     if (error || !data.user) {
       return { success: false, error: explainAuthError(error?.message || 'Login failed.') };
     }
@@ -249,6 +262,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       email: input.email.trim(),
       password: input.password,
       options: {
+        emailRedirectTo: `${window.location.origin}${withBase('auth/callback')}`,
         data: {
           registered: true,
           full_name: input.fullName.trim(),
@@ -265,6 +279,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { success: true, needsEmailConfirm: true };
     }
     if (data.user) setUser(await mapAuthUser(data.user));
+    return { success: true };
+  };
+
+  const verifyEmailCode = async (email: string, code: string) => {
+    if (!isSupabaseConfigured) return missingConfig();
+    const client = requireSupabase();
+    const { data, error } = await client.auth.verifyOtp({
+      email: email.trim(),
+      token: code.replace(/\s/g, ''),
+      type: 'signup',
+    });
+    if (error || !data.user) {
+      return { success: false, error: explainAuthError(error?.message || 'Could not verify the code.') };
+    }
+    try {
+      const mapped = await mapAuthUser(data.user);
+      setUser(mapped);
+      return { success: true, user: mapped };
+    } catch (err) {
+      await client.auth.signOut({ scope: 'local' });
+      setUser(null);
+      return { success: false, error: explainAuthError(err instanceof Error ? err.message : 'Could not verify the code.') };
+    }
+  };
+
+  const resendEmailCode = async (email: string) => {
+    if (!isSupabaseConfigured) return missingConfig();
+    if (!email.trim()) return { success: false, error: 'Enter your email first.' };
+    const { error } = await requireSupabase().auth.resend({
+      type: 'signup',
+      email: email.trim(),
+      options: { emailRedirectTo: `${window.location.origin}${withBase('auth/callback')}` },
+    });
+    if (error) return { success: false, error: explainAuthError(error.message) };
     return { success: true };
   };
 
@@ -341,7 +389,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, ready, login, register, loginWithGoogle, resetPassword, logout, isAuthenticated: !!user }}>
+    <AuthContext.Provider value={{ user, ready, login, register, verifyEmailCode, resendEmailCode, loginWithGoogle, resetPassword, logout, isAuthenticated: !!user }}>
       {children}
     </AuthContext.Provider>
   );

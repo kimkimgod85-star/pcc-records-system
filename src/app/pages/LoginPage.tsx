@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router';
 import { Eye, EyeOff, AlertCircle, LogIn, ArrowLeft, Mail, Lock } from 'lucide-react';
 import { UNREGISTERED_GOOGLE_MESSAGE, useAuth } from '../context/AuthContext';
 import { Header } from '../components/Header';
+import { EmailCodeVerify } from '../components/EmailCodeVerify';
 import { studentHome } from './WelcomePage';
 import { adminHome } from './admin/AdminWelcomePage';
 import { withBase } from '../lib/basePath';
@@ -36,6 +37,7 @@ export default function LoginPage() {
   );
   const [info, setInfo] = useState('');
   const [loading, setLoading] = useState(false);
+  const [verifyEmail, setVerifyEmail] = useState<string | null>(null);
 
   const goToApp = (role?: string, userId?: string) => {
     if (role === 'admin') navigate(userId ? adminHome(userId) : '/admin');
@@ -50,6 +52,7 @@ export default function LoginPage() {
     const result = await login(form.email, form.password);
     setLoading(false);
     if (result.success) goToApp(result.user?.role, result.user?.id);
+    else if (result.needsVerification) setVerifyEmail(form.email.trim());
     else setError(result.error || 'Login failed.');
   };
 
@@ -113,6 +116,15 @@ export default function LoginPage() {
               </div>
             </div>
 
+            {verifyEmail ? (
+              <EmailCodeVerify
+                email={verifyEmail}
+                sendOnOpen
+                onVerified={verified => goToApp(verified?.role, verified?.id)}
+                onBack={() => setVerifyEmail(null)}
+              />
+            ) : (
+            <>
             <h1 className="text-gray-900 dark:text-white" style={{ fontFamily: 'Poppins, sans-serif', fontSize: '1.45rem', fontWeight: 600 }}>
               Sign in
             </h1>
@@ -210,6 +222,8 @@ export default function LoginPage() {
                 Create an account
               </Link>
             </p>
+            </>
+            )}
           </div>
         </div>
       </div>
