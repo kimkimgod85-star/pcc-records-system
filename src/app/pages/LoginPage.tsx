@@ -39,7 +39,7 @@ export default function LoginPage() {
   const [info, setInfo] = useState('');
   const [loading, setLoading] = useState(false);
   const [verifyEmail, setVerifyEmail] = useState<string | null>(null);
-  const [forgotOpen, setForgotOpen] = useState(false);
+  const [forgotOpen, setForgotOpen] = useState(() => searchParams.get('forgot') === '1');
   const portal: LoginPortal = ['staff', 'admin', 'registrar'].includes(searchParams.get('as') || '') ? 'staff' : 'student';
   const isStaff = portal === 'staff';
 

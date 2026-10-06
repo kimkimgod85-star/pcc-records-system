@@ -86,7 +86,9 @@ export default function AuthCallbackPage() {
   const navigate = useNavigate();
   const [error, setError] = useState('');
   const [recoveryReady, setRecoveryReady] = useState(false);
-  const isRecovery = new URLSearchParams(window.location.search).get('type') === 'recovery';
+  const search = new URLSearchParams(window.location.search);
+  const isRecovery = search.get('type') === 'recovery';
+  const isEmailLinkError = isRecovery || (search.get('error_code') || '').startsWith('otp');
 
   useEffect(() => {
     const finish = async () => {
@@ -95,7 +97,11 @@ export default function AuthCallbackPage() {
         const params = new URLSearchParams(window.location.search);
         const oauthError = params.get('error_description') || params.get('error');
         if (oauthError) {
-          setError(explainCallbackError(oauthError, isRecovery));
+          setError(
+            (params.get('error_code') || '').startsWith('otp')
+              ? 'This email link has expired or was already used. Only the newest email works, and each link works once. Request a new one and use the code from the latest email.'
+              : explainCallbackError(oauthError, isRecovery),
+          );
           return;
         }
 
@@ -160,14 +166,24 @@ export default function AuthCallbackPage() {
         {error ? (
           <>
             <p className="text-sm text-red-600 dark:text-red-400 mb-4">{error || UNREGISTERED_GOOGLE_MESSAGE}</p>
-            <div className="flex items-center justify-center gap-2">
-              <button
-                type="button"
-                onClick={() => navigate('/register', { replace: true })}
-                className="px-4 py-2 rounded-lg bg-blue-800 text-white text-sm font-semibold"
-              >
-                Go to Register
-              </button>
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              {isEmailLinkError ? (
+                <button
+                  type="button"
+                  onClick={() => navigate('/login?forgot=1', { replace: true })}
+                  className="px-4 py-2 rounded-lg bg-blue-800 text-white text-sm font-semibold"
+                >
+                  Reset password again
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => navigate('/register', { replace: true })}
+                  className="px-4 py-2 rounded-lg bg-blue-800 text-white text-sm font-semibold"
+                >
+                  Go to Register
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => navigate('/login', { replace: true })}
