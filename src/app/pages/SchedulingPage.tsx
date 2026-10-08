@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router';
 import { Calendar, Clock, ChevronLeft, ChevronRight, CheckCircle, AlertCircle, FileText } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { fetchRequests, getBookableRequests, type StudentRequest } from '../lib/requests';
+import { playSubmitSound } from '../lib/officeChime';
 import {
   countBookingsForSlot,
   findBookingForRequest,
@@ -155,6 +156,7 @@ export default function SchedulingPage() {
       });
       setSchedule(result.state);
       setConfirmed(true);
+      playSubmitSound();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not save booking.');
     } finally {

@@ -4,6 +4,7 @@ import { ChevronRight, Upload, CheckCircle, Clock, Smartphone, MapPin, X } from 
 import { formatPeso, fetchDocumentCatalog } from '../lib/documents';
 import { fetchRequests, subscribeRequests, type StudentRequest } from '../lib/requests';
 import { submitPayment } from '../lib/payments';
+import { playSubmitSound } from '../lib/officeChime';
 import { useAuth } from '../context/AuthContext';
 
 function ProofUpload({
@@ -190,6 +191,7 @@ export default function PaymentPage() {
         screenshot: proof,
       });
       setSubmitted(true);
+      playSubmitSound();
     } catch (err) {
       setFormError(err instanceof Error ? err.message : 'Could not save payment.');
     } finally {

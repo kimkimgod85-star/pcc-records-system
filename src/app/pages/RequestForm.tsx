@@ -3,6 +3,7 @@ import { Link } from 'react-router';
 import { FileText, ChevronRight, CheckCircle, AlertCircle, Tag, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { createRequest } from '../lib/requests';
+import { playSubmitSound } from '../lib/officeChime';
 import {
   computeRequestTotal,
   describeCatalogChanges,
@@ -89,6 +90,7 @@ export default function RequestForm() {
       });
       setSubmittedId(created.id);
       setSubmitted(true);
+      playSubmitSound();
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : 'Could not submit request. Run supabase/schema.sql in the SQL Editor first.');
     } finally {

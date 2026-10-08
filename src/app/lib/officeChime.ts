@@ -62,6 +62,30 @@ function bell(ctx: AudioContext, frequency: number, start: number, duration: num
   });
 }
 
+/** Short rising "form submitted" confirmation for students. Plays after a click, so audio is already allowed. */
+export function playSubmitSound() {
+  const ctx = getContext();
+  if (!ctx) return;
+  if (ctx.state === 'suspended') void ctx.resume();
+  const t = ctx.currentTime + 0.02;
+
+  const pop = ctx.createOscillator();
+  const popGain = ctx.createGain();
+  pop.type = 'triangle';
+  pop.frequency.setValueAtTime(420, t);
+  pop.frequency.exponentialRampToValueAtTime(900, t + 0.08);
+  popGain.gain.setValueAtTime(0.0001, t);
+  popGain.gain.exponentialRampToValueAtTime(0.12, t + 0.01);
+  popGain.gain.exponentialRampToValueAtTime(0.0001, t + 0.12);
+  pop.connect(popGain).connect(ctx.destination);
+  pop.start(t);
+  pop.stop(t + 0.15);
+
+  bell(ctx, 784, t + 0.09, 0.45, 0.14);
+  bell(ctx, 1046.5, t + 0.2, 0.55, 0.15);
+  bell(ctx, 1568, t + 0.31, 0.9, 0.12);
+}
+
 /** Three-tone office announcement chime (ding-ding-dong), synthesized so no audio file is needed. */
 export function playOfficeChime(force = false) {
   if (!force && !isAlertSoundOn()) return;
