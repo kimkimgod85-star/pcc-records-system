@@ -42,9 +42,9 @@ function Steps({ mode, compact = false }: { mode: InstallMode; compact?: boolean
 
 function PhoneMockup() {
   return (
-    <div className="relative mx-auto w-[220px] flex-shrink-0" aria-hidden="true">
+    <div className="relative mx-auto w-[176px] h-[352px] sm:w-[220px] sm:h-[440px] flex-shrink-0" aria-hidden="true">
       <div className="absolute -inset-6 bg-blue-500/20 dark:bg-blue-400/10 blur-3xl rounded-full" />
-      <div className="relative w-[220px] h-[440px] rounded-[2.4rem] border-[6px] border-slate-900 dark:border-slate-700 bg-gradient-to-b from-blue-600 via-blue-700 to-blue-900 shadow-2xl overflow-hidden">
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 scale-[0.8] sm:scale-100 origin-top w-[220px] h-[440px] rounded-[2.4rem] border-[6px] border-slate-900 dark:border-slate-700 bg-gradient-to-b from-blue-600 via-blue-700 to-blue-900 shadow-2xl overflow-hidden">
         <div className="flex items-center justify-between px-5 pt-2.5 text-[9px] font-semibold text-white/90">
           <span>9:41</span>
           <span className="w-14 h-4 rounded-full bg-slate-900 dark:bg-slate-700" />
@@ -90,8 +90,8 @@ export function InstallAppSection() {
   const [showSteps, setShowSteps] = useState(false);
 
   return (
-    <section id="app" className="py-16 sm:py-20 bg-gradient-to-b from-blue-50 to-white dark:from-slate-900 dark:to-slate-950 overflow-hidden">
-      <div className="max-w-6xl mx-auto px-5 sm:px-6 lg:px-8 grid lg:grid-cols-[1.2fr_1fr] gap-10 lg:gap-12 items-center">
+    <section id="app" className="py-12 sm:py-20 bg-gradient-to-b from-blue-50 to-white dark:from-slate-900 dark:to-slate-950 overflow-hidden">
+      <div className="max-w-6xl mx-auto px-5 sm:px-6 lg:px-8 grid lg:grid-cols-[1.2fr_1fr] gap-8 sm:gap-10 lg:gap-12 items-center">
         <div className="text-center lg:text-left">
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-200 text-xs font-semibold">
             <Smartphone className="w-3.5 h-3.5" /> PCC Records App
@@ -104,11 +104,11 @@ export function InstallAppSection() {
             and uses almost no storage.
           </p>
 
-          <ul className="mt-6 grid grid-cols-2 gap-2.5 max-w-md mx-auto lg:mx-0">
+          <ul className="mt-6 grid grid-cols-2 gap-2 sm:gap-2.5 max-w-md mx-auto lg:mx-0">
             {PERKS.map(perk => (
-              <li key={perk.label} className="flex items-center gap-2 p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 shadow-sm text-left">
+              <li key={perk.label} className="flex items-center gap-2 p-2 sm:p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 shadow-sm text-left min-w-0">
                 <perk.icon className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
-                <span className="text-sm text-gray-700 dark:text-gray-200 leading-snug">{perk.label}</span>
+                <span className="text-xs sm:text-sm text-gray-700 dark:text-gray-200 leading-snug">{perk.label}</span>
               </li>
             ))}
           </ul>
@@ -122,7 +122,7 @@ export function InstallAppSection() {
               <button
                 type="button"
                 onClick={() => void install()}
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-blue-700 hover:bg-blue-800 text-white font-semibold shadow-lg shadow-blue-700/25 transition-all active:scale-[0.98]"
+                className="w-full max-w-xs sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-blue-700 hover:bg-blue-800 text-white font-semibold shadow-lg shadow-blue-700/25 transition-all active:scale-[0.98]"
               >
                 <Download className="w-5 h-5" /> Install the app
               </button>
@@ -134,7 +134,7 @@ export function InstallAppSection() {
               <button
                 type="button"
                 onClick={() => setShowSteps(true)}
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-blue-700 hover:bg-blue-800 text-white font-semibold shadow-lg shadow-blue-700/25 transition-all active:scale-[0.98]"
+                className="w-full max-w-xs sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-blue-700 hover:bg-blue-800 text-white font-semibold shadow-lg shadow-blue-700/25 transition-all active:scale-[0.98]"
               >
                 <Download className="w-5 h-5" /> {mode === 'ios' ? 'Add to iPhone' : 'Install the app'}
               </button>
