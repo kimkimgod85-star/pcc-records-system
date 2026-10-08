@@ -60,14 +60,18 @@ export function RejectReasonDialog({
   };
 
   return (
-    <div className="fade-in fixed inset-0 z-[70] flex items-end sm:items-center justify-center bg-slate-900/60 p-0 sm:p-4" onClick={() => !busy && onCancel()}>
+    <div
+      className="fade-in fixed inset-0 z-[70] flex items-center justify-center p-4 bg-slate-900/30 backdrop-blur-md"
+      style={{ WebkitBackdropFilter: 'blur(12px)' }}
+      onClick={() => !busy && onCancel()}
+    >
       <form
         onSubmit={submit}
         onClick={e => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
         aria-labelledby="reject-title"
-        className="rise-in w-full sm:max-w-md bg-white dark:bg-slate-800 rounded-t-3xl sm:rounded-2xl shadow-2xl p-5 safe-area-pb"
+        className="pop-in w-full max-w-md bg-white dark:bg-slate-800 rounded-2xl shadow-2xl ring-1 ring-black/5 dark:ring-white/10 p-5 sm:p-6"
       >
         <div className="flex items-start gap-3">
           <span className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/40 flex items-center justify-center flex-shrink-0">
