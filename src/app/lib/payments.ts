@@ -105,7 +105,8 @@ export async function submitPayment(input: {
     })
     .select('*, document_requests(request_code, document_name, user_id, profiles(full_name))')
     .single();
-  if (error || !data) throw error || new Error('Could not save payment.');
+  if (error) throw new Error(error.message || 'Could not save payment.');
+  if (!data) throw new Error('Could not save payment.');
 
   await updateRequest(input.requestUuid, {
     payment_status: 'pending',

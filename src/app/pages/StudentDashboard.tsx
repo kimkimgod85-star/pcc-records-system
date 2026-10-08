@@ -12,7 +12,33 @@ import { formatLongDate, paymentLabel } from '../lib/status';
 import { StatusBadge } from '../components/StatusBadge';
 import { DeviceNotificationBanner } from '../components/DeviceNotificationPrompt';
 
-type PaymentStatus = 'unpaid' | 'pay_later' | 'paid';
+type PaymentStatus = 'unpaid' | 'pay_later' | 'paid' | 'verifying' | 'awaiting' | 'none';
+
+const PAY_TEXT: Record<PaymentStatus, string> = {
+  unpaid: 'Unpaid',
+  pay_later: 'Pay later',
+  paid: 'Paid',
+  verifying: 'Verifying',
+  awaiting: 'Awaiting approval',
+  none: '—',
+};
+
+const PAY_COLOR: Record<PaymentStatus, string> = {
+  unpaid: 'text-orange-500 dark:text-orange-400',
+  pay_later: 'text-gray-500 dark:text-gray-400',
+  paid: 'text-green-600 dark:text-green-400',
+  verifying: 'text-blue-600 dark:text-blue-400',
+  awaiting: 'text-blue-600 dark:text-blue-400',
+  none: 'text-gray-400',
+};
+
+function dashboardPayment(r: StudentRequest): PaymentStatus {
+  if (r.paymentStatus === 'verified') return 'paid';
+  if (r.paymentStatus === 'pending') return 'verifying';
+  if (r.status === 'rejected' || r.status === 'completed') return 'none';
+  if (r.status === 'pending') return 'awaiting';
+  return r.paymentStatus === 'pay_later' ? 'pay_later' : 'unpaid';
+}
 
 const peso = (amount: number) => `₱${amount.toFixed(2)}`;
 
@@ -73,7 +99,7 @@ export default function StudentDashboard() {
   }, [user]);
 
   const requests = rawRequests.map(r => {
-    const paymentStatus: PaymentStatus = r.paymentStatus === 'verified' ? 'paid' : r.paymentStatus === 'pay_later' ? 'pay_later' : 'unpaid';
+    const paymentStatus = dashboardPayment(r);
     return {
       id: r.id,
       type: r.type,
@@ -84,7 +110,7 @@ export default function StudentDashboard() {
       paymentStatus,
       paymentMethod: r.paymentMethod === 'gcash' ? 'GCash' : r.paymentMethod === 'cashier' ? 'Cashier' : r.paymentMethod,
       amount: r.amount,
-      paymentColor: paymentStatus === 'paid' ? 'text-green-600 dark:text-green-400' : paymentStatus === 'pay_later' ? 'text-gray-500 dark:text-gray-400' : 'text-orange-500 dark:text-orange-400',
+      paymentColor: PAY_COLOR[paymentStatus],
     };
   });
 
@@ -96,14 +122,16 @@ export default function StudentDashboard() {
     rejected: rawRequests.filter(r => r.status === 'rejected').length,
   };
 
-  const unpaidRequests = requests.filter(r => r.paymentStatus !== 'paid');
-  const paidRequests = requests.filter(r => r.paymentStatus === 'paid');
-  const unpaidTotal = unpaidRequests.reduce((sum, r) => sum + r.amount, 0);
-  const paidTotal = paidRequests.reduce((sum, r) => sum + r.amount, 0);
+  const unpaidRequests = requests.filter(r => r.paymentStatus === 'unpaid' || r.paymentStatus === 'pay_later' || r.paymentStatus === 'awaiting');
+  const dueRequests = requests.filter(r => r.paymentStatus === 'unpaid' || r.paymentStatus === 'pay_later');
+  const waitingCount = unpaidRequests.length - dueRequests.length;
+  const paidRequests = requests.filter(r => r.paymentStatus === 'paid' || r.paymentStatus === 'verifying');
+  const unpaidTotal = dueRequests.reduce((sum, r) => sum + r.amount, 0);
+  const paidTotal = requests.filter(r => r.paymentStatus === 'paid').reduce((sum, r) => sum + r.amount, 0);
   const visiblePayments =
     paymentTab === 'to_pay' ? unpaidRequests :
     paymentTab === 'paid' ? paidRequests :
-    requests;
+    requests.filter(r => r.paymentStatus !== 'none');
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
@@ -217,7 +245,7 @@ export default function StudentDashboard() {
             </p>
           </div>
           <div className="col-span-2 sm:col-span-1 sm:text-right">
-            {unpaidRequests.length > 0 ? (
+            {dueRequests.length > 0 ? (
               <Link
                 to="/payment"
                 className="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-5 py-2.5 bg-orange-600 hover:bg-orange-700 text-white rounded-xl text-sm font-semibold shadow-sm transition-all hover:shadow-md active:scale-[0.98]"
@@ -225,6 +253,8 @@ export default function StudentDashboard() {
                 <Wallet className="w-4 h-4" />
                 Pay Unpaid Items
               </Link>
+            ) : waitingCount > 0 ? (
+              <p className="text-sm font-medium text-blue-600 dark:text-blue-400 pt-1">Waiting for approval before you can pay.</p>
             ) : (
               <p className="text-sm font-medium text-green-600 dark:text-green-400 pt-1">All payments are complete.</p>
             )}
@@ -240,6 +270,8 @@ export default function StudentDashboard() {
           {visiblePayments.map(req => {
             const isPaid = req.paymentStatus === 'paid';
             const isPayLater = req.paymentStatus === 'pay_later';
+            const isVerifying = req.paymentStatus === 'verifying';
+            const isAwaiting = req.paymentStatus === 'awaiting';
             return (
               <div key={req.id} className="px-5 sm:px-6 py-4 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
                 <div className="flex-1 min-w-0">
@@ -248,27 +280,33 @@ export default function StudentDashboard() {
                     <span className={`px-2 py-0.5 rounded-full text-[12px] font-semibold ${
                       isPaid
                         ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                        : isVerifying || isAwaiting
+                        ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
                         : isPayLater
                         ? 'bg-gray-100 text-gray-600 dark:bg-slate-700 dark:text-gray-300'
                         : 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
                     }`}>
-                      {isPaid ? 'Paid' : isPayLater ? 'Pay later' : 'Due now'}
+                      {isPaid ? 'Paid' : isVerifying ? 'Verifying' : isAwaiting ? 'Awaiting approval' : isPayLater ? 'Pay later' : 'Due now'}
                     </span>
                   </div>
                   <p className="text-xs text-gray-500 dark:text-gray-400 font-mono break-all">{req.id}</p>
                   <p className="text-sm sm:text-xs text-gray-600 dark:text-gray-400 mt-1 leading-snug">
                     {isPaid
                       ? `Paid via ${req.paymentMethod || 'online'} · ${req.submittedDate}`
+                      : isVerifying
+                      ? 'Payment received. Waiting for the Registrar to verify it.'
+                      : isAwaiting
+                      ? 'Don’t pay yet. Payment opens after the Registrar approves this request.'
                       : isPayLater
                       ? 'You can pay this later at the cashier, or pay online anytime.'
-                      : 'Payment is required so processing can continue.'}
+                      : 'Approved. Payment is required so processing can continue.'}
                   </p>
                 </div>
                 <div className="flex items-center justify-between sm:justify-end gap-3 sm:flex-col sm:items-end">
-                  <p className={`text-base font-bold ${isPaid ? 'text-green-600 dark:text-green-400' : 'text-gray-900 dark:text-white'}`} style={{ fontFamily: 'Poppins, sans-serif' }}>
+                  <p className={`text-base font-bold ${isPaid ? 'text-green-600 dark:text-green-400' : isAwaiting ? 'text-gray-400 dark:text-gray-500' : 'text-gray-900 dark:text-white'}`} style={{ fontFamily: 'Poppins, sans-serif' }}>
                     {peso(req.amount)}
                   </p>
-                  {isPaid ? (
+                  {isPaid || isVerifying || isAwaiting ? (
                     <Link
                       to="/track"
                       className="inline-flex items-center justify-center px-4 py-2 rounded-xl text-xs font-semibold bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors"
@@ -318,7 +356,7 @@ export default function StudentDashboard() {
                 <div className="flex items-center justify-between gap-3 mt-2 text-sm">
                   <span className="text-gray-500 dark:text-gray-400">{req.submittedDate}</span>
                   <span className={`font-semibold ${req.paymentColor}`}>
-                    {req.paymentStatus === 'paid' ? 'Paid' : req.paymentStatus === 'pay_later' ? 'Pay later' : 'Unpaid'}
+                    {PAY_TEXT[req.paymentStatus]}
                   </span>
                 </div>
               </Link>
@@ -359,7 +397,7 @@ export default function StudentDashboard() {
                     </td>
                     <td className="px-6 py-3.5">
                       <span className={`text-xs font-semibold whitespace-nowrap ${req.paymentColor}`}>
-                        {req.paymentStatus === 'paid' ? 'Paid' : req.paymentStatus === 'pay_later' ? 'Pay later' : 'Unpaid'}
+                        {PAY_TEXT[req.paymentStatus]}
                       </span>
                     </td>
                   </tr>

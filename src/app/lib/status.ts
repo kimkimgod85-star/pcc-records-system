@@ -36,6 +36,11 @@ export function isPaymentStatus(value: unknown): value is PaymentStatus {
   return value === 'unpaid' || value === 'pending' || value === 'verified' || value === 'rejected' || value === 'pay_later';
 }
 
+/** Students may only pay once the Registrar has approved the request, so nobody pays for a request that gets rejected. */
+export function canPayFor(status: RequestStatus) {
+  return status === 'approved' || status === 'processing' || status === 'ready';
+}
+
 export function statusToStep(status: RequestStatus) {
   if (status === 'rejected') return 0;
   const steps: RequestStatus[] = ['pending', 'approved', 'processing', 'ready', 'completed'];

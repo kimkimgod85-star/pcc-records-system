@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router';
-import { FileText, ChevronRight, CheckCircle, AlertCircle, Tag, X } from 'lucide-react';
+import { FileText, ChevronRight, CheckCircle, AlertCircle, Tag, X, Clock } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { createRequest } from '../lib/requests';
 import { playSubmitSound } from '../lib/officeChime';
@@ -114,13 +114,13 @@ export default function RequestForm() {
           <p className="text-gray-500 dark:text-gray-400 text-sm mb-6">
             The Registrar's Office will review your request within 1–2 business days. You will receive a notification once approved.
           </p>
+          <div className="mb-6 p-3 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 flex items-start gap-2 text-left">
+            <Clock className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+            <p className="text-sm text-blue-800 dark:text-blue-200">
+              <span className="font-semibold">Don’t pay yet.</span> Payment opens after the Registrar approves your request, so you won’t lose money if it gets rejected.
+            </p>
+          </div>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Link
-              to="/payment"
-              className="px-5 py-2.5 bg-orange-600 hover:bg-orange-700 text-white rounded-xl text-sm font-medium transition-colors"
-            >
-              Proceed to Payment
-            </Link>
             <Link
               to={`/schedule?request=${submittedId}`}
               className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-medium transition-colors"
@@ -406,7 +406,7 @@ export default function RequestForm() {
             <div className="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl flex items-start gap-2 mb-5">
               <AlertCircle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
               <p className="text-xs text-amber-700 dark:text-amber-300">
-                By submitting this request, you confirm that all provided information is accurate. Payment is required before document release.
+                By submitting this request, you confirm that all provided information is accurate. You will pay only after the Registrar approves your request, and payment is required before document release.
               </p>
             </div>
 

@@ -140,7 +140,7 @@ export async function createRequest(input: {
     userId: input.userId,
     type: 'approved',
     title: 'Request submitted',
-    message: `${created.type} (${created.id}) · ${copies(created.quantity)} · ${formatPeso(created.amount)}${created.urgency === 'rush' ? ' · Rush' : ''}. The Registrar will review it within 1–2 business days.`,
+    message: `${created.type} (${created.id}) · ${copies(created.quantity)} · ${formatPeso(created.amount)}${created.urgency === 'rush' ? ' · Rush' : ''}. The Registrar will review it within 1–2 business days. Don’t pay yet — you’ll be notified when it is approved and ready for payment.`,
     link: trackLink(created.id),
   });
   emit();
@@ -191,7 +191,8 @@ export async function updateRequestStatus(uuid: string, status: RequestStatus, u
       updated.paymentStatus === 'verified' ? ' Your payment is already verified, so there is nothing else to pay.'
       : updated.paymentStatus === 'pending' ? ' Your payment was received and is waiting for verification.'
       : updated.paymentStatus === 'pay_later' ? ''
-      : ` Please pay ${formatPeso(updated.amount)} so it can be processed.`;
+      : ` You can now pay ${formatPeso(updated.amount)} so it can be processed.`;
+    const needsPayment = status === 'approved' && (updated.paymentStatus === 'unpaid' || updated.paymentStatus === 'rejected');
     const pickup = updated.pickupDate
       ? ` Pickup: ${formatLongDate(updated.pickupDate)}${updated.pickupTime ? ` at ${updated.pickupTime}` : ''}. Bring a valid ID.`
       : ' Schedule your pickup to claim it. Bring a valid ID.';
@@ -213,7 +214,9 @@ export async function updateRequestStatus(uuid: string, status: RequestStatus, u
       type: status === 'rejected' ? 'payment' : status === 'ready' ? 'ready' : status === 'completed' ? 'completed' : 'approved',
       title: notices[status].title,
       message: notices[status].message,
-      link: status === 'ready' && !updated.pickupDate ? `/schedule?request=${encodeURIComponent(updated.id)}` : trackLink(updated.id),
+      link: needsPayment ? `/payment?request=${encodeURIComponent(updated.id)}`
+        : status === 'ready' && !updated.pickupDate ? `/schedule?request=${encodeURIComponent(updated.id)}`
+        : trackLink(updated.id),
     });
   }
   return updated;

@@ -4,6 +4,7 @@ import { ChevronRight, Upload, CheckCircle, Clock, Smartphone, MapPin, X } from 
 import { formatPeso, fetchDocumentCatalog } from '../lib/documents';
 import { fetchRequests, subscribeRequests, type StudentRequest } from '../lib/requests';
 import { submitPayment } from '../lib/payments';
+import { canPayFor } from '../lib/status';
 import { playSubmitSound } from '../lib/officeChime';
 import { useAuth } from '../context/AuthContext';
 
@@ -138,9 +139,12 @@ export default function PaymentPage() {
     return subscribeRequests(refresh);
   }, [user]);
 
-  const open = requests.filter(item => item.status !== 'rejected' && item.status !== 'completed');
-  const payable = open
-    .filter(item => item.paymentStatus === 'unpaid' || item.paymentStatus === 'rejected' || item.paymentStatus === 'pay_later')
+  const owed = (item: StudentRequest) =>
+    item.paymentStatus === 'unpaid' || item.paymentStatus === 'rejected' || item.paymentStatus === 'pay_later';
+  const awaitingApproval = requests.filter(item => item.status === 'pending' && owed(item));
+  const focusedWaiting = requestedId ? awaitingApproval.find(item => item.id === requestedId) : undefined;
+  const payable = requests
+    .filter(item => canPayFor(item.status) && owed(item))
     .map(item => ({
       id: item.id,
       uuid: item.uuid,
@@ -255,12 +259,46 @@ export default function PaymentPage() {
         </div>
       )}
 
-      {loaded && payable.length === 0 && (
+      {awaitingApproval.length > 0 && (
+        <div className={`mb-5 rounded-2xl border p-4 sm:p-5 ${
+          focusedWaiting
+            ? 'bg-blue-50 border-blue-300 dark:bg-blue-900/20 dark:border-blue-700'
+            : 'bg-blue-50/70 border-blue-200 dark:bg-blue-900/10 dark:border-blue-800/60'
+        }`}>
+          <div className="flex items-start gap-3">
+            <Clock className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+            <div className="min-w-0 flex-1">
+              <p className="font-semibold text-gray-900 dark:text-white">Waiting for Registrar approval</p>
+              <p className="text-sm text-gray-600 dark:text-gray-300 mt-0.5">
+                Don’t pay yet. You can pay once the Registrar approves the request, so you never pay for a request that gets rejected. We’ll notify you.
+              </p>
+              <ul className="mt-3 space-y-2">
+                {awaitingApproval.map(item => (
+                  <li
+                    key={item.id}
+                    className="flex items-center justify-between gap-3 rounded-xl bg-white/80 dark:bg-slate-800/70 border border-blue-100 dark:border-slate-700 px-3 py-2"
+                  >
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">{item.type}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 font-mono break-all">{item.id}</p>
+                    </div>
+                    <span className="text-sm font-semibold text-gray-500 dark:text-gray-400 flex-shrink-0">{formatPeso(item.amount)}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {loaded && payable.length === 0 && !focusedWaiting && (
         <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm p-6 text-center mb-5">
           <CheckCircle className="w-10 h-10 text-green-500 mx-auto mb-2" />
           <p className="font-semibold text-gray-900 dark:text-white">Nothing to pay right now</p>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            {alreadyPaid.length
+            {awaitingApproval.length
+              ? 'Your requests are still being reviewed. Payment opens after approval.'
+              : alreadyPaid.length
               ? 'Your requests are already paid or waiting for verification.'
               : 'You have no unpaid requests. Submit a document request first.'}
           </p>

@@ -61,6 +61,16 @@ function PaymentNotice({ item }: { item: ReturnType<typeof toTrackItem> }) {
     );
   }
   if (item.paymentStatus === 'pay_later' || item.status === 'completed') return null;
+  if (item.status === 'pending') {
+    return (
+      <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl flex items-start gap-2">
+        <Clock className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
+        <p className="text-xs text-blue-700 dark:text-blue-300">
+          Waiting for Registrar approval. Don’t pay yet — payment of {item.amount} opens once this request is approved. We’ll notify you.
+        </p>
+      </div>
+    );
+  }
   const rejected = item.paymentStatus === 'rejected';
   return (
     <div className={`mt-3 p-3 rounded-xl border flex flex-wrap items-center gap-2 ${
