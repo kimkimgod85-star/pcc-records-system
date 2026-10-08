@@ -34,7 +34,7 @@ const steps = [
   {
     icon: CreditCard,
     title: 'Pay the fee',
-    desc: 'Pay through GCash and upload the screenshot, or pay at the Cashier and upload a photo of your official receipt.',
+    desc: 'Pay through GCash and upload the screenshot, or pay at the Cashier in the PCC New Building and upload a photo of your official receipt.',
     href: '/payment',
     action: 'Payments',
     color: 'text-orange-600 dark:text-orange-400',

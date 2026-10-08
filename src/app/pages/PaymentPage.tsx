@@ -35,7 +35,7 @@ function ProofUpload({
           setDragOver(false);
           if (e.dataTransfer.files[0]) onChange(e.dataTransfer.files[0]);
         }}
-        className={`border-2 border-dashed rounded-xl p-6 text-center transition-all ${
+        className={`border-2 border-dashed rounded-xl p-4 sm:p-6 text-center transition-all ${
           dragOver
             ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
             : 'border-gray-300 dark:border-slate-600 hover:border-blue-400 dark:hover:border-blue-600'
@@ -44,36 +44,34 @@ function ProofUpload({
         {file ? (
           <div className="space-y-3">
             <img src={preview} alt={label} className="w-full max-h-56 object-contain rounded-lg bg-gray-50 dark:bg-slate-900" />
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <CheckCircle className="w-5 h-5 text-green-500" />
-                <div className="text-left">
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">{file.name}</p>
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2 min-w-0">
+                <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                <div className="text-left min-w-0">
+                  <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{file.name}</p>
                   <p className="text-xs text-gray-400">{(file.size / 1024).toFixed(1)} KB</p>
                 </div>
               </div>
-              <button type="button" onClick={() => onChange(null)} className="text-gray-400 hover:text-red-500">
+              <button type="button" onClick={() => onChange(null)} aria-label="Remove photo" className="p-2 -m-1 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 flex-shrink-0">
                 <X className="w-4 h-4" />
               </button>
             </div>
           </div>
         ) : (
-          <>
+          <label className="block cursor-pointer">
             <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Drag & drop or{' '}
-              <label className="text-blue-600 dark:text-blue-400 cursor-pointer hover:underline">
-                browse files
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={e => { if (e.target.files?.[0]) onChange(e.target.files[0]); }}
-                />
-              </label>
-            </p>
-            <p className="text-xs text-gray-400 mt-1">PNG, JPG up to 5MB</p>
-          </>
+            <span className="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium">
+              Choose photo
+            </span>
+            <span className="hidden sm:block text-sm text-gray-500 dark:text-gray-400 mt-2">or drag & drop it here</span>
+            <span className="block text-xs text-gray-400 mt-1.5">PNG or JPG, up to 5MB</span>
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={e => { if (e.target.files?.[0]) onChange(e.target.files[0]); }}
+            />
+          </label>
         )}
       </div>
     </div>
@@ -211,8 +209,8 @@ export default function PaymentPage() {
 
   if (submitted) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-12 text-center">
-        <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 border border-gray-100 dark:border-slate-700 shadow-sm">
+      <div className="max-w-2xl mx-auto px-4 py-8 sm:py-12 text-center">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 sm:p-8 border border-gray-100 dark:border-slate-700 shadow-sm">
           <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
             <CheckCircle className="w-8 h-8 text-green-600 dark:text-green-400" />
           </div>
@@ -222,7 +220,7 @@ export default function PaymentPage() {
           <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
             {paymentMethod === 'gcash'
               ? 'Your GCash payment has been submitted for verification. You will be notified once it\'s confirmed.'
-              : 'Your cashier receipt was sent to the Registrar for verification. You will be notified once it\'s confirmed. Keep the original receipt for claiming.'}
+              : 'Your Official Receipt from the PCC New Building Cashier was sent to the Registrar for verification. You will be notified once it\'s confirmed. Keep the original receipt for claiming.'}
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link to="/track" className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-medium transition-colors">
@@ -314,7 +312,7 @@ export default function PaymentPage() {
       {payable.length > 0 && (
       <form onSubmit={handleSubmit} className="space-y-5">
         {/* Select Request */}
-        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm p-5">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm p-4 sm:p-5">
           <h2 className="font-semibold text-gray-900 dark:text-white text-sm mb-3" style={{ fontFamily: 'Poppins, sans-serif' }}>
             Select Request to Pay
           </h2>
@@ -348,20 +346,20 @@ export default function PaymentPage() {
         </div>
 
         {/* Payment Method */}
-        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm p-5">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm p-4 sm:p-5">
           <h2 className="font-semibold text-gray-900 dark:text-white text-sm mb-3" style={{ fontFamily: 'Poppins, sans-serif' }}>
             Payment Method
           </h2>
-          <div className="grid grid-cols-2 gap-3 mb-5">
+          <div className="grid grid-cols-2 gap-2.5 sm:gap-3 mb-5">
             {[
-              { value: 'gcash', label: 'GCash', icon: Smartphone, desc: 'Online payment via GCash' },
-              { value: 'cashier', label: 'Pay in Person', icon: MapPin, desc: 'Pay at PCC Cashier' },
+              { value: 'gcash', label: 'GCash', icon: Smartphone, desc: 'Pay online via GCash' },
+              { value: 'cashier', label: 'Pay in Person', icon: MapPin, desc: 'Cashier, PCC New Building' },
             ].map(method => (
               <button
                 key={method.value}
                 type="button"
                 onClick={() => setPaymentMethod(method.value as 'gcash' | 'cashier')}
-                className={`text-left p-4 rounded-xl border-2 transition-all ${
+                className={`min-w-0 text-left p-3 sm:p-4 rounded-xl border-2 transition-all ${
                   paymentMethod === method.value
                     ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20'
                     : 'border-gray-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-700'
@@ -369,7 +367,7 @@ export default function PaymentPage() {
               >
                 <method.icon className={`w-5 h-5 mb-2 ${paymentMethod === method.value ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400'}`} />
                 <p className="text-sm font-medium text-gray-900 dark:text-white">{method.label}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{method.desc}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 leading-snug">{method.desc}</p>
               </button>
             ))}
           </div>
@@ -417,42 +415,51 @@ export default function PaymentPage() {
           {/* Cashier Instructions */}
           {paymentMethod === 'cashier' && (
             <div className="space-y-3">
-              <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl">
-                <p className="text-sm font-semibold text-green-700 dark:text-green-300 mb-3">Pay at the Cashier</p>
-                <div className="space-y-2">
+              <div className="rounded-xl overflow-hidden border border-green-200 dark:border-green-800">
+                <div className="flex items-center gap-3 p-3.5 sm:p-4 bg-green-600 dark:bg-green-700 text-white">
+                  <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
+                    <MapPin className="w-5 h-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[11px] uppercase tracking-wide text-green-100 font-semibold">Proceed to</p>
+                    <p className="font-semibold leading-tight">PCC New Building</p>
+                    <p className="text-sm text-green-50">Cashier’s Office</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 divide-x divide-green-200 dark:divide-green-800 bg-white dark:bg-slate-900 text-center">
+                  <div className="p-2.5">
+                    <p className="text-[11px] text-gray-500 dark:text-gray-400">Amount to pay</p>
+                    <p className="font-semibold text-gray-900 dark:text-white">{req?.amount}</p>
+                  </div>
+                  <div className="p-2.5">
+                    <p className="text-[11px] text-gray-500 dark:text-gray-400 inline-flex items-center gap-1"><Clock className="w-3 h-3" /> Open</p>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white leading-tight">Mon–Sat</p>
+                    <p className="text-[11px] text-gray-600 dark:text-gray-300">8:00 AM – 4:00 PM</p>
+                  </div>
+                </div>
+                <p className="px-3 py-1.5 text-[11px] text-center bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-300 border-t border-green-200 dark:border-green-800">
+                  Closed on Sundays
+                </p>
+              </div>
+
+              <div className="p-3.5 sm:p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl">
+                <p className="text-sm font-semibold text-green-800 dark:text-green-300 mb-2.5">How to pay</p>
+                <ol className="space-y-2">
                   {[
                     'Bring your Request ID and valid school ID',
-                    'Proceed to the Cashier\'s Office (PCC Main Building, Ground Floor)',
-                    `Pay the amount of ${req?.amount} for your document`,
+                    'Proceed to the Cashier’s Office at the PCC New Building',
+                    `Pay ${req?.amount ?? 'the amount'} for your document`,
                     'Take a clear photo of your Official Receipt and upload it below',
                     'The Registrar verifies the receipt, then processes your request',
                   ].map((step, i) => (
-                    <div key={i} className="flex items-start gap-2.5">
-                      <div className="w-5 h-5 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <span className="text-xs text-green-600 dark:text-green-400 font-bold">{i + 1}</span>
-                      </div>
-                      <p className="text-sm text-green-700 dark:text-green-300">{step}</p>
-                    </div>
+                    <li key={i} className="flex items-start gap-2.5">
+                      <span className="w-5 h-5 bg-green-600 text-white rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 text-[11px] font-bold">
+                        {i + 1}
+                      </span>
+                      <span className="text-sm text-green-800 dark:text-green-200 leading-snug">{step}</span>
+                    </li>
                   ))}
-                </div>
-              </div>
-              <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center flex-shrink-0">
-                  <Clock className="w-5 h-5 text-amber-600 dark:text-amber-400" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-amber-800 dark:text-amber-200">Cashier Hours</p>
-                  <div className="mt-1 space-y-0.5 text-xs">
-                    <div className="flex justify-between gap-3">
-                      <span className="text-amber-700 dark:text-amber-300">Monday – Saturday</span>
-                      <span className="font-medium text-amber-800 dark:text-amber-200">8:00 AM – 4:00 PM</span>
-                    </div>
-                    <div className="flex justify-between gap-3">
-                      <span className="text-amber-700 dark:text-amber-300">Sunday</span>
-                      <span className="font-medium text-red-600 dark:text-red-400">Closed</span>
-                    </div>
-                  </div>
-                </div>
+                </ol>
               </div>
 
               <div>

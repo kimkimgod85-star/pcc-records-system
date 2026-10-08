@@ -300,7 +300,7 @@ export default function StudentDashboard() {
                       : isAwaiting
                       ? 'Don’t pay yet. Payment opens after the Registrar approves this request.'
                       : isPayLater
-                      ? 'You can pay this later at the cashier, or pay online anytime.'
+                      ? 'You can pay this later at the Cashier (PCC New Building), or pay online anytime.'
                       : 'Approved. Payment is required so processing can continue.'}
                   </p>
                 </div>
