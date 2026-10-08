@@ -67,6 +67,18 @@ const AuthContext = createContext<AuthContextType>({
   isAuthenticated: false,
 });
 
+export const DEACTIVATED_MESSAGE =
+  'Your account has been deactivated by the Registrar / Admin. Please visit the Registrar’s Office to have it reviewed.';
+
+export function isDeactivatedMessage(message?: string | null) {
+  return Boolean(message && message.toLowerCase().includes('deactivated'));
+}
+
+function goToDeactivatedNotice() {
+  if (window.location.pathname.endsWith('/login') && window.location.search.includes('reason=deactivated')) return;
+  window.location.replace(withBase('login?reason=deactivated'));
+}
+
 function explainAuthError(message: string) {
   const m = message.toLowerCase();
   if (m.includes('provider is not enabled') || m.includes('unsupported provider')) {
@@ -88,7 +100,7 @@ function explainAuthError(message: string) {
     return 'This email is already registered. Sign in, or finish registration with Google on the Register page.';
   }
   if (m.includes('deactivated')) {
-    return message;
+    return DEACTIVATED_MESSAGE;
   }
   return message;
 }
@@ -147,8 +159,8 @@ async function mapAuthUser(authUser: AuthUser): Promise<User> {
   if (error) throw error;
 
   if (data?.status === 'inactive') {
-    await client.auth.signOut();
-    throw new Error('This account has been deactivated. Contact the registrar.');
+    await client.auth.signOut({ scope: 'local' });
+    throw new Error(DEACTIVATED_MESSAGE);
   }
 
   if (!data || !hasCompletedPccRegistration(authUser, data)) {
@@ -227,6 +239,12 @@ export async function completePendingGoogleRegistration(authUser: AuthUser) {
   const draft = readGoogleRegisterDraft();
   if (!draft) return false;
   const client = requireSupabase();
+  const { data: existing } = await client.from('profiles').select('status').eq('id', authUser.id).maybeSingle();
+  if (existing?.status === 'inactive') {
+    clearGoogleRegisterDraft();
+    await client.auth.signOut({ scope: 'local' });
+    throw new Error(DEACTIVATED_MESSAGE);
+  }
   const { error } = await client.from('profiles').upsert({
     id: authUser.id,
     email: authUser.email,
@@ -277,8 +295,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } catch (err) {
         if (alive) setUser(null);
         const message = err instanceof Error ? err.message : '';
-        if (message.toLowerCase().includes('deactivated')) {
-          console.warn(message);
+        if (isDeactivatedMessage(message)) {
+          goToDeactivatedNotice();
+          return;
         }
         if (
           message === UNREGISTERED_GOOGLE_MESSAGE &&
@@ -304,6 +323,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       listener.subscription.unsubscribe();
     };
   }, []);
+
+  // Sign the person out right away if the Registrar deactivates the account while they are using the site.
+  useEffect(() => {
+    if (!isSupabaseConfigured || !user || user.role === 'admin') return;
+    const client = requireSupabase();
+    const channel = client
+      .channel(`pcc-account-status-${user.id}-${Math.random().toString(36).slice(2)}`)
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${user.id}` },
+        async payload => {
+          if ((payload.new as { status?: string }).status !== 'inactive') return;
+          await client.auth.signOut({ scope: 'local' });
+          setUser(null);
+          goToDeactivatedNotice();
+        },
+      )
+      .subscribe();
+    return () => {
+      void client.removeChannel(channel);
+    };
+  }, [user?.id, user?.role]);
 
   const missingConfig = (): { success: false; error: string } => ({
     success: false,

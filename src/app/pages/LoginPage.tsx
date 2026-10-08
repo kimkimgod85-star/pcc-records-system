@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
-import { Eye, EyeOff, AlertCircle, LogIn, ArrowLeft, Mail, Lock, GraduationCap, ShieldCheck } from 'lucide-react';
-import { UNREGISTERED_GOOGLE_MESSAGE, useAuth, type LoginPortal } from '../context/AuthContext';
+import { Eye, EyeOff, AlertCircle, LogIn, ArrowLeft, Mail, Lock, GraduationCap, ShieldCheck, UserX, Clock, Phone } from 'lucide-react';
+import { DEACTIVATED_MESSAGE, isDeactivatedMessage, UNREGISTERED_GOOGLE_MESSAGE, useAuth, type LoginPortal } from '../context/AuthContext';
 import { Header } from '../components/Header';
 import { EmailCodeVerify } from '../components/EmailCodeVerify';
 import { ForgotPassword } from '../components/ForgotPassword';
@@ -34,7 +34,9 @@ export default function LoginPage() {
   const [form, setForm] = useState({ email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState(() =>
-    searchParams.get('reason') === 'unregistered' ? UNREGISTERED_GOOGLE_MESSAGE : '',
+    searchParams.get('reason') === 'unregistered' ? UNREGISTERED_GOOGLE_MESSAGE
+    : searchParams.get('reason') === 'deactivated' ? DEACTIVATED_MESSAGE
+    : '',
   );
   const [info, setInfo] = useState('');
   const [loading, setLoading] = useState(false);
@@ -188,7 +190,34 @@ export default function LoginPage() {
                 : 'Use your PCC account to request and track records.'}
             </p>
 
-            {error && (
+            {error && isDeactivatedMessage(error) && (
+              <div role="alert" className="mb-4 rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 overflow-hidden">
+                <div className="flex items-start gap-3 p-4">
+                  <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/40 flex items-center justify-center flex-shrink-0">
+                    <UserX className="w-5 h-5 text-red-600 dark:text-red-400" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-semibold text-red-800 dark:text-red-200">Account deactivated</p>
+                    <p className="text-sm text-red-700 dark:text-red-300 mt-0.5 leading-snug">
+                      This account was deactivated by the Registrar / Admin, so you can’t sign in or make requests right now.
+                      Please proceed to the Registrar’s Office to have your account reviewed. Bring a valid ID.
+                    </p>
+                  </div>
+                </div>
+                <div className="px-4 py-3 border-t border-red-200/70 dark:border-red-800/60 bg-white/60 dark:bg-slate-900/30 space-y-1.5 text-sm text-gray-700 dark:text-gray-300">
+                  <p className="flex items-center gap-2"><Clock className="w-4 h-4 text-gray-500 flex-shrink-0" /> Mon–Sat, 8:00 AM – 4:00 PM</p>
+                  <p className="flex items-center gap-2 min-w-0">
+                    <Mail className="w-4 h-4 text-gray-500 flex-shrink-0" />
+                    <a href="mailto:registrar@pcci.ph.education" className="text-blue-800 dark:text-blue-300 hover:underline break-all">registrar@pcci.ph.education</a>
+                  </p>
+                  <p className="flex items-center gap-2">
+                    <Phone className="w-4 h-4 text-gray-500 flex-shrink-0" />
+                    <a href="tel:+639187272849" className="text-blue-800 dark:text-blue-300 hover:underline">0918 727 2849</a>
+                  </p>
+                </div>
+              </div>
+            )}
+            {error && !isDeactivatedMessage(error) && (
               <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg flex items-center gap-2">
                 <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
                 <p className="text-sm text-red-600 dark:text-red-400">{error}</p>

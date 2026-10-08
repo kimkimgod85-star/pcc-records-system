@@ -114,10 +114,9 @@ language plpgsql
 set search_path = ''
 as $$
 begin
-  if tg_op = 'UPDATE' and new.role is distinct from old.role then
-    if auth.uid() is not null and not public.is_admin() then
-      new.role := old.role;
-    end if;
+  if tg_op = 'UPDATE' and auth.uid() is not null and not public.is_admin() then
+    new.role := old.role;
+    new.status := old.status;
   end if;
   return new;
 end;
@@ -538,3 +537,39 @@ drop trigger if exists payments_require_approval on public.payments;
 create trigger payments_require_approval
   before insert on public.payments
   for each row execute function public.require_approved_before_payment();
+
+-- Deactivated accounts cannot submit requests, payments, or bookings.
+create or replace function public.block_deactivated_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if exists (
+    select 1 from public.profiles
+    where id = auth.uid() and status = 'inactive'
+  ) then
+    raise exception 'This account has been deactivated by the Registrar. Please visit the Registrar''s Office.'
+      using errcode = 'P0001';
+  end if;
+  return new;
+end;
+$$;
+
+revoke execute on function public.block_deactivated_user() from public, anon, authenticated;
+
+drop trigger if exists document_requests_block_deactivated on public.document_requests;
+create trigger document_requests_block_deactivated
+  before insert on public.document_requests
+  for each row execute function public.block_deactivated_user();
+
+drop trigger if exists payments_block_deactivated on public.payments;
+create trigger payments_block_deactivated
+  before insert on public.payments
+  for each row execute function public.block_deactivated_user();
+
+drop trigger if exists pickup_bookings_block_deactivated on public.pickup_bookings;
+create trigger pickup_bookings_block_deactivated
+  before insert or update on public.pickup_bookings
+  for each row execute function public.block_deactivated_user();

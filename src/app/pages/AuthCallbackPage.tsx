@@ -5,6 +5,7 @@ import {
   completePendingGoogleRegistration,
   explainPasswordError,
   hasCompletedPccRegistration,
+  isDeactivatedMessage,
   readGoogleRegisterDraft,
   UNREGISTERED_GOOGLE_MESSAGE,
 } from '../context/AuthContext';
@@ -137,9 +138,15 @@ export default function AuthCallbackPage() {
 
         const { data: profile } = await client
           .from('profiles')
-          .select('role, email')
+          .select('role, email, status')
           .eq('id', data.session.user.id)
           .maybeSingle();
+
+        if (profile?.status === 'inactive') {
+          await client.auth.signOut({ scope: 'local' });
+          navigate('/login?reason=deactivated', { replace: true });
+          return;
+        }
 
         if (!hasCompletedPccRegistration(data.session.user, profile)) {
           await client.auth.signOut();
@@ -149,6 +156,10 @@ export default function AuthCallbackPage() {
 
         navigate(profile?.role === 'admin' ? adminHome(data.session.user.id) : studentHome(data.session.user.id), { replace: true });
       } catch (err) {
+        if (err instanceof Error && isDeactivatedMessage(err.message)) {
+          navigate('/login?reason=deactivated', { replace: true });
+          return;
+        }
         setError(err instanceof Error ? explainCallbackError(err.message) : 'Sign-in failed.');
       }
     };
