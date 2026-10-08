@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { withBase } from './basePath';
+import { shareLoginWithInstalledApp } from './supabase';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -23,6 +24,7 @@ if (typeof window !== 'undefined') {
   window.addEventListener('appinstalled', () => {
     deferred = null;
     justInstalled = true;
+    shareLoginWithInstalledApp();
     notify();
   });
   // The browser only offers "Install" once the service worker is registered.

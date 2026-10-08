@@ -17,10 +17,26 @@ export const isSupabaseConfigured = Boolean(url && anonKey);
 
 // Each browser tab keeps its own login so different accounts can be open side by side.
 // The storage key is per tab because Supabase syncs logins between tabs that share a key.
+// The installed app is a single window, so it keeps its login on the device instead;
+// otherwise closing the app would sign the user out.
 const TAB_ID_KEY = 'pcc-auth-tab';
+const APP_STORAGE_KEY = 'pcc-auth-app';
 const CODE_VERIFIER_KEY = 'pcc-auth-code-verifier';
 
+function runningAsInstalledApp() {
+  try {
+    return window.matchMedia?.('(display-mode: standalone)').matches
+      || (navigator as Navigator & { standalone?: boolean }).standalone === true;
+  } catch {
+    return false;
+  }
+}
+
+const installedApp = typeof window !== 'undefined' && runningAsInstalledApp();
+const sessionStore = (): Storage => (installedApp ? localStorage : sessionStorage);
+
 function tabStorageKey() {
+  if (installedApp) return APP_STORAGE_KEY;
   try {
     let id = sessionStorage.getItem(TAB_ID_KEY);
     if (!id) {
@@ -35,13 +51,24 @@ function tabStorageKey() {
   }
 }
 
+/** Copies this tab's login to the installed app, so it opens already signed in. */
+export function shareLoginWithInstalledApp() {
+  if (installedApp) return;
+  try {
+    const session = sessionStorage.getItem(tabStorageKey());
+    if (session) localStorage.setItem(APP_STORAGE_KEY, session);
+  } catch {
+    /* storage unavailable */
+  }
+}
+
 // Email links (password reset) open in a new tab, so the PKCE verifier must be shared.
 const isVerifier = (key: string) => key.endsWith('-code-verifier');
 
 const tabStorage = {
   getItem: (key: string) => {
     try {
-      return isVerifier(key) ? localStorage.getItem(CODE_VERIFIER_KEY) : sessionStorage.getItem(key);
+      return isVerifier(key) ? localStorage.getItem(CODE_VERIFIER_KEY) : sessionStore().getItem(key);
     } catch {
       return null;
     }
@@ -49,7 +76,7 @@ const tabStorage = {
   setItem: (key: string, value: string) => {
     try {
       if (isVerifier(key)) localStorage.setItem(CODE_VERIFIER_KEY, value);
-      else sessionStorage.setItem(key, value);
+      else sessionStore().setItem(key, value);
     } catch {
       /* storage unavailable */
     }
@@ -57,7 +84,7 @@ const tabStorage = {
   removeItem: (key: string) => {
     try {
       if (isVerifier(key)) localStorage.removeItem(CODE_VERIFIER_KEY);
-      else sessionStorage.removeItem(key);
+      else sessionStore().removeItem(key);
     } catch {
       /* storage unavailable */
     }
