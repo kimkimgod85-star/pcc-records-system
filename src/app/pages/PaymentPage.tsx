@@ -1,12 +1,15 @@
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
-import { ChevronRight, Upload, CheckCircle, Clock, Smartphone, MapPin, X } from 'lucide-react';
+import { ChevronRight, Upload, CheckCircle, Clock, Smartphone, MapPin, X, Copy, Check } from 'lucide-react';
 import { formatPeso, fetchDocumentCatalog } from '../lib/documents';
 import { fetchRequests, subscribeRequests, type StudentRequest } from '../lib/requests';
 import { submitPayment } from '../lib/payments';
 import { canPayFor } from '../lib/status';
 import { playSubmitSound } from '../lib/officeChime';
 import { useAuth } from '../context/AuthContext';
+
+const GCASH_NUMBER = '09XX-XXX-XXXX';
+const GCASH_NAME = 'PCC Cashier';
 
 function ProofUpload({
   label,
@@ -161,6 +164,17 @@ export default function PaymentPage() {
   const [gcashRef, setGcashRef] = useState('');
   const [screenshot, setScreenshot] = useState<File | null>(null);
   const [orNumber, setOrNumber] = useState('');
+  const [copied, setCopied] = useState(false);
+
+  const copyGcashNumber = async () => {
+    try {
+      await navigator.clipboard.writeText(GCASH_NUMBER.replace(/[\s-]/g, ''));
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked */
+    }
+  };
   const [receipt, setReceipt] = useState<File | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -375,23 +389,59 @@ export default function PaymentPage() {
           {/* GCash Form */}
           {paymentMethod === 'gcash' && (
             <div className="space-y-4">
-              {/* GCash Info */}
-              <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl">
-                <p className="text-sm font-semibold text-blue-700 dark:text-blue-300 mb-2">GCash Payment Details</p>
-                <div className="space-y-1">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-blue-600 dark:text-blue-400">GCash Number</span>
-                    <span className="font-mono font-semibold text-blue-700 dark:text-blue-300">09XX-XXX-XXXX</span>
+              <div className="rounded-xl overflow-hidden border border-blue-200 dark:border-blue-800">
+                <div className="flex items-center gap-3 p-3.5 sm:p-4 bg-blue-600 dark:bg-blue-700 text-white">
+                  <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
+                    <Smartphone className="w-5 h-5" />
                   </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-blue-600 dark:text-blue-400">Account Name</span>
-                    <span className="font-medium text-blue-700 dark:text-blue-300">PCC Cashier</span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[11px] uppercase tracking-wide text-blue-100 font-semibold">Send via GCash to</p>
+                    <p className="font-semibold font-mono leading-tight">{GCASH_NUMBER}</p>
+                    <p className="text-sm text-blue-50">{GCASH_NAME}</p>
                   </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-blue-600 dark:text-blue-400">Amount to Pay</span>
-                    <span className="font-semibold text-blue-700 dark:text-blue-300">{req?.amount}</span>
+                  <button
+                    type="button"
+                    onClick={copyGcashNumber}
+                    className="flex-shrink-0 inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white/20 hover:bg-white/30 text-xs font-semibold"
+                  >
+                    {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                    {copied ? 'Copied' : 'Copy'}
+                  </button>
+                </div>
+                <div className="grid grid-cols-2 divide-x divide-blue-200 dark:divide-blue-800 bg-white dark:bg-slate-900 text-center">
+                  <div className="p-2.5">
+                    <p className="text-[11px] text-gray-500 dark:text-gray-400">Amount to pay</p>
+                    <p className="font-semibold text-gray-900 dark:text-white">{req?.amount}</p>
+                  </div>
+                  <div className="p-2.5">
+                    <p className="text-[11px] text-gray-500 dark:text-gray-400 inline-flex items-center gap-1"><Clock className="w-3 h-3" /> Pay anytime</p>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white leading-tight">24/7</p>
+                    <p className="text-[11px] text-gray-600 dark:text-gray-300">Checked Mon–Sat</p>
                   </div>
                 </div>
+                <p className="px-3 py-1.5 text-[11px] text-center bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300 border-t border-blue-200 dark:border-blue-800">
+                  Send the exact amount so it can be verified quickly
+                </p>
+              </div>
+
+              <div className="p-3.5 sm:p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl">
+                <p className="text-sm font-semibold text-blue-800 dark:text-blue-300 mb-2.5">How to pay</p>
+                <ol className="space-y-2">
+                  {[
+                    'Open GCash and tap Send, then Express Send',
+                    `Send ${req?.amount ?? 'the amount'} to the GCash number above`,
+                    'Take a screenshot of the GCash receipt',
+                    'Enter the reference number and upload the screenshot below',
+                    'The Registrar verifies the payment, then processes your request',
+                  ].map((step, i) => (
+                    <li key={i} className="flex items-start gap-2.5">
+                      <span className="w-5 h-5 bg-blue-600 text-white rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 text-[11px] font-bold">
+                        {i + 1}
+                      </span>
+                      <span className="text-sm text-blue-900 dark:text-blue-200 leading-snug">{step}</span>
+                    </li>
+                  ))}
+                </ol>
               </div>
 
               <div>
