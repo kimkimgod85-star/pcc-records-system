@@ -39,15 +39,12 @@ function PaymentNotice({ item }: { item: ReturnType<typeof toTrackItem> }) {
         title="Request not approved"
         text={item.rejectionReason}
         action={
-          <div className="flex flex-col min-[400px]:flex-row min-[400px]:items-center justify-between gap-2">
-            <p className="text-xs text-gray-500 dark:text-gray-400">Fix the issue, then send a new request.</p>
-            <Link
-              to="/request"
-              className="inline-flex items-center justify-center gap-1 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold flex-shrink-0"
-            >
-              Request again <ChevronRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
+          <Link
+            to="/request"
+            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold"
+          >
+            Request again <ChevronRight className="w-3.5 h-3.5" />
+          </Link>
         }
       />
     );
@@ -88,15 +85,12 @@ function PaymentNotice({ item }: { item: ReturnType<typeof toTrackItem> }) {
         text={item.paymentRejectionReason}
         fallback="Your proof of payment could not be verified."
         action={
-          <div className="flex flex-col min-[400px]:flex-row min-[400px]:items-center justify-between gap-2">
-            <p className="text-xs text-gray-500 dark:text-gray-400">Upload a clear proof again. You don’t need to send a new request.</p>
-            <Link
-              to={`/payment?request=${encodeURIComponent(item.id)}`}
-              className="inline-flex items-center justify-center gap-1 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold flex-shrink-0"
-            >
-              Submit again <ChevronRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
+          <Link
+            to={`/payment?request=${encodeURIComponent(item.id)}`}
+            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold"
+          >
+            Submit proof again <ChevronRight className="w-3.5 h-3.5" />
+          </Link>
         }
       />
     );
