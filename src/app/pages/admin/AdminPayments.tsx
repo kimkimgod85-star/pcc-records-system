@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { fetchPayments, screenshotUrl, subscribePayments, updatePaymentStatus, type PaymentRecord } from '../../lib/payments';
 import { useRevealOnSmallScreen } from '../../lib/useRevealOnSmallScreen';
+import { PAYMENT_REJECT_REASONS, RejectReasonDialog } from '../../components/RejectReasonDialog';
 
 type PayStatus = PaymentRecord['status'];
 
@@ -69,6 +70,7 @@ export default function AdminPayments() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [saving, setSaving] = useState<PayStatus | null>(null);
   const [error, setError] = useState('');
+  const [rejecting, setRejecting] = useState(false);
   const detailRef = useRevealOnSmallScreen<HTMLDivElement>(selectedId ?? undefined);
 
   useEffect(() => {
@@ -98,12 +100,13 @@ export default function AdminPayments() {
     setError('');
   };
 
-  const updateStatus = async (row: PaymentRecord, status: PayStatus) => {
+  const updateStatus = async (row: PaymentRecord, status: PayStatus, reason = '') => {
     setSaving(status);
     setError('');
     try {
-      await updatePaymentStatus(row.uuid, status, row.requestUuid, row.userId);
+      await updatePaymentStatus(row.uuid, status, row.requestUuid, row.userId, reason);
       setPayments(prev => prev.map(p => p.id === row.id ? { ...p, status } : p));
+      setRejecting(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not update the payment. Please try again.');
     } finally {
@@ -366,7 +369,7 @@ export default function AdminPayments() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => updateStatus(selected, 'rejected')}
+                  onClick={() => { setError(''); setRejecting(true); }}
                   disabled={selected.status === 'rejected' || saving !== null}
                   className={`inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold transition-colors ${
                     selected.status === 'rejected'
@@ -393,6 +396,17 @@ export default function AdminPayments() {
           </div>
         )}
       </div>
+
+      <RejectReasonDialog
+        open={rejecting && Boolean(selected)}
+        title="Reject this payment?"
+        subject={selected ? `${selected.amount} · ${selected.document} (${selected.reqId}) · ${selected.student}` : ''}
+        reasons={PAYMENT_REJECT_REASONS}
+        busy={saving === 'rejected'}
+        error={rejecting ? error : ''}
+        onCancel={() => setRejecting(false)}
+        onConfirm={reason => { if (selected) void updateStatus(selected, 'rejected', reason); }}
+      />
     </div>
   );
 }

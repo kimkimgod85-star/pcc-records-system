@@ -147,6 +147,7 @@ export default function PaymentPage() {
       amountValue: item.amount,
       amount: formatPeso(item.amount),
       retry: item.paymentStatus === 'rejected',
+      retryReason: item.paymentRejectionReason,
     }));
   const alreadyPaid = requests.filter(item => item.paymentStatus === 'pending' || item.paymentStatus === 'verified');
   const focused = requestedId ? alreadyPaid.find(item => item.id === requestedId) : undefined;
@@ -294,7 +295,9 @@ export default function PaymentPage() {
                     <p className="text-sm font-medium text-gray-900 dark:text-white">{r.type}</p>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 font-mono">{r.id}</p>
                     {r.retry && (
-                      <p className="text-xs text-red-600 dark:text-red-400 mt-1">Previous proof was not accepted. Please submit again.</p>
+                      <p className="text-xs text-red-600 dark:text-red-400 mt-1 break-words">
+                        Previous proof was not accepted{r.retryReason ? ` — ${r.retryReason.replace(/[.\s]+$/, '')}` : ''}. Please submit again.
+                      </p>
                     )}
                   </div>
                   <span className="text-sm font-semibold text-blue-600 dark:text-blue-400 flex-shrink-0">{r.amount}</span>

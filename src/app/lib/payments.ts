@@ -2,7 +2,7 @@ import { requireSupabase } from './supabase';
 import { addNotification } from './notifications';
 import { formatPeso } from './documents';
 import { formatShortDate, tableMissing } from './status';
-import { trackLink, updateRequest } from './requests';
+import { trackLink, updateRequest, updateRequestWithOptional } from './requests';
 import { listenRealtime } from './realtime';
 
 const EVENT = 'pcc-payments-updated';
@@ -125,7 +125,7 @@ export async function submitPayment(input: {
   return record;
 }
 
-export async function updatePaymentStatus(uuid: string, status: 'pending' | 'verified' | 'rejected', requestUuid: string, userId: string) {
+export async function updatePaymentStatus(uuid: string, status: 'pending' | 'verified' | 'rejected', requestUuid: string, userId: string, reason = '') {
   const client = requireSupabase();
   const { data: payment, error } = await client
     .from('payments')
@@ -135,9 +135,11 @@ export async function updatePaymentStatus(uuid: string, status: 'pending' | 'ver
     .single();
   if (error) throw error;
 
-  const request = await updateRequest(requestUuid, {
-    payment_status: status === 'verified' ? 'verified' : status === 'rejected' ? 'rejected' : 'pending',
-  });
+  const request = await updateRequestWithOptional(
+    requestUuid,
+    { payment_status: status === 'verified' ? 'verified' : status === 'rejected' ? 'rejected' : 'pending' },
+    { payment_rejection_reason: status === 'rejected' ? reason || null : null },
+  );
 
   const doc = `${request.type} (${request.id})`;
   const amount = formatPeso(Number(payment?.amount ?? request.amount));
@@ -149,7 +151,7 @@ export async function updatePaymentStatus(uuid: string, status: 'pending' | 'ver
     message: status === 'verified'
       ? `${amount} for ${doc}${ref} is confirmed. You’re fully paid, so there is nothing else to pay.`
       : status === 'rejected'
-      ? `Your proof of payment for ${doc}${ref} could not be verified. Please upload a clear photo of your payment again.`
+      ? `Your proof of payment for ${doc}${ref} could not be verified.${reason ? ` Reason: ${reason.replace(/[.\s]+$/, '')}.` : ''} Please upload your proof of payment again.`
       : `Your payment of ${amount} for ${doc} is waiting for Registrar verification. You don’t need to pay again.`,
     link: status === 'rejected' ? `/payment?request=${encodeURIComponent(request.id)}` : trackLink(request.id),
   });

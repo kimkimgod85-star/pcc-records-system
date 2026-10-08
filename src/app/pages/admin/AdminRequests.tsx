@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Search, CheckCircle, X, ChevronRight, ArrowRight, AlertCircle, Loader2, StickyNote } from 'lucide-react';
+import { Search, CheckCircle, X, ChevronRight, ArrowRight, AlertCircle, Loader2, StickyNote, CalendarClock, XCircle } from 'lucide-react';
 import { fetchRequests, subscribeRequests, updateRequestStatus, type StudentRequest } from '../../lib/requests';
-import { formatShortDate, paymentLabel, type PaymentStatus, type RequestStatus } from '../../lib/status';
+import { formatPickup, formatShortDate, paymentLabel, type PaymentStatus, type RequestStatus } from '../../lib/status';
 import { useRevealOnSmallScreen } from '../../lib/useRevealOnSmallScreen';
 import { StatusBadge } from '../../components/StatusBadge';
+import { RejectReasonDialog, REQUEST_REJECT_REASONS } from '../../components/RejectReasonDialog';
 
 type AdminRequestRow = {
   uuid: string;
@@ -18,6 +19,9 @@ type AdminRequestRow = {
   paymentStatus: PaymentStatus;
   payment: string;
   notes: string;
+  pickup: string;
+  pickupLong: string;
+  rejectionReason: string;
 };
 
 function toRow(item: StudentRequest): AdminRequestRow {
@@ -34,6 +38,9 @@ function toRow(item: StudentRequest): AdminRequestRow {
     paymentStatus: item.paymentStatus,
     payment: paymentLabel(item.paymentStatus, item.paymentMethod),
     notes: item.notes,
+    pickup: formatPickup(item.pickupDate, item.pickupTime),
+    pickupLong: formatPickup(item.pickupDate, item.pickupTime, true),
+    rejectionReason: item.rejectionReason,
   };
 }
 
@@ -88,6 +95,7 @@ export default function AdminRequests() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [saving, setSaving] = useState<RequestStatus | null>(null);
   const [error, setError] = useState('');
+  const [rejecting, setRejecting] = useState(false);
   const detailRef = useRevealOnSmallScreen<HTMLDivElement>(selectedId ?? undefined);
 
   useEffect(() => {
@@ -115,17 +123,27 @@ export default function AdminRequests() {
     setError('');
   };
 
-  const updateStatus = async (row: AdminRequestRow, status: RequestStatus) => {
+  const updateStatus = async (row: AdminRequestRow, status: RequestStatus, reason = '') => {
     setSaving(status);
     setError('');
     try {
-      await updateRequestStatus(row.uuid, status, row.userId, row.type, row.id);
-      setRequests(prev => prev.map(r => r.id === row.id ? { ...r, status } : r));
+      await updateRequestStatus(row.uuid, status, row.userId, row.type, row.id, reason);
+      setRequests(prev => prev.map(r => r.id === row.id ? { ...r, status, rejectionReason: status === 'rejected' ? reason : '' } : r));
+      setRejecting(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not update the status. Please try again.');
     } finally {
       setSaving(null);
     }
+  };
+
+  const chooseStatus = (row: AdminRequestRow, status: RequestStatus) => {
+    if (status === 'rejected') {
+      setError('');
+      setRejecting(true);
+      return;
+    }
+    void updateStatus(row, status);
   };
 
   const next = selectedReq ? NEXT_STEP[selectedReq.status] : undefined;
@@ -227,6 +245,11 @@ export default function AdminRequests() {
                   <span className="font-mono text-blue-600 dark:text-blue-400 break-all">{req.id}</span>
                   <span className="text-gray-500 dark:text-gray-400 whitespace-nowrap">{req.submitted}</span>
                 </div>
+                {req.pickup && (
+                  <p className="mt-1.5 inline-flex items-center gap-1.5 text-xs font-medium text-cyan-700 dark:text-cyan-400">
+                    <CalendarClock className="w-3.5 h-3.5" /> Pickup: {req.pickup}
+                  </p>
+                )}
               </button>
             ))}
           </div>
@@ -241,6 +264,7 @@ export default function AdminRequests() {
                     <th className="px-5 py-3">Student</th>
                     <th className={`px-5 py-3 ${selectedReq ? 'hidden' : 'hidden md:table-cell'}`}>Payment</th>
                     <th className={`px-5 py-3 ${selectedReq ? 'hidden' : 'hidden xl:table-cell'}`}>Submitted</th>
+                    <th className={`px-5 py-3 ${selectedReq ? 'hidden' : 'hidden lg:table-cell'}`}>Pickup</th>
                     <th className="px-5 py-3">Status</th>
                     <th className="w-8" />
                   </tr>
@@ -269,6 +293,11 @@ export default function AdminRequests() {
                         </td>
                         <td className={`px-5 py-3.5 align-top ${selectedReq ? 'hidden' : 'hidden xl:table-cell'}`}>
                           <span className="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">{req.submitted}</span>
+                        </td>
+                        <td className={`px-5 py-3.5 align-top ${selectedReq ? 'hidden' : 'hidden lg:table-cell'}`}>
+                          {req.pickup
+                            ? <span className="text-sm font-medium text-cyan-700 dark:text-cyan-400 whitespace-nowrap">{req.pickup}</span>
+                            : <span className="text-sm text-gray-400">Not booked</span>}
                         </td>
                         <td className="px-5 py-3.5 align-top">
                           <StatusBadge status={req.status} label={STATUS_LABEL[req.status]} />
@@ -317,6 +346,30 @@ export default function AdminRequests() {
                 <Field label="Purpose" value={selectedReq.purpose} wide />
               </dl>
 
+              <div className={`mx-5 mb-4 p-3 rounded-xl border flex items-start gap-2.5 ${
+                selectedReq.pickup
+                  ? 'bg-cyan-50 border-cyan-200 dark:bg-cyan-900/15 dark:border-cyan-800/60'
+                  : 'bg-gray-50 border-gray-200 dark:bg-slate-900/40 dark:border-slate-700'
+              }`}>
+                <CalendarClock className={`w-5 h-5 mt-0.5 flex-shrink-0 ${selectedReq.pickup ? 'text-cyan-700 dark:text-cyan-400' : 'text-gray-400'}`} />
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Pickup booked by student</p>
+                  <p className={`text-sm font-semibold mt-0.5 ${selectedReq.pickup ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'}`}>
+                    {selectedReq.pickupLong || 'Not booked yet'}
+                  </p>
+                </div>
+              </div>
+
+              {selectedReq.status === 'rejected' && (
+                <div className="mx-5 mb-4 p-3 rounded-xl bg-red-50 border border-red-200 dark:bg-red-900/15 dark:border-red-800/60 flex items-start gap-2.5">
+                  <XCircle className="w-5 h-5 mt-0.5 flex-shrink-0 text-red-600 dark:text-red-400" />
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-red-700 dark:text-red-300">Reason sent to student</p>
+                    <p className="text-sm text-red-900 dark:text-red-100 mt-0.5 break-words">{selectedReq.rejectionReason || 'No reason recorded.'}</p>
+                  </div>
+                </div>
+              )}
+
               {selectedReq.notes && (
                 <div className="mx-5 mb-5 p-3 rounded-xl bg-amber-50 dark:bg-amber-900/15 border border-amber-200 dark:border-amber-800/60 flex items-start gap-2">
                   <StickyNote className="w-4 h-4 mt-0.5 flex-shrink-0 text-amber-600 dark:text-amber-400" />
@@ -362,7 +415,7 @@ export default function AdminRequests() {
                     <button
                       key={action.status}
                       type="button"
-                      onClick={() => updateStatus(selectedReq, action.status)}
+                      onClick={() => chooseStatus(selectedReq, action.status)}
                       disabled={current || saving !== null}
                       className={`inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium border transition-colors ${
                         current
@@ -388,6 +441,17 @@ export default function AdminRequests() {
           </div>
         )}
       </div>
+
+      <RejectReasonDialog
+        open={rejecting && Boolean(selectedReq)}
+        title="Reject this request?"
+        subject={selectedReq ? `${selectedReq.type} (${selectedReq.id}) · ${selectedReq.student}` : ''}
+        reasons={REQUEST_REJECT_REASONS}
+        busy={saving === 'rejected'}
+        error={rejecting ? error : ''}
+        onCancel={() => setRejecting(false)}
+        onConfirm={reason => { if (selectedReq) void updateStatus(selectedReq, 'rejected', reason); }}
+      />
     </div>
   );
 }

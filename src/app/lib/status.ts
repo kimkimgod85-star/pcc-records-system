@@ -51,6 +51,20 @@ export function formatLongDate(value?: string | null) {
   return `${months[month - 1]} ${day}, ${year}`;
 }
 
+/** e.g. "Thu, Oct 9, 2026 · 9:00 AM" — the exact pickup slot the student booked. */
+export function formatPickup(date?: string | null, time?: string | null, long = false) {
+  if (!date) return '';
+  const [year, month, day] = date.slice(0, 10).split('-').map(Number);
+  if (!year || !month || !day) return date;
+  const when = new Date(year, month - 1, day).toLocaleDateString('en-US', {
+    weekday: long ? 'long' : 'short',
+    month: long ? 'long' : 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+  return time ? `${when} · ${time}` : when;
+}
+
 export function formatShortDate(value?: string | null) {
   if (!value) return '—';
   const iso = value.slice(0, 10);

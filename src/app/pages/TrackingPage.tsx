@@ -25,6 +25,8 @@ function toTrackItem(r: StudentRequest) {
     payment: paymentLabel(r.paymentStatus, r.paymentMethod),
     paymentStatus: r.paymentStatus,
     notes: r.notes,
+    rejectionReason: r.rejectionReason,
+    paymentRejectionReason: r.paymentRejectionReason,
   };
 }
 
@@ -33,7 +35,12 @@ function PaymentNotice({ item }: { item: ReturnType<typeof toTrackItem> }) {
     return (
       <div className="mt-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl flex items-start gap-2">
         <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
-        <p className="text-xs text-red-700 dark:text-red-300">This request was not approved. Please contact the Registrar’s Office for details.</p>
+        <div className="text-xs text-red-700 dark:text-red-300 min-w-0">
+          <p>This request was not approved.</p>
+          {item.rejectionReason
+            ? <p className="mt-1 break-words"><span className="font-semibold">Reason:</span> {item.rejectionReason}</p>
+            : <p className="mt-1">Please contact the Registrar’s Office for details.</p>}
+        </div>
       </div>
     );
   }
@@ -66,6 +73,9 @@ function PaymentNotice({ item }: { item: ReturnType<typeof toTrackItem> }) {
         {rejected
           ? 'Your proof of payment could not be verified. Please upload it again.'
           : `Payment of ${item.amount} is needed to process this request.`}
+        {rejected && item.paymentRejectionReason && (
+          <span className="block mt-1 break-words"><span className="font-semibold">Reason:</span> {item.paymentRejectionReason}</span>
+        )}
       </p>
       <Link
         to={`/payment?request=${encodeURIComponent(item.id)}`}

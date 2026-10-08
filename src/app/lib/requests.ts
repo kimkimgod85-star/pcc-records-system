@@ -41,6 +41,8 @@ export interface StudentRequest {
   paymentMethod: string;
   pickupDate: string | null;
   pickupTime: string | null;
+  rejectionReason: string;
+  paymentRejectionReason: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -78,6 +80,8 @@ function mapRow(row: Record<string, unknown>): StudentRequest {
     paymentMethod: String(row.payment_method || ''),
     pickupDate: row.pickup_date ? String(row.pickup_date).slice(0, 10) : null,
     pickupTime: row.pickup_time ? String(row.pickup_time) : null,
+    rejectionReason: String(row.rejection_reason || ''),
+    paymentRejectionReason: String(row.payment_rejection_reason || ''),
     createdAt: String(row.created_at || new Date().toISOString()),
     updatedAt: String(row.updated_at || row.created_at || new Date().toISOString()),
   };
@@ -156,8 +160,31 @@ export async function updateRequest(uuid: string, patch: Record<string, unknown>
   return mapRow(data as Record<string, unknown>);
 }
 
-export async function updateRequestStatus(uuid: string, status: RequestStatus, userId?: string, type?: string, code?: string) {
-  const updated = await updateRequest(uuid, { status });
+function missingColumn(error: unknown) {
+  const code = error && typeof error === 'object' && 'code' in error ? String((error as { code: unknown }).code) : '';
+  const message = error && typeof error === 'object' && 'message' in error ? String((error as { message: unknown }).message) : '';
+  return code === 'PGRST204' || code === '42703' || /column .* does not exist|could not find the .* column/i.test(message);
+}
+
+/** Saves the request plus optional extra columns; if supabase/rejection_reasons.sql was not run yet, saves without them. */
+export async function updateRequestWithOptional(uuid: string, patch: Record<string, unknown>, optional: Record<string, unknown>) {
+  try {
+    return await updateRequest(uuid, { ...patch, ...optional });
+  } catch (error) {
+    if (!missingColumn(error)) throw error;
+    return updateRequest(uuid, patch);
+  }
+}
+
+/** Reason and optional message joined the way students see them. */
+export function composeReason(reason: string, message?: string) {
+  const r = reason.trim();
+  const m = (message || '').trim();
+  return [r, m].filter(Boolean).join(' — ');
+}
+
+export async function updateRequestStatus(uuid: string, status: RequestStatus, userId?: string, type?: string, code?: string, reason = '') {
+  const updated = await updateRequestWithOptional(uuid, { status }, { rejection_reason: status === 'rejected' ? reason || null : null });
   if (userId) {
     const doc = `${updated.type || type || 'Your document'} (${updated.id || code})`;
     const paymentNote =
@@ -174,7 +201,12 @@ export async function updateRequestStatus(uuid: string, status: RequestStatus, u
       processing: { title: 'Document is being prepared', message: `${doc} is now being prepared by the Registrar.` },
       ready: { title: 'Ready for pickup', message: `${doc} is ready at the Registrar’s Office.${pickup}` },
       completed: { title: 'Request completed', message: `${doc} was claimed. Thank you!` },
-      rejected: { title: 'Request rejected', message: `${doc} was not approved. Please contact the Registrar’s Office for details.` },
+      rejected: {
+        title: 'Request rejected',
+        message: reason
+          ? `${doc} was not approved. Reason: ${reason}`
+          : `${doc} was not approved. Please contact the Registrar’s Office for details.`,
+      },
     };
     await addNotification({
       userId,

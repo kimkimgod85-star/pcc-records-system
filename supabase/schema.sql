@@ -218,6 +218,9 @@ create table if not exists public.document_requests (
   updated_at timestamptz not null default now()
 );
 
+alter table public.document_requests add column if not exists rejection_reason text;
+alter table public.document_requests add column if not exists payment_rejection_reason text;
+
 alter table public.document_requests enable row level security;
 
 drop policy if exists "Users read own requests" on public.document_requests;
