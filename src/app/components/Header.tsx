@@ -55,7 +55,7 @@ export function Header({ variant = 'app' }: HeaderProps) {
     setProfileOpen(false);
   };
 
-  const isPublicAuth = location.pathname === '/login' || location.pathname === '/register';
+  const isPublicAuth = location.pathname === '/login' || location.pathname === '/register' || location.pathname === '/terms';
   const overHero = variant === 'landing' && !scrolled && !isPublicAuth;
 
   const navLinks = isAuthenticated

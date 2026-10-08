@@ -1,11 +1,14 @@
 {
-  "name": "PCC Records Management System",
+  "id": "./",
+  "name": "PCC Records Request & Scheduling",
   "short_name": "PCC Records",
+  "description": "Request school records, pay, book pickup, and track documents from Pagadian Capitol Colleges.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#1e40af",
+  "categories": ["education", "productivity"],
   "icons": [
     { "src": "favicon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
     { "src": "favicon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }

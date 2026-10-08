@@ -11,6 +11,7 @@ import { fetchNotifications, subscribeNotifications } from '../lib/notifications
 import { formatLongDate, paymentLabel } from '../lib/status';
 import { StatusBadge } from '../components/StatusBadge';
 import { DeviceNotificationBanner } from '../components/DeviceNotificationPrompt';
+import { InstallAppBanner } from '../components/InstallApp';
 
 type PaymentStatus = 'unpaid' | 'pay_later' | 'paid' | 'verifying' | 'awaiting' | 'none';
 
@@ -168,6 +169,7 @@ export default function StudentDashboard() {
       </div>
 
       {user && <DeviceNotificationBanner userId={user.id} />}
+      <InstallAppBanner className="mb-6" />
 
       {/* Request Status */}
       <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm overflow-hidden mb-6">

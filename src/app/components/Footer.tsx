@@ -118,6 +118,9 @@ export function Footer() {
           <p className="text-xs text-gray-500 max-w-[16rem] sm:max-w-none text-balance">
             Web-Based School Records Request & Scheduling System
           </p>
+          <Link to="/terms" className="text-xs text-gray-400 hover:text-blue-400 underline-offset-2 hover:underline">
+            Terms &amp; Privacy
+          </Link>
         </div>
       </div>
     </footer>

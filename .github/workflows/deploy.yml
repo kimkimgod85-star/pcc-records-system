@@ -41,6 +41,7 @@ jobs:
           cp dist/index.html dist/404.html
           cp dist/index.html dist/login.html
           cp dist/index.html dist/register.html
+          cp dist/index.html dist/terms.html
 
       - uses: actions/upload-pages-artifact@v4
         with:

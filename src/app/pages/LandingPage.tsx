@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { Header } from '../components/Header';
 import { Footer } from '../components/Footer';
+import { InstallAppSection } from '../components/InstallApp';
 import { withBase } from '../lib/basePath';
 
 const PCC_BG_URL = withBase('PCC1.jpg');
@@ -247,6 +248,8 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      <InstallAppSection />
 
       {/* Contact Section */}
       <section id="contact" className="py-16 sm:py-20 bg-primary dark:bg-blue-900">

@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useRef, useState } from 'r
 import type { Session, User as AuthUser } from '@supabase/supabase-js';
 import { isSupabaseConfigured, isGoogleAuthEnabled, requireSupabase } from '../lib/supabase';
 import { withBase } from '../lib/basePath';
+import { TERMS_VERSION } from '../lib/terms';
 
 export type UserRole = 'student' | 'alumni' | 'admin';
 
@@ -241,6 +242,8 @@ export async function completePendingGoogleRegistration(authUser: AuthUser) {
       full_name: draft.fullName.trim(),
       student_id: draft.studentId?.trim() || '',
       role: draft.role,
+      terms_version: TERMS_VERSION,
+      terms_accepted_at: new Date().toISOString(),
     },
   });
   clearGoogleRegisterDraft();
@@ -378,6 +381,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           full_name: input.fullName.trim(),
           student_id: input.studentId?.trim() || '',
           role: input.role,
+          terms_version: TERMS_VERSION,
+          terms_accepted_at: new Date().toISOString(),
         },
       },
     });

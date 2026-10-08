@@ -41,10 +41,20 @@ export default function RegisterPage() {
   const [success, setSuccess] = useState(false);
   const [needsConfirm, setNeedsConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [agreed, setAgreed] = useState(false);
+  const [agreeNudge, setAgreeNudge] = useState(false);
+
+  const requireAgreement = () => {
+    if (agreed) return true;
+    setAgreeNudge(true);
+    setError('Please read and agree to the Terms of Use and Privacy Notice first.');
+    return false;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    if (!requireAgreement()) return;
 
     if (form.password !== form.confirmPassword) {
       setError('Passwords do not match.');
@@ -80,6 +90,7 @@ export default function RegisterPage() {
 
   const handleGoogle = async () => {
     setError('');
+    if (!requireAgreement()) return;
     if (!form.fullName.trim()) {
       setError('Enter your full name first, then continue with Google.');
       return;
@@ -254,6 +265,37 @@ export default function RegisterPage() {
                   </button>
                 </div>
               </div>
+
+              <label
+                className={`flex items-start gap-2.5 p-2.5 rounded-lg border cursor-pointer transition-colors ${
+                  agreeNudge && !agreed
+                    ? 'border-red-300 bg-red-50 dark:border-red-800 dark:bg-red-900/20'
+                    : agreed
+                    ? 'border-blue-200 bg-blue-50/60 dark:border-blue-800 dark:bg-blue-900/15'
+                    : 'border-gray-200 dark:border-slate-600'
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={agreed}
+                  onChange={e => {
+                    setAgreed(e.target.checked);
+                    if (e.target.checked) {
+                      setAgreeNudge(false);
+                      setError('');
+                    }
+                  }}
+                  className="mt-0.5 w-4 h-4 rounded border-gray-300 text-blue-800 focus:ring-blue-600 flex-shrink-0"
+                />
+                <span className="text-xs leading-relaxed text-gray-700 dark:text-gray-300">
+                  I have read and agree to the{' '}
+                  <Link to="/terms" target="_blank" rel="noopener" className="font-semibold text-blue-800 dark:text-blue-300 underline">
+                    Terms of Use &amp; Privacy Notice
+                  </Link>
+                  , and I allow PCC to collect and use my information for my records requests, as allowed by the Data Privacy Act
+                  of 2012 (RA 10173).
+                </span>
+              </label>
 
               <button
                 type="submit"

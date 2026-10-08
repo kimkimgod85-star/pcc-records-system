@@ -7,6 +7,7 @@ import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import AuthCallbackPage from './pages/AuthCallbackPage';
+import TermsPage from './pages/TermsPage';
 import StudentDashboard from './pages/StudentDashboard';
 import WelcomePage from './pages/WelcomePage';
 import RequestForm from './pages/RequestForm';
@@ -38,6 +39,7 @@ export const router = createBrowserRouter([
         ],
       },
       { path: 'auth/callback', Component: AuthCallbackPage },
+      { path: 'terms', Component: TermsPage },
       {
         Component: StudentLayout,
         children: [

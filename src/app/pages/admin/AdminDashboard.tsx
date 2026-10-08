@@ -9,6 +9,7 @@ import { loadSchedule, subscribeSchedule, todayISO } from '../../lib/scheduling'
 import { formatShortDate, type RequestStatus } from '../../lib/status';
 import { StatusBadge } from '../../components/StatusBadge';
 import { DeviceNotificationCard } from '../../components/DeviceNotificationPrompt';
+import { InstallAppBanner } from '../../components/InstallApp';
 import { useAuth } from '../../context/AuthContext';
 import { useDeviceNotificationState } from '../../lib/deviceNotifications';
 
@@ -105,6 +106,7 @@ export default function AdminDashboard() {
           <DeviceNotificationCard userId={user.id} admin />
         </div>
       )}
+      <InstallAppBanner className="mb-6" />
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">

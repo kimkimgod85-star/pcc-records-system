@@ -286,6 +286,10 @@ export default function LoginPage() {
                 Create an account
               </Link>
             </p>
+            <p className="mt-2 text-center text-xs text-gray-400 dark:text-gray-500">
+              By signing in, you agree to our{' '}
+              <Link to="/terms" className="underline hover:text-blue-700 dark:hover:text-blue-300">Terms &amp; Privacy</Link>.
+            </p>
             </>
             )}
             </>
