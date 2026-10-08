@@ -406,11 +406,11 @@ export default function RequestForm() {
             </h2>
 
             <div className="bg-gray-50 dark:bg-slate-900 rounded-xl p-5 space-y-3 mb-5">
-              {([
-                { label: 'Document Type', value: selectedDoc?.name, edit: 1 },
-                { label: 'Purpose', value: form.purpose, edit: 2 },
-                { label: 'Quantity', value: `${form.quantity} copy/copies`, edit: 2 },
-                { label: 'Processing', value: form.urgency === 'rush' ? 'Rush (2–3 days)' : 'Regular (5–7 days)', edit: 2 },
+              {[
+                { label: 'Document Type', value: selectedDoc?.name },
+                { label: 'Purpose', value: form.purpose },
+                { label: 'Quantity', value: `${form.quantity} copy/copies` },
+                { label: 'Processing', value: form.urgency === 'rush' ? 'Rush (2–3 days)' : 'Regular (5–7 days)' },
                 { label: 'Base Fee', value: selectedDoc ? formatPeso(selectedDoc.fee) : '—' },
                 { label: 'Rush Fee', value: form.urgency === 'rush' ? formatPeso(rushFee) : 'N/A' },
                 {
@@ -418,24 +418,11 @@ export default function RequestForm() {
                   value: formatPeso(totals.total),
                   highlight: true,
                 },
-              ] as { label: string; value?: string; edit?: number; highlight?: boolean }[]).map((item, i) => (
+              ].map((item, i) => (
                 <div key={i} className={`flex justify-between items-center gap-3 ${item.highlight ? 'pt-3 border-t border-gray-200 dark:border-slate-700' : ''}`}>
                   <span className="text-sm text-gray-500 dark:text-gray-400">{item.label}</span>
-                  <span className="flex items-center gap-2 min-w-0 text-right">
-                    <span className={`text-sm break-words ${item.highlight ? 'font-semibold text-blue-600 dark:text-blue-400' : 'text-gray-900 dark:text-white'}`}>
-                      {item.value}
-                    </span>
-                    {item.edit && (
-                      <button
-                        type="button"
-                        onClick={() => setStep(item.edit!)}
-                        aria-label={`Edit ${item.label}`}
-                        className="flex-shrink-0 inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-semibold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30"
-                      >
-                        <Pencil className="w-3 h-3" />
-                        Edit
-                      </button>
-                    )}
+                  <span className={`text-sm text-right break-words ${item.highlight ? 'font-semibold text-blue-600 dark:text-blue-400' : 'text-gray-900 dark:text-white'}`}>
+                    {item.value}
                   </span>
                 </div>
               ))}
