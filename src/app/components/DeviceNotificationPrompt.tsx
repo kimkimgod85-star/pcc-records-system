@@ -12,7 +12,7 @@ import { addNotification } from '../lib/notifications';
 const DISMISS_KEY = 'pcc-device-notif-dismissed';
 
 /** Full on/off control with every permission state explained. */
-export function DeviceNotificationCard({ userId }: { userId: string }) {
+export function DeviceNotificationCard({ userId, admin = false }: { userId: string; admin?: boolean }) {
   const { permission, enabled, active } = useDeviceNotificationState(userId);
   const [busy, setBusy] = useState(false);
 
@@ -33,8 +33,10 @@ export function DeviceNotificationCard({ userId }: { userId: string }) {
         userId,
         type: 'info',
         title: 'Notifications are on',
-        message: 'You’ll get updates from the PCC Registrar on this device.',
-        link: '/notifications',
+        message: admin
+          ? 'You’ll be alerted on this device for new requests, payments, and pickup bookings.'
+          : 'You’ll get updates from the PCC Registrar on this device.',
+        link: admin ? '/admin' : '/notifications',
       });
     } finally {
       setBusy(false);
@@ -93,7 +95,7 @@ export function DeviceNotificationCard({ userId }: { userId: string }) {
   }
 
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm p-4 sm:p-5 flex items-start gap-4">
+    <div id="device-alerts" className="scroll-mt-20 bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm p-4 sm:p-5 flex items-start gap-4">
       <div className={`w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 ${
         active ? 'bg-green-50 text-green-600 dark:bg-green-900/30 dark:text-green-400' : 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
       }`}>
@@ -111,7 +113,9 @@ export function DeviceNotificationCard({ userId }: { userId: string }) {
           </span>
         </div>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5 mb-3">
-          Get a pop-up on this phone or computer the moment your request or payment is updated, even when the site is closed.
+          {admin
+            ? 'Get a pop-up on this phone or computer when a student submits a request, sends a payment, or books a pickup, even when the site is closed.'
+            : 'Get a pop-up on this phone or computer the moment your request or payment is updated, even when the site is closed.'}
         </p>
         {body}
       </div>

@@ -2,10 +2,11 @@ import { useCallback, useEffect, useState } from 'react';
 import { isSupabaseConfigured, requireSupabase } from './supabase';
 import { formatPeso } from './documents';
 import { playOfficeChime, unlockChime } from './officeChime';
+import { formatPickup } from './status';
 
 export interface AdminAlert {
   id: string;
-  kind: 'request' | 'payment';
+  kind: 'request' | 'payment' | 'booking';
   title: string;
   detail: string;
   link: string;
@@ -25,7 +26,7 @@ function copies(quantity: unknown) {
   return `${n} ${n === 1 ? 'copy' : 'copies'}`;
 }
 
-/** Rings the office chime and lists a pop-up whenever a student submits a request or a payment. */
+/** Rings the office chime and lists a pop-up whenever a student submits a request, a payment, or books a pickup. */
 export function useAdminAlerts(enabled: boolean) {
   const [alerts, setAlerts] = useState<AdminAlert[]>([]);
 
@@ -80,6 +81,26 @@ export function useAdminAlerts(enabled: boolean) {
           title: 'New payment to verify',
           detail: `${who} · ${formatPeso(Number(row.amount))} via ${row.method === 'cashier' ? 'Cashier' : 'GCash'} for ${doc}${row.ref_no ? ` · Ref ${row.ref_no}` : ''}`,
           link: '/admin/payments',
+          at: Date.now(),
+        });
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'pickup_bookings' }, async payload => {
+        if (payload.eventType === 'DELETE') return;
+        const row = payload.new as Record<string, unknown>;
+        const old = payload.old as Record<string, unknown> | undefined;
+        const moved = payload.eventType === 'UPDATE';
+        if (moved && old && old.date === row.date && old.time === row.time) return;
+        const [who, request] = await Promise.all([
+          row.user_name ? Promise.resolve(String(row.user_name)) : studentName(row.user_id),
+          client.from('document_requests').select('request_code, document_name').eq('id', String(row.request_id)).maybeSingle(),
+        ]);
+        const doc = request.data ? `${request.data.document_name} (${request.data.request_code})` : String(row.request_type || 'a request');
+        push({
+          id: `book-${row.id}-${row.date}-${row.time}`,
+          kind: 'booking',
+          title: moved ? 'Pickup rescheduled' : 'New pickup booking',
+          detail: `${who} · ${doc} · ${formatPickup(String(row.date), String(row.time || ''), true)}`,
+          link: '/admin/scheduling',
           at: Date.now(),
         });
       })

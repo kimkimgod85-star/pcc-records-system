@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
-import { BellRing, CreditCard, FileText, Smartphone, Volume2, VolumeX, X } from 'lucide-react';
+import { BellRing, CalendarCheck, CreditCard, FileText, Smartphone, Volume2, VolumeX, X } from 'lucide-react';
 import type { AdminAlert } from '../lib/adminAlerts';
 import { isAlertSoundOn, onAlertSoundChange, playOfficeChime, setAlertSound } from '../lib/officeChime';
 import {
@@ -16,7 +16,7 @@ export function AdminAlertToasts({ alerts, onDismiss }: { alerts: AdminAlert[]; 
   return (
     <div className="fixed z-[60] top-16 lg:top-4 inset-x-3 sm:inset-x-auto sm:right-4 sm:w-96 space-y-2" aria-live="polite">
       {alerts.map(alert => {
-        const Icon = alert.kind === 'payment' ? CreditCard : FileText;
+        const Icon = alert.kind === 'payment' ? CreditCard : alert.kind === 'booking' ? CalendarCheck : FileText;
         return (
           <div
             key={alert.id}
@@ -29,6 +29,8 @@ export function AdminAlertToasts({ alerts, onDismiss }: { alerts: AdminAlert[]; 
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
               alert.kind === 'payment'
                 ? 'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400'
+                : alert.kind === 'booking'
+                ? 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400'
                 : 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
             }`}>
               <Icon className="w-5 h-5" />
@@ -37,7 +39,7 @@ export function AdminAlertToasts({ alerts, onDismiss }: { alerts: AdminAlert[]; 
               <p className="text-sm font-semibold text-gray-900 dark:text-white">{alert.title}</p>
               <p className="text-[13px] text-gray-600 dark:text-gray-300 mt-0.5 leading-snug break-words">{alert.detail}</p>
               <p className="text-xs font-medium text-blue-600 dark:text-blue-400 mt-1.5">
-                {alert.kind === 'payment' ? 'Open Payments' : 'Open Manage Requests'}
+                {alert.kind === 'payment' ? 'Open Payments' : alert.kind === 'booking' ? 'Open Scheduling' : 'Open Manage Requests'}
               </p>
             </div>
             <button
@@ -60,6 +62,7 @@ export function AdminAlertSettings({ userId, collapsed }: { userId: string; coll
   const [soundOn, setSoundOn] = useState(isAlertSoundOn);
   const { permission, active } = useDeviceNotificationState(userId);
   const [busy, setBusy] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => onAlertSoundChange(() => setSoundOn(isAlertSoundOn())), []);
 
@@ -69,14 +72,24 @@ export function AdminAlertSettings({ userId, collapsed }: { userId: string; coll
     if (next) playOfficeChime(true);
   };
 
+  const showHelp = () => {
+    navigate('/admin');
+    window.setTimeout(() => document.getElementById('device-alerts')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 150);
+  };
+
   const togglePhone = async () => {
     if (active) {
       disableDeviceNotifications(userId);
       return;
     }
+    if (permission === 'denied' || permission === 'unsupported') {
+      showHelp();
+      return;
+    }
     setBusy(true);
     try {
-      await enableDeviceNotifications(userId);
+      const result = await enableDeviceNotifications(userId);
+      if (result !== 'granted') showHelp();
     } finally {
       setBusy(false);
     }
@@ -98,10 +111,12 @@ export function AdminAlertSettings({ userId, collapsed }: { userId: string; coll
         collapsed={collapsed}
         on={active}
         label="Alerts"
-        title={`Device alerts: ${phoneLabel}`}
+        title={permission === 'denied'
+          ? 'Device alerts are blocked by the browser (click for how to allow)'
+          : `Device alerts: ${phoneLabel} (click to turn ${active ? 'off' : 'on'})`}
         icon={Smartphone}
         onClick={togglePhone}
-        disabled={busy || permission === 'denied' || permission === 'unsupported'}
+        disabled={busy}
       />
     </>
   );

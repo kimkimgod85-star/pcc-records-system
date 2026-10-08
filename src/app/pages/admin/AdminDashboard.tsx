@@ -8,6 +8,9 @@ import { fetchManagedUsers, subscribeUsers } from '../../lib/profiles';
 import { loadSchedule, subscribeSchedule, todayISO } from '../../lib/scheduling';
 import { formatShortDate, type RequestStatus } from '../../lib/status';
 import { StatusBadge } from '../../components/StatusBadge';
+import { DeviceNotificationCard } from '../../components/DeviceNotificationPrompt';
+import { useAuth } from '../../context/AuthContext';
+import { useDeviceNotificationState } from '../../lib/deviceNotifications';
 
 const PIE_COLORS = ['#2563EB', '#16A34A', '#9333EA', '#EA580C', '#0891B2'];
 
@@ -37,6 +40,8 @@ export default function AdminDashboard() {
   const [totalRequests, setTotalRequests] = useState(0);
   const [pending, setPending] = useState(0);
   const [completed, setCompleted] = useState(0);
+  const { user } = useAuth();
+  const { active: deviceAlertsOn } = useDeviceNotificationState(user?.id);
   const [users, setUsers] = useState(0);
   const [processing, setProcessing] = useState(0);
   const [scheduledToday, setScheduledToday] = useState(0);
@@ -94,6 +99,12 @@ export default function AdminDashboard() {
           Live overview of requests, payments, and pickups.
         </p>
       </div>
+
+      {user && !deviceAlertsOn && (
+        <div className="mb-6">
+          <DeviceNotificationCard userId={user.id} admin />
+        </div>
+      )}
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
