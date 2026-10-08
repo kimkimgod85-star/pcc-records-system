@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router';
-import { FileText, ChevronRight, CheckCircle, AlertCircle, Tag, X, Clock } from 'lucide-react';
+import { Link, useSearchParams } from 'react-router';
+import { FileText, ChevronRight, CheckCircle, AlertCircle, Tag, X, Clock, ArrowLeft, Pencil } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { createRequest } from '../lib/requests';
 import { playSubmitSound } from '../lib/officeChime';
@@ -29,7 +29,7 @@ const PURPOSES = [
 
 export default function RequestForm() {
   const { user } = useAuth();
-  const [step, setStep] = useState(1);
+  const [searchParams, setSearchParams] = useSearchParams();
   const [form, setForm] = useState({
     documentType: '',
     purpose: '',
@@ -37,6 +37,18 @@ export default function RequestForm() {
     notes: '',
     urgency: 'regular' as ProcessingUrgency,
   });
+  // The step lives in the URL so the phone/browser Back button returns to the previous step instead of leaving the form.
+  const requestedStep = Number(searchParams.get('step')) || 1;
+  const step = !form.documentType ? 1 : !form.purpose ? Math.min(requestedStep, 2) : Math.min(Math.max(requestedStep, 1), 3);
+  const setStep = (next: number) => {
+    setSearchParams(prev => {
+      const params = new URLSearchParams(prev);
+      if (next <= 1) params.delete('step');
+      else params.set('step', String(next));
+      return params;
+    });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
   const [submitted, setSubmitted] = useState(false);
   const [submittedId, setSubmittedId] = useState('');
   const [loading, setLoading] = useState(false);
@@ -62,7 +74,6 @@ export default function RequestForm() {
       setRushFee(getRushFee(catalog));
       setForm(prev => {
         if (!prev.documentType || available.some(item => item.code === prev.documentType)) return prev;
-        setStep(1);
         return { ...prev, documentType: '' };
       });
     };
@@ -179,7 +190,13 @@ export default function RequestForm() {
           { num: 3, label: 'Review' },
         ].map((s, i, arr) => (
           <div key={s.num} className="flex items-center flex-1 last:flex-none">
-            <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setStep(s.num)}
+              disabled={step <= s.num}
+              title={step > s.num ? `Go back to ${s.label}` : undefined}
+              className="flex items-center gap-2 rounded-full disabled:cursor-default enabled:hover:opacity-80"
+            >
               <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors ${
                 step > s.num
                   ? 'bg-green-500 text-white'
@@ -189,10 +206,14 @@ export default function RequestForm() {
               }`}>
                 {step > s.num ? <CheckCircle className="w-4 h-4" /> : s.num}
               </div>
-              <span className={`text-xs hidden sm:block ${step === s.num ? 'text-blue-600 dark:text-blue-400 font-medium' : 'text-gray-400 dark:text-gray-500'}`}>
+              <span className={`text-xs hidden sm:block ${
+                step === s.num ? 'text-blue-600 dark:text-blue-400 font-medium'
+                : step > s.num ? 'text-green-600 dark:text-green-400 underline-offset-2 hover:underline'
+                : 'text-gray-400 dark:text-gray-500'
+              }`}>
                 {s.label}
               </span>
-            </div>
+            </button>
             {i < arr.length - 1 && (
               <div className={`flex-1 h-0.5 mx-3 ${step > s.num ? 'bg-green-500' : 'bg-gray-200 dark:bg-slate-700'}`} />
             )}
@@ -261,10 +282,18 @@ export default function RequestForm() {
               {/* Selected Document Summary */}
               <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800 flex items-center gap-3">
                 <span className="text-xl">{selectedDoc?.icon}</span>
-                <div>
+                <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-blue-700 dark:text-blue-300">{selectedDoc?.name}</p>
                   <p className="text-xs text-blue-600 dark:text-blue-400">Processing Fee: {selectedDoc ? formatPeso(selectedDoc.fee) : ''}</p>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => setStep(1)}
+                  className="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold text-blue-700 dark:text-blue-300 bg-white dark:bg-slate-800 border border-blue-200 dark:border-blue-700 hover:bg-blue-100 dark:hover:bg-slate-700 transition-colors"
+                >
+                  <Pencil className="w-3.5 h-3.5" />
+                  Change
+                </button>
               </div>
 
               <div>
@@ -352,9 +381,11 @@ export default function RequestForm() {
             <div className="mt-6 flex justify-between gap-3">
               <button
                 onClick={() => setStep(1)}
-                className="px-5 py-2.5 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-700 dark:text-gray-300 rounded-xl text-sm font-medium transition-colors"
+                className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-700 dark:text-gray-300 rounded-xl text-sm font-medium transition-colors"
               >
-                Back
+                <ArrowLeft className="w-4 h-4" />
+                <span className="sm:hidden">Back</span>
+                <span className="hidden sm:inline">Back to Document Type</span>
               </button>
               <button
                 onClick={() => setStep(3)}
@@ -375,11 +406,11 @@ export default function RequestForm() {
             </h2>
 
             <div className="bg-gray-50 dark:bg-slate-900 rounded-xl p-5 space-y-3 mb-5">
-              {[
-                { label: 'Document Type', value: selectedDoc?.name },
-                { label: 'Purpose', value: form.purpose },
-                { label: 'Quantity', value: `${form.quantity} copy/copies` },
-                { label: 'Processing', value: form.urgency === 'rush' ? 'Rush (2–3 days)' : 'Regular (5–7 days)' },
+              {([
+                { label: 'Document Type', value: selectedDoc?.name, edit: 1 },
+                { label: 'Purpose', value: form.purpose, edit: 2 },
+                { label: 'Quantity', value: `${form.quantity} copy/copies`, edit: 2 },
+                { label: 'Processing', value: form.urgency === 'rush' ? 'Rush (2–3 days)' : 'Regular (5–7 days)', edit: 2 },
                 { label: 'Base Fee', value: selectedDoc ? formatPeso(selectedDoc.fee) : '—' },
                 { label: 'Rush Fee', value: form.urgency === 'rush' ? formatPeso(rushFee) : 'N/A' },
                 {
@@ -387,11 +418,24 @@ export default function RequestForm() {
                   value: formatPeso(totals.total),
                   highlight: true,
                 },
-              ].map((item, i) => (
-                <div key={i} className={`flex justify-between items-center ${item.highlight ? 'pt-3 border-t border-gray-200 dark:border-slate-700' : ''}`}>
+              ] as { label: string; value?: string; edit?: number; highlight?: boolean }[]).map((item, i) => (
+                <div key={i} className={`flex justify-between items-center gap-3 ${item.highlight ? 'pt-3 border-t border-gray-200 dark:border-slate-700' : ''}`}>
                   <span className="text-sm text-gray-500 dark:text-gray-400">{item.label}</span>
-                  <span className={`text-sm ${item.highlight ? 'font-semibold text-blue-600 dark:text-blue-400' : 'text-gray-900 dark:text-white'}`}>
-                    {item.value}
+                  <span className="flex items-center gap-2 min-w-0 text-right">
+                    <span className={`text-sm break-words ${item.highlight ? 'font-semibold text-blue-600 dark:text-blue-400' : 'text-gray-900 dark:text-white'}`}>
+                      {item.value}
+                    </span>
+                    {item.edit && (
+                      <button
+                        type="button"
+                        onClick={() => setStep(item.edit!)}
+                        aria-label={`Edit ${item.label}`}
+                        className="flex-shrink-0 inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-semibold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30"
+                      >
+                        <Pencil className="w-3 h-3" />
+                        Edit
+                      </button>
+                    )}
                   </span>
                 </div>
               ))}
@@ -420,9 +464,11 @@ export default function RequestForm() {
             <div className="flex justify-between gap-3">
               <button
                 onClick={() => setStep(2)}
-                className="px-5 py-2.5 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-700 dark:text-gray-300 rounded-xl text-sm font-medium transition-colors"
+                className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-700 dark:text-gray-300 rounded-xl text-sm font-medium transition-colors"
               >
-                Back
+                <ArrowLeft className="w-4 h-4" />
+                <span className="sm:hidden">Back</span>
+                <span className="hidden sm:inline">Back to Details</span>
               </button>
               <button
                 onClick={handleSubmit}
