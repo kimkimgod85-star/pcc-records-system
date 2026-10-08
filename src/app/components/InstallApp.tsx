@@ -42,32 +42,43 @@ function Steps({ mode, compact = false }: { mode: InstallMode; compact?: boolean
 
 function PhoneMockup() {
   return (
-    <div className="relative mx-auto w-[200px] sm:w-[220px]" aria-hidden="true">
+    <div className="relative mx-auto w-[220px] flex-shrink-0" aria-hidden="true">
       <div className="absolute -inset-6 bg-blue-500/20 dark:bg-blue-400/10 blur-3xl rounded-full" />
-      <div className="relative rounded-[2.2rem] border-[6px] border-slate-900 dark:border-slate-700 bg-gradient-to-b from-blue-700 to-blue-900 shadow-2xl overflow-hidden aspect-[9/18]">
-        <div className="mx-auto mt-2 w-16 h-4 rounded-full bg-slate-900 dark:bg-slate-700" />
-        <div className="px-4 pt-6 grid grid-cols-3 gap-x-3 gap-y-4">
+      <div className="relative w-[220px] h-[440px] rounded-[2.4rem] border-[6px] border-slate-900 dark:border-slate-700 bg-gradient-to-b from-blue-600 via-blue-700 to-blue-900 shadow-2xl overflow-hidden">
+        <div className="flex items-center justify-between px-5 pt-2.5 text-[9px] font-semibold text-white/90">
+          <span>9:41</span>
+          <span className="w-14 h-4 rounded-full bg-slate-900 dark:bg-slate-700" />
+          <span className="flex items-center gap-0.5">
+            <span className="w-3 h-1.5 rounded-sm bg-white/80" />
+          </span>
+        </div>
+
+        <div className="mt-6 px-4 grid grid-cols-3 gap-y-4 justify-items-center">
           {Array.from({ length: 9 }).map((_, i) => (
             i === 4 ? (
-              <div key={i} className="flex flex-col items-center gap-1">
-                <img src={APP_ICON} alt="" className="w-12 h-12 rounded-2xl bg-white p-1 shadow-lg ring-2 ring-white/70" />
-                <span className="text-[9px] font-semibold text-white leading-none">PCC Records</span>
+              <div key={i} className="w-14 flex flex-col items-center gap-1">
+                <span className="w-11 h-11 rounded-xl bg-white shadow-lg ring-2 ring-white/70 flex items-center justify-center overflow-hidden flex-shrink-0">
+                  <img src={APP_ICON} alt="" className="w-9 h-9 max-w-none object-contain" />
+                </span>
+                <span className="text-[8px] font-semibold text-white leading-none whitespace-nowrap">PCC Records</span>
               </div>
             ) : (
-              <div key={i} className="flex flex-col items-center gap-1 opacity-40">
-                <div className="w-12 h-12 rounded-2xl bg-white/25" />
-                <span className="w-8 h-1.5 rounded-full bg-white/40" />
+              <div key={i} className="w-14 flex flex-col items-center gap-1 opacity-40">
+                <span className="w-11 h-11 rounded-xl bg-white/25 flex-shrink-0" />
+                <span className="w-7 h-1.5 rounded-full bg-white/40" />
               </div>
             )
           ))}
         </div>
-        <div className="absolute bottom-3 inset-x-4 rounded-2xl bg-white/95 dark:bg-slate-800/95 p-2.5 flex items-start gap-2 shadow-lg">
-          <img src={APP_ICON} alt="" className="w-6 h-6 rounded-md flex-shrink-0" />
+
+        <div className="absolute bottom-6 inset-x-3 rounded-2xl bg-white/95 dark:bg-slate-800/95 p-2.5 flex items-start gap-2 shadow-lg">
+          <img src={APP_ICON} alt="" className="w-6 h-6 max-w-none object-contain rounded-md flex-shrink-0" />
           <div className="min-w-0">
             <p className="text-[9px] font-bold text-gray-900 dark:text-white leading-tight">Ready for pickup</p>
-            <p className="text-[8px] text-gray-600 dark:text-gray-300 leading-tight">Your Transcript of Records is ready at the Registrar’s Office.</p>
+            <p className="text-[8px] text-gray-600 dark:text-gray-300 leading-snug">Your Transcript of Records is ready at the Registrar’s Office.</p>
           </div>
         </div>
+        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-20 h-1 rounded-full bg-white/60" />
       </div>
     </div>
   );
