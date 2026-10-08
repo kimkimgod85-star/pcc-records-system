@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Search, CheckCircle, X, ChevronRight, ArrowRight, AlertCircle, Loader2, StickyNote, CalendarClock, XCircle } from 'lucide-react';
+import { Search, CheckCircle, X, ChevronRight, ArrowRight, AlertCircle, Loader2, StickyNote, CalendarClock } from 'lucide-react';
 import { fetchRequests, subscribeRequests, updateRequestStatus, type StudentRequest } from '../../lib/requests';
 import { formatPickup, formatShortDate, paymentLabel, type PaymentStatus, type RequestStatus } from '../../lib/status';
 import { useRevealOnSmallScreen } from '../../lib/useRevealOnSmallScreen';
 import { StatusBadge } from '../../components/StatusBadge';
 import { RejectReasonDialog, REQUEST_REJECT_REASONS } from '../../components/RejectReasonDialog';
+import { RejectionNotice } from '../../components/RejectionNotice';
 
 type AdminRequestRow = {
   uuid: string;
@@ -361,13 +362,13 @@ export default function AdminRequests() {
               </div>
 
               {selectedReq.status === 'rejected' && (
-                <div className="mx-5 mb-4 p-3 rounded-xl bg-red-50 border border-red-200 dark:bg-red-900/15 dark:border-red-800/60 flex items-start gap-2.5">
-                  <XCircle className="w-5 h-5 mt-0.5 flex-shrink-0 text-red-600 dark:text-red-400" />
-                  <div className="min-w-0">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-red-700 dark:text-red-300">Reason sent to student</p>
-                    <p className="text-sm text-red-900 dark:text-red-100 mt-0.5 break-words">{selectedReq.rejectionReason || 'No reason recorded.'}</p>
-                  </div>
-                </div>
+                <RejectionNotice
+                  compact
+                  className="mx-5 mb-4"
+                  title="Rejected · sent to student"
+                  text={selectedReq.rejectionReason}
+                  fallback="No reason recorded."
+                />
               )}
 
               {selectedReq.notes && (

@@ -1,23 +1,9 @@
 import { useEffect, useState } from 'react';
-import { AlertCircle, Loader2, X, XCircle } from 'lucide-react';
+import { AlertCircle, Check, Loader2, PenLine, X, XCircle } from 'lucide-react';
 import { composeReason } from '../lib/requests';
+import { RejectionNotice } from './RejectionNotice';
 
-export const REQUEST_REJECT_REASONS = [
-  'Incomplete or incorrect information in the request',
-  'Student ID or name does not match our school records',
-  'Unsettled school account or missing clearance',
-  'Missing requirement (valid ID, authorization letter, or clearance)',
-  'Duplicate request — you already have an active request for this document',
-  'This document cannot be released yet for your record',
-];
-
-export const PAYMENT_REJECT_REASONS = [
-  'Proof of payment is blurry or unreadable',
-  'Amount paid does not match the fee',
-  'Reference / OR number not found or does not match',
-  'This payment was already used for another request',
-  'Wrong recipient or wrong GCash account',
-];
+export { PAYMENT_REJECT_REASONS, REQUEST_REJECT_REASONS } from '../lib/rejectReasons';
 
 const OTHER = '__other__';
 
@@ -64,6 +50,7 @@ export function RejectReasonDialog({
 
   const reason = choice === OTHER ? custom.trim() : choice;
   const valid = reason.length >= 3;
+  const isPayment = /payment/i.test(title);
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -73,18 +60,25 @@ export function RejectReasonDialog({
   };
 
   return (
-    <div className="fade-in fixed inset-0 z-[70] flex items-end sm:items-center justify-center bg-black/50 p-0 sm:p-4" onClick={() => !busy && onCancel()}>
+    <div className="fade-in fixed inset-0 z-[70] flex items-end sm:items-center justify-center bg-slate-900/60 backdrop-blur-[2px] p-0 sm:p-4" onClick={() => !busy && onCancel()}>
       <form
         onSubmit={submit}
         onClick={e => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
         aria-labelledby="reject-title"
-        className="rise-in w-full sm:max-w-lg max-h-[92dvh] overflow-y-auto bg-white dark:bg-slate-800 rounded-t-2xl sm:rounded-2xl shadow-2xl"
+        className="rise-in w-full sm:max-w-lg max-h-[92dvh] flex flex-col bg-white dark:bg-slate-800 rounded-t-3xl sm:rounded-2xl shadow-2xl overflow-hidden"
       >
-        <div className="flex items-start justify-between gap-3 px-5 pt-5 pb-3 border-b border-gray-100 dark:border-slate-700">
-          <div className="min-w-0">
-            <h2 id="reject-title" className="font-semibold text-gray-900 dark:text-white" style={{ fontFamily: 'Poppins, sans-serif' }}>
+        <div className="sm:hidden flex justify-center pt-2.5">
+          <span className="w-10 h-1 rounded-full bg-gray-300 dark:bg-slate-600" />
+        </div>
+
+        <div className="flex items-start gap-3 px-5 pt-4 sm:pt-5 pb-4 border-b border-gray-100 dark:border-slate-700">
+          <span className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/40 flex items-center justify-center flex-shrink-0">
+            <XCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <h2 id="reject-title" className="font-semibold text-gray-900 dark:text-white leading-tight" style={{ fontFamily: 'Poppins, sans-serif' }}>
               {title}
             </h2>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5 break-words">{subject}</p>
@@ -94,28 +88,28 @@ export function RejectReasonDialog({
             onClick={onCancel}
             disabled={busy}
             aria-label="Close"
-            className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-slate-700"
+            className="p-1.5 -mr-1 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-slate-700"
           >
-            <X className="w-4 h-4" />
+            <X className="w-5 h-5" />
           </button>
         </div>
 
-        <div className="px-5 py-4 space-y-4">
+        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
           <fieldset>
-            <legend className="text-sm font-semibold text-gray-900 dark:text-white mb-2">
-              Reason <span className="text-red-500">*</span>
-              <span className="font-normal text-gray-500 dark:text-gray-400"> — the student will see this</span>
+            <legend className="flex items-baseline justify-between w-full mb-2">
+              <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                Reason <span className="text-red-500">*</span>
+              </span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">Student will see this</span>
             </legend>
-            <div className="space-y-1.5">
+            <div className="rounded-xl border border-gray-200 dark:border-slate-600 divide-y divide-gray-100 dark:divide-slate-700 overflow-hidden">
               {[...reasons, OTHER].map(option => {
                 const selected = choice === option;
                 return (
                   <label
                     key={option}
-                    className={`flex items-start gap-2.5 p-2.5 rounded-xl border cursor-pointer transition-colors ${
-                      selected
-                        ? 'border-red-300 bg-red-50 dark:border-red-800 dark:bg-red-900/20'
-                        : 'border-gray-200 dark:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-700/50'
+                    className={`flex items-center gap-3 px-3.5 py-2.5 cursor-pointer transition-colors ${
+                      selected ? 'bg-red-50 dark:bg-red-900/20' : 'hover:bg-gray-50 dark:hover:bg-slate-700/40'
                     }`}
                   >
                     <input
@@ -124,10 +118,17 @@ export function RejectReasonDialog({
                       value={option}
                       checked={selected}
                       onChange={() => setChoice(option)}
-                      className="mt-0.5 w-4 h-4 text-red-600 focus:ring-red-500"
+                      className="sr-only"
                     />
-                    <span className="text-sm text-gray-800 dark:text-gray-200 leading-snug">
-                      {option === OTHER ? 'Other reason (type below)' : option}
+                    <span className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
+                      selected ? 'border-red-600 bg-red-600' : 'border-gray-300 dark:border-slate-500'
+                    }`}>
+                      {selected && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
+                    </span>
+                    <span className={`text-sm leading-snug ${selected ? 'text-red-900 dark:text-red-100 font-medium' : 'text-gray-700 dark:text-gray-200'}`}>
+                      {option === OTHER
+                        ? <span className="inline-flex items-center gap-1.5"><PenLine className="w-3.5 h-3.5" /> Other reason</span>
+                        : option}
                     </span>
                   </label>
                 );
@@ -150,8 +151,9 @@ export function RejectReasonDialog({
           </fieldset>
 
           <div>
-            <label htmlFor="reject-message" className="block text-sm font-semibold text-gray-900 dark:text-white mb-1">
-              Message to the student <span className="font-normal text-gray-500 dark:text-gray-400">(optional)</span>
+            <label htmlFor="reject-message" className="flex items-baseline justify-between mb-2">
+              <span className="text-sm font-semibold text-gray-900 dark:text-white">Message to the student</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">Optional</span>
             </label>
             <textarea
               id="reject-message"
@@ -160,14 +162,20 @@ export function RejectReasonDialog({
               onChange={e => setMessage(e.target.value)}
               maxLength={400}
               placeholder="e.g. Please visit the Registrar’s Office with your valid ID, then submit a new request."
-              className="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-600 rounded-xl text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500 resize-y"
+              className="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-600 rounded-xl text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500 resize-none"
             />
+            <p className="mt-1 text-right text-[11px] text-gray-400">{message.length}/400</p>
           </div>
 
           {valid && (
-            <div className="p-3 rounded-xl bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700">
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Student will see</p>
-              <p className="text-sm text-gray-800 dark:text-gray-200 mt-1 break-words">{composeReason(reason, message)}</p>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">Preview: what the student sees</p>
+              <RejectionNotice
+                compact
+                title={isPayment ? 'Payment not verified' : 'Request not approved'}
+                text={composeReason(reason, message)}
+                knownReasons={[reason]}
+              />
             </div>
           )}
 
@@ -179,19 +187,19 @@ export function RejectReasonDialog({
           )}
         </div>
 
-        <div className="flex gap-2 px-5 pb-5 pt-1 safe-area-pb">
+        <div className="flex gap-2 px-5 py-3.5 border-t border-gray-100 dark:border-slate-700 bg-gray-50/70 dark:bg-slate-800 safe-area-pb">
           <button
             type="button"
             onClick={onCancel}
             disabled={busy}
-            className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-slate-700 dark:text-gray-200 dark:hover:bg-slate-600 disabled:opacity-60"
+            className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold bg-white border border-gray-200 text-gray-700 hover:bg-gray-100 dark:bg-slate-700 dark:border-slate-600 dark:text-gray-200 dark:hover:bg-slate-600 disabled:opacity-60"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={busy}
-            className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold bg-red-600 hover:bg-red-700 text-white disabled:opacity-60"
+            className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold bg-red-600 hover:bg-red-700 text-white shadow-sm disabled:opacity-60"
           >
             {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <XCircle className="w-4 h-4" />}
             Reject and notify

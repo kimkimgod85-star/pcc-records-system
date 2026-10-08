@@ -9,6 +9,7 @@ import { fetchRequests, subscribeRequests, type StudentRequest } from '../lib/re
 import { formatLongDate, paymentLabel, statusToStep } from '../lib/status';
 import { useRevealOnSmallScreen } from '../lib/useRevealOnSmallScreen';
 import { formatPeso } from '../lib/documents';
+import { RejectionNotice } from '../components/RejectionNotice';
 
 function toTrackItem(r: StudentRequest) {
   return {
@@ -33,15 +34,22 @@ function toTrackItem(r: StudentRequest) {
 function PaymentNotice({ item }: { item: ReturnType<typeof toTrackItem> }) {
   if (item.status === 'rejected') {
     return (
-      <div className="mt-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl flex items-start gap-2">
-        <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
-        <div className="text-xs text-red-700 dark:text-red-300 min-w-0">
-          <p>This request was not approved.</p>
-          {item.rejectionReason
-            ? <p className="mt-1 break-words"><span className="font-semibold">Reason:</span> {item.rejectionReason}</p>
-            : <p className="mt-1">Please contact the Registrar’s Office for details.</p>}
-        </div>
-      </div>
+      <RejectionNotice
+        className="mt-3"
+        title="Request not approved"
+        text={item.rejectionReason}
+        action={
+          <div className="flex flex-col min-[400px]:flex-row min-[400px]:items-center justify-between gap-2">
+            <p className="text-xs text-gray-500 dark:text-gray-400">Fix the issue, then send a new request.</p>
+            <Link
+              to="/request"
+              className="inline-flex items-center justify-center gap-1 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold flex-shrink-0"
+            >
+              Request again <ChevronRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+        }
+      />
     );
   }
   if (item.paymentStatus === 'verified') {
@@ -72,6 +80,27 @@ function PaymentNotice({ item }: { item: ReturnType<typeof toTrackItem> }) {
     );
   }
   const rejected = item.paymentStatus === 'rejected';
+  if (rejected) {
+    return (
+      <RejectionNotice
+        className="mt-3"
+        title="Payment not verified"
+        text={item.paymentRejectionReason}
+        fallback="Your proof of payment could not be verified."
+        action={
+          <div className="flex flex-col min-[400px]:flex-row min-[400px]:items-center justify-between gap-2">
+            <p className="text-xs text-gray-500 dark:text-gray-400">Upload a clear proof again. You don’t need to send a new request.</p>
+            <Link
+              to={`/payment?request=${encodeURIComponent(item.id)}`}
+              className="inline-flex items-center justify-center gap-1 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold flex-shrink-0"
+            >
+              Submit again <ChevronRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+        }
+      />
+    );
+  }
   return (
     <div className={`mt-3 p-3 rounded-xl border flex flex-wrap items-center gap-2 ${
       rejected
