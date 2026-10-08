@@ -105,7 +105,7 @@ export default function LoginPage() {
               <img src={PCC_LOGO_URL} alt="PCC logo" className="h-14 w-auto object-contain mb-5 drop-shadow" />
               <p className="text-[12px] uppercase tracking-[0.18em] text-blue-200">Registrar’s Office</p>
               <h2 className="mt-2 text-xl font-semibold leading-snug" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                School records, without the queue.
+                Your school records, just a click away.
               </h2>
             </div>
             <p className="text-xs text-blue-100 leading-relaxed">
