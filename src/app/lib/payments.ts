@@ -1,7 +1,7 @@
 import { requireSupabase } from './supabase';
 import { addNotification } from './notifications';
 import { formatPeso } from './documents';
-import { formatShortDate, tableMissing } from './status';
+import { formatShortDate, isRequestStatus, tableMissing, type RequestStatus } from './status';
 import { trackLink, updateRequest, updateRequestWithOptional } from './requests';
 import { listenRealtime } from './realtime';
 
@@ -22,6 +22,7 @@ export interface PaymentRecord {
   status: 'pending' | 'verified' | 'rejected';
   refNo: string;
   screenshotPath: string;
+  requestStatus: RequestStatus;
 }
 
 function mapRow(row: Record<string, unknown>): PaymentRecord {
@@ -43,6 +44,7 @@ function mapRow(row: Record<string, unknown>): PaymentRecord {
     status: row.status === 'verified' || row.status === 'rejected' ? row.status : 'pending',
     refNo: String(row.ref_no || 'N/A'),
     screenshotPath: String(row.screenshot_path || ''),
+    requestStatus: isRequestStatus(request.status) ? request.status : 'pending',
   };
 }
 
@@ -55,7 +57,7 @@ export async function fetchPayments(userId?: string): Promise<PaymentRecord[]> {
     const client = requireSupabase();
     let query = client
       .from('payments')
-      .select('*, document_requests(request_code, document_name, user_id, profiles(full_name))')
+      .select('*, document_requests(request_code, document_name, user_id, status, profiles(full_name))')
       .order('created_at', { ascending: false });
     if (userId) query = query.eq('user_id', userId);
     const { data, error } = await query;
@@ -103,7 +105,7 @@ export async function submitPayment(input: {
       screenshot_path: screenshotPath || null,
       status: 'pending',
     })
-    .select('*, document_requests(request_code, document_name, user_id, profiles(full_name))')
+    .select('*, document_requests(request_code, document_name, user_id, status, profiles(full_name))')
     .single();
   if (error) throw new Error(error.message || 'Could not save payment.');
   if (!data) throw new Error('Could not save payment.');

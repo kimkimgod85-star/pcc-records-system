@@ -1,13 +1,34 @@
 import { useEffect, useState } from 'react';
 import {
   Search, CheckCircle, XCircle, X, Smartphone, MapPin, ChevronRight, Loader2,
-  AlertCircle, Wallet, Clock, Receipt, RotateCcw, ImageOff, ExternalLink,
+  AlertCircle, Wallet, Clock, Receipt, RotateCcw, ImageOff, ExternalLink, ArrowRight,
 } from 'lucide-react';
+import { Link } from 'react-router';
 import { fetchPayments, screenshotUrl, subscribePayments, updatePaymentStatus, type PaymentRecord } from '../../lib/payments';
+import { subscribeRequests, updateRequestStatus } from '../../lib/requests';
+import { REQUEST_STATUS_LABEL, type RequestStatus } from '../../lib/status';
+import { StatusBadge } from '../../components/StatusBadge';
 import { useRevealOnSmallScreen } from '../../lib/useRevealOnSmallScreen';
 import { PAYMENT_REJECT_REASONS, RejectReasonDialog } from '../../components/RejectReasonDialog';
 
 type PayStatus = PaymentRecord['status'];
+
+const AUTO_PROCESS_KEY = 'pcc-admin-auto-process';
+
+const NEXT_REQUEST_STEP: Partial<Record<RequestStatus, { status: RequestStatus; label: string; hint: string }>> = {
+  pending: { status: 'approved', label: 'Approve request', hint: 'The request is still pending review.' },
+  approved: { status: 'processing', label: 'Start processing', hint: 'Payment is verified, so the document can be prepared.' },
+  processing: { status: 'ready', label: 'Mark Ready for Pickup', hint: 'The student will be told to book or come for pickup.' },
+  ready: { status: 'completed', label: 'Mark as Completed', hint: 'Use this once the student claims the document.' },
+};
+
+function readAutoProcess() {
+  try {
+    return localStorage.getItem(AUTO_PROCESS_KEY) !== 'off';
+  } catch {
+    return true;
+  }
+}
 
 const STATUS: Record<PayStatus, { label: string; badge: string; dot: string }> = {
   pending: {
@@ -71,12 +92,48 @@ export default function AdminPayments() {
   const [saving, setSaving] = useState<PayStatus | null>(null);
   const [error, setError] = useState('');
   const [rejecting, setRejecting] = useState(false);
+  const [autoProcess, setAutoProcess] = useState(readAutoProcess);
+  const [advancing, setAdvancing] = useState(false);
+  const [notice, setNotice] = useState('');
   const detailRef = useRevealOnSmallScreen<HTMLDivElement>(selectedId ?? undefined);
 
   useEffect(() => {
-    fetchPayments().then(setPayments);
-    return subscribePayments(() => { fetchPayments().then(setPayments); });
+    const refresh = () => { fetchPayments().then(setPayments); };
+    refresh();
+    const stopPayments = subscribePayments(refresh);
+    const stopRequests = subscribeRequests(refresh);
+    return () => {
+      stopPayments();
+      stopRequests();
+    };
   }, []);
+
+  const toggleAutoProcess = (on: boolean) => {
+    setAutoProcess(on);
+    try {
+      localStorage.setItem(AUTO_PROCESS_KEY, on ? 'on' : 'off');
+    } catch {
+      /* ignore */
+    }
+  };
+
+  const setRequestStatus = (requestUuid: string, requestStatus: RequestStatus) =>
+    setPayments(prev => prev.map(p => p.requestUuid === requestUuid ? { ...p, requestStatus } : p));
+
+  const advanceRequest = async (row: PaymentRecord, next: RequestStatus) => {
+    setAdvancing(true);
+    setError('');
+    setNotice('');
+    try {
+      await updateRequestStatus(row.requestUuid, next, row.userId, row.document, row.reqId);
+      setRequestStatus(row.requestUuid, next);
+      setNotice(`${row.reqId} is now “${REQUEST_STATUS_LABEL[next]}”. The student was notified.`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not update the request. Please try again.');
+    } finally {
+      setAdvancing(false);
+    }
+  };
 
   const selected = payments.find(p => p.id === selectedId) ?? null;
 
@@ -98,15 +155,26 @@ export default function AdminPayments() {
   const select = (id: string) => {
     setSelectedId(id);
     setError('');
+    setNotice('');
   };
 
   const updateStatus = async (row: PaymentRecord, status: PayStatus, reason = '') => {
     setSaving(status);
     setError('');
+    setNotice('');
     try {
       await updatePaymentStatus(row.uuid, status, row.requestUuid, row.userId, reason);
       setPayments(prev => prev.map(p => p.id === row.id ? { ...p, status } : p));
       setRejecting(false);
+      if (status === 'verified') {
+        if (autoProcess && row.requestStatus === 'approved') {
+          await updateRequestStatus(row.requestUuid, 'processing', row.userId, row.document, row.reqId);
+          setRequestStatus(row.requestUuid, 'processing');
+          setNotice(`Payment verified and ${row.reqId} moved to “Processing”. The student was notified.`);
+        } else {
+          setNotice('Payment verified. The student was notified.');
+        }
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not update the payment. Please try again.');
     } finally {
@@ -365,7 +433,9 @@ export default function AdminPayments() {
                   }`}
                 >
                   {saving === 'verified' ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
-                  {selected.status === 'verified' ? 'Verified' : 'Verify'}
+                  {selected.status === 'verified'
+                    ? 'Verified'
+                    : autoProcess && selected.requestStatus === 'approved' ? 'Verify & Process' : 'Verify'}
                 </button>
                 <button
                   type="button"
@@ -381,6 +451,65 @@ export default function AdminPayments() {
                   {selected.status === 'rejected' ? 'Rejected' : 'Reject'}
                 </button>
               </div>
+
+              {selected.status === 'pending' && selected.requestStatus === 'approved' && (
+                <label className="mt-3 flex items-start gap-2.5 p-3 rounded-xl bg-gray-50 dark:bg-slate-900/50 border border-gray-200 dark:border-slate-700 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={autoProcess}
+                    onChange={e => toggleAutoProcess(e.target.checked)}
+                    className="mt-0.5 w-4 h-4 rounded text-blue-600 focus:ring-blue-500"
+                  />
+                  <span className="text-sm text-gray-700 dark:text-gray-300 leading-snug">
+                    Start processing right after verifying
+                    <span className="block text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                      Moves {selected.reqId} to “Processing” in the same click, no need to open Manage Requests.
+                    </span>
+                  </span>
+                </label>
+              )}
+
+              {notice && (
+                <div className="mt-3 p-3 rounded-xl bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 flex items-start gap-2">
+                  <CheckCircle className="w-4 h-4 mt-0.5 flex-shrink-0 text-green-600" />
+                  <p className="text-sm text-green-800 dark:text-green-200">{notice}</p>
+                </div>
+              )}
+
+              {selected.status === 'verified' && (() => {
+                const next = NEXT_REQUEST_STEP[selected.requestStatus];
+                return (
+                  <div className="mt-4 pt-4 border-t border-gray-100 dark:border-slate-700">
+                    <div className="flex items-center justify-between gap-3 mb-2">
+                      <p className="text-sm font-semibold text-gray-900 dark:text-white">Request {selected.reqId}</p>
+                      <StatusBadge status={selected.requestStatus} />
+                    </div>
+                    {next ? (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => advanceRequest(selected, next.status)}
+                          disabled={advancing || saving !== null}
+                          className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-sm disabled:opacity-60"
+                        >
+                          {advancing ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
+                          {next.label}
+                        </button>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5">{next.hint}</p>
+                      </>
+                    ) : (
+                      <p className="text-sm text-gray-500 dark:text-gray-400">No further steps for this request.</p>
+                    )}
+                    <Link
+                      to="/admin/requests"
+                      className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline"
+                    >
+                      Open in Manage Requests <ExternalLink className="w-3.5 h-3.5" />
+                    </Link>
+                  </div>
+                );
+              })()}
+
               {selected.status !== 'pending' && (
                 <button
                   type="button"
