@@ -31,6 +31,7 @@ export default function SchedulingPage() {
   const [searchParams] = useSearchParams();
   const today = new Date();
   const [requests, setRequests] = useState<StudentRequest[]>([]);
+  const [loaded, setLoaded] = useState(false);
   const bookableRequests = useMemo(() => getBookableRequests(requests, user?.id), [requests, user?.id]);
   const requestedId = searchParams.get('request');
   const [schedule, setSchedule] = useState<ScheduleState>({
@@ -61,7 +62,8 @@ export default function SchedulingPage() {
           || bookable[0]?.id
           || ''
         ));
-      });
+      })
+      .finally(() => setLoaded(true));
     return subscribeSchedule(refresh);
   }, [user, requestedId]);
 
@@ -164,9 +166,23 @@ export default function SchedulingPage() {
     }
   };
 
+  if (!loaded) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8" aria-busy="true" aria-label="Loading your requests">
+        <div className="animate-pulse space-y-4">
+          <div className="h-4 w-40 rounded bg-gray-200 dark:bg-slate-700" />
+          <div className="h-7 w-72 max-w-full rounded bg-gray-200 dark:bg-slate-700" />
+          <div className="h-4 w-full max-w-xl rounded bg-gray-200 dark:bg-slate-700" />
+          <div className="h-28 rounded-2xl bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700" />
+          <div className="h-80 rounded-2xl bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700" />
+        </div>
+      </div>
+    );
+  }
+
   if (bookableRequests.length === 0) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-12 text-center">
+      <div className="fade-in max-w-2xl mx-auto px-4 py-12 text-center">
         <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 border border-gray-100 dark:border-slate-700 shadow-sm">
           <div className="w-16 h-16 bg-orange-100 dark:bg-orange-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
             <FileText className="w-8 h-8 text-orange-600 dark:text-orange-400" />
@@ -223,7 +239,7 @@ export default function SchedulingPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+    <div className="fade-in max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
       <div className="mb-6">
         <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-3">
           <Link to="/dashboard" className="hover:text-blue-600 dark:hover:text-blue-400">Dashboard</Link>
