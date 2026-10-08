@@ -207,6 +207,42 @@ html:not(.dark) .admin-readable .text-gray-500:not([class*="sm:text-"], [class*=
 .no-scrollbar {
   scrollbar-width: none;
 }
+
+/* Gentle motion: pages fade up on open, menus and dialogs ease in. */
+@keyframes pcc-page-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes pcc-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes pcc-pop-in {
+  from { opacity: 0; transform: translateY(-4px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes pcc-rise-in {
+  from { opacity: 0; transform: translateY(16px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+.page-enter {
+  animation: pcc-page-in 0.38s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.fade-in {
+  animation: pcc-fade-in 0.2s ease-out both;
+}
+.pop-in {
+  animation: pcc-pop-in 0.18s cubic-bezier(0.22, 1, 0.36, 1) both;
+  transform-origin: top right;
+}
+.rise-in {
+  animation: pcc-rise-in 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .page-enter, .fade-in, .pop-in, .rise-in {
+    animation: none;
+  }
+}
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }

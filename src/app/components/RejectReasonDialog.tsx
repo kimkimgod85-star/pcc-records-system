@@ -73,14 +73,14 @@ export function RejectReasonDialog({
   };
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center bg-black/50 p-0 sm:p-4" onClick={() => !busy && onCancel()}>
+    <div className="fade-in fixed inset-0 z-[70] flex items-end sm:items-center justify-center bg-black/50 p-0 sm:p-4" onClick={() => !busy && onCancel()}>
       <form
         onSubmit={submit}
         onClick={e => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
         aria-labelledby="reject-title"
-        className="w-full sm:max-w-lg max-h-[92dvh] overflow-y-auto bg-white dark:bg-slate-800 rounded-t-2xl sm:rounded-2xl shadow-2xl"
+        className="rise-in w-full sm:max-w-lg max-h-[92dvh] overflow-y-auto bg-white dark:bg-slate-800 rounded-t-2xl sm:rounded-2xl shadow-2xl"
       >
         <div className="flex items-start justify-between gap-3 px-5 pt-5 pb-3 border-b border-gray-100 dark:border-slate-700">
           <div className="min-w-0">

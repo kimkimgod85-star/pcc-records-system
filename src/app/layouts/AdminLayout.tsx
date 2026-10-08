@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Outlet, Navigate } from 'react-router';
+import { Outlet, Navigate, useLocation } from 'react-router';
 import { AdminSidebar } from '../components/AdminSidebar';
 import { AdminAlertToasts } from '../components/AdminAlerts';
 import { useAuth } from '../context/AuthContext';
@@ -10,6 +10,7 @@ const ADMIN_FONT_SIZE = '18px';
 
 export default function AdminLayout() {
   const { user, isAuthenticated, ready } = useAuth();
+  const location = useLocation();
   const isAdmin = isAuthenticated && user?.role === 'admin';
   const { alerts, dismiss } = useAdminAlerts(isAdmin);
   useDeviceNotificationListener(isAdmin ? user?.id : undefined);
@@ -38,7 +39,9 @@ export default function AdminLayout() {
     <div className="admin-readable flex h-dvh bg-gray-50 dark:bg-slate-950 overflow-hidden">
       <AdminSidebar />
       <main className="flex-1 min-w-0 overflow-y-auto pt-14 lg:pt-0 safe-area-pb">
-        <Outlet />
+        <div key={location.pathname} className="page-enter">
+          <Outlet />
+        </div>
       </main>
       <AdminAlertToasts alerts={alerts} onDismiss={dismiss} />
     </div>

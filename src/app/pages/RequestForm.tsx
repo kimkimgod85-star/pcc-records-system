@@ -224,7 +224,7 @@ export default function RequestForm() {
       <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm overflow-hidden">
         {/* Step 1: Document Type */}
         {step === 1 && (
-          <div className="p-6">
+          <div className="p-6 page-enter">
             <h2 className="text-base font-semibold text-gray-900 dark:text-white mb-4" style={{ fontFamily: 'Poppins, sans-serif' }}>
               Select Document Type
             </h2>
@@ -273,7 +273,7 @@ export default function RequestForm() {
 
         {/* Step 2: Details */}
         {step === 2 && (
-          <div className="p-6">
+          <div className="p-6 page-enter">
             <h2 className="text-base font-semibold text-gray-900 dark:text-white mb-4" style={{ fontFamily: 'Poppins, sans-serif' }}>
               Request Details
             </h2>
@@ -400,7 +400,7 @@ export default function RequestForm() {
 
         {/* Step 3: Review */}
         {step === 3 && (
-          <div className="p-6">
+          <div className="p-6 page-enter">
             <h2 className="text-base font-semibold text-gray-900 dark:text-white mb-4" style={{ fontFamily: 'Poppins, sans-serif' }}>
               Review Your Request
             </h2>

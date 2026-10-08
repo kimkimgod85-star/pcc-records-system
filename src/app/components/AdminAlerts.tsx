@@ -24,7 +24,7 @@ export function AdminAlertToasts({ alerts, onDismiss }: { alerts: AdminAlert[]; 
             tabIndex={0}
             onClick={() => { onDismiss(alert.id); navigate(alert.link); }}
             onKeyDown={e => { if (e.key === 'Enter') { onDismiss(alert.id); navigate(alert.link); } }}
-            className="flex items-start gap-3 p-3.5 rounded-2xl bg-white dark:bg-slate-800 border border-blue-200 dark:border-blue-800 shadow-xl cursor-pointer hover:bg-blue-50 dark:hover:bg-slate-700 transition-colors"
+            className="rise-in flex items-start gap-3 p-3.5 rounded-2xl bg-white dark:bg-slate-800 border border-blue-200 dark:border-blue-800 shadow-xl cursor-pointer hover:bg-blue-50 dark:hover:bg-slate-700 transition-colors"
           >
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
               alert.kind === 'payment'
