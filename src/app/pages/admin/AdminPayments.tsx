@@ -8,7 +8,6 @@ import { fetchPayments, screenshotUrl, subscribePayments, updatePaymentStatus, t
 import { subscribeRequests, updateRequestStatus } from '../../lib/requests';
 import { REQUEST_STATUS_LABEL, type RequestStatus } from '../../lib/status';
 import { StatusBadge } from '../../components/StatusBadge';
-import { useRevealOnSmallScreen } from '../../lib/useRevealOnSmallScreen';
 import { CASHIER_PAYMENT_REJECT_REASONS, PAYMENT_REJECT_REASONS, RejectReasonDialog } from '../../components/RejectReasonDialog';
 
 type PayStatus = PaymentRecord['status'];
@@ -95,7 +94,6 @@ export default function AdminPayments() {
   const [autoProcess, setAutoProcess] = useState(readAutoProcess);
   const [advancing, setAdvancing] = useState(false);
   const [notice, setNotice] = useState('');
-  const detailRef = useRevealOnSmallScreen<HTMLDivElement>(selectedId ?? undefined);
 
   useEffect(() => {
     const refresh = () => { fetchPayments().then(setPayments); };
@@ -107,6 +105,29 @@ export default function AdminPayments() {
       stopRequests();
     };
   }, []);
+
+  const selected = payments.find(p => p.id === selectedId) ?? null;
+  const detailOpen = Boolean(selected);
+
+  useEffect(() => {
+    if (!detailOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = prev; };
+  }, [detailOpen]);
+
+  useEffect(() => {
+    if (!detailOpen || rejecting) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && saving === null && !advancing) {
+        setSelectedId(null);
+        setError('');
+        setNotice('');
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [detailOpen, rejecting, saving, advancing]);
 
   const toggleAutoProcess = (on: boolean) => {
     setAutoProcess(on);
@@ -135,8 +156,6 @@ export default function AdminPayments() {
     }
   };
 
-  const selected = payments.find(p => p.id === selectedId) ?? null;
-
   const query = search.trim().toLowerCase();
   const searched = payments.filter(p =>
     !query ||
@@ -151,6 +170,13 @@ export default function AdminPayments() {
 
   const totalCollected = payments.filter(p => p.status === 'verified').reduce((sum, p) => sum + p.amountValue, 0);
   const pendingCount = payments.filter(p => p.status === 'pending').length;
+
+  const closeDetail = () => {
+    if (saving !== null || advancing) return;
+    setSelectedId(null);
+    setError('');
+    setNotice('');
+  };
 
   const select = (id: string) => {
     setSelectedId(id);
@@ -189,18 +215,16 @@ export default function AdminPayments() {
           Payment Verification
         </h1>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-          Check GCash screenshots online. For Pay in Person, verify when the student brings their Official Receipt and REQ ID.
+          Click a payment to verify. GCash uses the screenshot; Pay in Person waits for the student in person.
         </p>
       </div>
 
-      {/* Summary */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
         <SummaryCard icon={Clock} label="Waiting to verify" value={String(pendingCount)} tone="orange" onClick={() => setFilter('pending')} />
         <SummaryCard icon={Wallet} label="Total collected" value={peso(totalCollected)} tone="green" onClick={() => setFilter('verified')} />
         <SummaryCard icon={Receipt} label="All transactions" value={String(payments.length)} tone="blue" onClick={() => setFilter('all')} />
       </div>
 
-      {/* Search + filters */}
       <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm p-3 sm:p-4 mb-5 space-y-3">
         <div className="relative">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -248,232 +272,139 @@ export default function AdminPayments() {
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-5 gap-6 items-start">
-        {/* List */}
-        <div className={`${selected ? 'lg:col-span-3' : 'lg:col-span-5'} bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm overflow-hidden`}>
-          <div className="px-5 py-3 border-b border-gray-100 dark:border-slate-700">
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              {filtered.length} payment{filtered.length !== 1 ? 's' : ''}
-              {filter !== 'all' && <span className="text-gray-400"> · {STATUS[filter].label}</span>}
-            </span>
-          </div>
-
-          {filtered.length === 0 && (
-            <div className="py-12 text-center text-sm text-gray-500 dark:text-gray-400">No payments found.</div>
-          )}
-
-          {/* Phone: cards */}
-          <div className="sm:hidden divide-y divide-gray-100 dark:divide-slate-700">
-            {filtered.map(pay => (
-              <button
-                key={pay.id}
-                type="button"
-                onClick={() => select(pay.id)}
-                className={`w-full text-left px-4 py-4 transition-colors ${
-                  selectedId === pay.id ? 'bg-blue-50 dark:bg-blue-900/20' : 'active:bg-gray-50 dark:active:bg-slate-700/50'
-                }`}
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold text-gray-900 dark:text-white leading-snug">{pay.student}</p>
-                    <p className="text-sm text-gray-600 dark:text-gray-300 mt-0.5">{pay.document}</p>
-                  </div>
-                  <PayBadge status={pay.status} />
-                </div>
-                <div className="flex items-center justify-between gap-3 mt-2.5">
-                  <MethodTag method={pay.method} />
-                  <span className="text-base font-semibold text-gray-900 dark:text-white tabular-nums">{pay.amount}</span>
-                </div>
-                <p className="text-xs font-mono text-blue-600 dark:text-blue-400 mt-1.5 break-all">{pay.reqId}</p>
-              </button>
-            ))}
-          </div>
-
-          {/* Tablet & desktop: table */}
-          {filtered.length > 0 && (
-            <div className="hidden sm:block overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 bg-gray-50/80 dark:bg-slate-900/40 border-b border-gray-100 dark:border-slate-700">
-                    <th className="px-5 py-3">Student</th>
-                    <th className={`px-5 py-3 ${selected ? 'hidden' : 'hidden md:table-cell'}`}>Method</th>
-                    <th className="px-5 py-3 text-right">Amount</th>
-                    <th className={`px-5 py-3 ${selected ? 'hidden' : 'hidden xl:table-cell'}`}>Date</th>
-                    <th className="px-5 py-3">Status</th>
-                    <th className="w-8" />
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100 dark:divide-slate-700">
-                  {filtered.map(pay => {
-                    const active = selectedId === pay.id;
-                    return (
-                      <tr
-                        key={pay.id}
-                        onClick={() => select(pay.id)}
-                        className={`cursor-pointer transition-colors ${
-                          active ? 'bg-blue-50 dark:bg-blue-900/20' : 'hover:bg-gray-50 dark:hover:bg-slate-700/40'
-                        }`}
-                      >
-                        <td className="px-5 py-3.5 align-top">
-                          <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug">{pay.student}</p>
-                          <p className="text-sm text-gray-600 dark:text-gray-400 leading-snug">{pay.document}</p>
-                          <p className="text-xs font-mono text-blue-600 dark:text-blue-400 mt-0.5">{pay.reqId}</p>
-                        </td>
-                        <td className={`px-5 py-3.5 align-top ${selected ? 'hidden' : 'hidden md:table-cell'}`}>
-                          <MethodTag method={pay.method} />
-                        </td>
-                        <td className="px-5 py-3.5 align-top text-right">
-                          <span className="text-sm font-semibold text-gray-900 dark:text-white tabular-nums whitespace-nowrap">{pay.amount}</span>
-                        </td>
-                        <td className={`px-5 py-3.5 align-top ${selected ? 'hidden' : 'hidden xl:table-cell'}`}>
-                          <span className="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">{pay.date}</span>
-                        </td>
-                        <td className="px-5 py-3.5 align-top">
-                          <PayBadge status={pay.status} />
-                        </td>
-                        <td className="pr-4 py-3.5 align-top">
-                          <ChevronRight className={`w-4 h-4 ${active ? 'text-blue-500' : 'text-gray-300 dark:text-slate-600'}`} />
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
+      {/* Full-width list */}
+      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm overflow-hidden">
+        <div className="px-5 py-3 border-b border-gray-100 dark:border-slate-700">
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            {filtered.length} payment{filtered.length !== 1 ? 's' : ''}
+            {filter !== 'all' && <span className="text-gray-400"> · {STATUS[filter].label}</span>}
+          </span>
         </div>
 
-        {/* Detail panel */}
-        {selected && (
-          <div ref={detailRef} className="lg:col-span-2 lg:sticky lg:top-6 space-y-4 scroll-mt-16">
-            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm overflow-hidden">
-              <div className="flex items-start justify-between gap-3 px-5 py-4 border-b border-gray-100 dark:border-slate-700">
+        {filtered.length === 0 && (
+          <div className="py-12 text-center text-sm text-gray-500 dark:text-gray-400">No payments found.</div>
+        )}
+
+        <div className="sm:hidden divide-y divide-gray-100 dark:divide-slate-700">
+          {filtered.map(pay => (
+            <button
+              key={pay.id}
+              type="button"
+              onClick={() => select(pay.id)}
+              className="w-full text-left px-4 py-4 transition-colors active:bg-gray-50 dark:active:bg-slate-700/50"
+            >
+              <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Amount paid</p>
-                  <p className="text-2xl font-semibold text-gray-900 dark:text-white tabular-nums leading-tight" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                    {selected.amount}
-                  </p>
-                  <div className="flex flex-wrap items-center gap-2 mt-2">
-                    <PayBadge status={selected.status} />
-                    <MethodTag method={selected.method} />
-                  </div>
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white leading-snug">{pay.student}</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-300 mt-0.5">{pay.document}</p>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setSelectedId(null)}
-                  aria-label="Close details"
-                  className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:text-gray-200 dark:hover:bg-slate-700"
+                <PayBadge status={pay.status} />
+              </div>
+              <div className="flex items-center justify-between gap-3 mt-2.5">
+                <MethodTag method={pay.method} />
+                <span className="text-base font-semibold text-gray-900 dark:text-white tabular-nums">{pay.amount}</span>
+              </div>
+              <p className="text-xs font-mono text-blue-600 dark:text-blue-400 mt-1.5 break-all">{pay.reqId}</p>
+            </button>
+          ))}
+        </div>
+
+        {filtered.length > 0 && (
+          <div className="hidden sm:block overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 bg-gray-50/80 dark:bg-slate-900/40 border-b border-gray-100 dark:border-slate-700">
+                  <th className="px-5 py-3">Student</th>
+                  <th className="px-5 py-3 hidden md:table-cell">Method</th>
+                  <th className="px-5 py-3 text-right">Amount</th>
+                  <th className="px-5 py-3 hidden xl:table-cell">Date</th>
+                  <th className="px-5 py-3">Status</th>
+                  <th className="w-8" />
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 dark:divide-slate-700">
+                {filtered.map(pay => (
+                  <tr
+                    key={pay.id}
+                    onClick={() => select(pay.id)}
+                    className="cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-slate-700/40"
+                  >
+                    <td className="px-5 py-3.5 align-top">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug">{pay.student}</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 leading-snug">{pay.document}</p>
+                      <p className="text-xs font-mono text-blue-600 dark:text-blue-400 mt-0.5">{pay.reqId}</p>
+                    </td>
+                    <td className="px-5 py-3.5 align-top hidden md:table-cell">
+                      <MethodTag method={pay.method} />
+                    </td>
+                    <td className="px-5 py-3.5 align-top text-right">
+                      <span className="text-sm font-semibold text-gray-900 dark:text-white tabular-nums whitespace-nowrap">{pay.amount}</span>
+                    </td>
+                    <td className="px-5 py-3.5 align-top hidden xl:table-cell">
+                      <span className="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">{pay.date}</span>
+                    </td>
+                    <td className="px-5 py-3.5 align-top">
+                      <PayBadge status={pay.status} />
+                    </td>
+                    <td className="pr-4 py-3.5 align-top">
+                      <ChevronRight className="w-4 h-4 text-gray-300 dark:text-slate-600" />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* Centered detail modal */}
+      {selected && (
+        <div
+          className="fade-in fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/40 backdrop-blur-md"
+          style={{ WebkitBackdropFilter: 'blur(12px)' }}
+          onClick={closeDetail}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="payment-detail-title"
+            onClick={e => e.stopPropagation()}
+            className="pop-in w-full sm:max-w-xl max-h-[92dvh] sm:max-h-[88dvh] flex flex-col bg-white dark:bg-slate-800 rounded-t-2xl sm:rounded-2xl shadow-2xl ring-1 ring-black/5 dark:ring-white/10 overflow-hidden"
+          >
+            <div className="flex-shrink-0 flex items-start justify-between gap-3 px-5 pt-5 pb-4 border-b border-gray-100 dark:border-slate-700">
+              <div className="min-w-0">
+                <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Amount paid</p>
+                <p
+                  id="payment-detail-title"
+                  className="text-2xl font-semibold text-gray-900 dark:text-white tabular-nums leading-tight"
+                  style={{ fontFamily: 'Poppins, sans-serif' }}
                 >
-                  <X className="w-4 h-4" />
-                </button>
+                  {selected.amount}
+                </p>
+                <div className="flex flex-wrap items-center gap-2 mt-2">
+                  <PayBadge status={selected.status} />
+                  <MethodTag method={selected.method} />
+                </div>
               </div>
-
-              {/* Proof / verification status */}
-              <div className="px-5 pt-4">
-                {selected.method === 'gcash' ? (
-                  <>
-                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">GCash screenshot</p>
-                    {screenshotUrl(selected.screenshotPath) ? (
-                      <a
-                        href={selected.screenshotPath}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="group block rounded-xl overflow-hidden border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-900"
-                      >
-                        <img
-                          src={selected.screenshotPath}
-                          alt="GCash proof"
-                          className="w-full max-h-72 object-contain"
-                        />
-                        <span className="flex items-center justify-center gap-1.5 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 border-t border-gray-200 dark:border-slate-700 group-hover:bg-blue-50 dark:group-hover:bg-blue-900/20">
-                          <ExternalLink className="w-3.5 h-3.5" /> Open full size
-                        </span>
-                      </a>
-                    ) : (
-                      <div className="rounded-xl border border-dashed border-gray-300 dark:border-slate-600 px-4 py-5 flex flex-col items-center justify-center gap-1.5 text-center text-gray-500 dark:text-gray-400">
-                        <ImageOff className="w-5 h-5" />
-                        <p className="text-sm">No screenshot uploaded</p>
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <>
-                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">Pay in Person status</p>
-                    <div className={`rounded-xl border px-4 py-4 ${
-                      selected.status === 'verified'
-                        ? 'bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800'
-                        : selected.status === 'rejected'
-                        ? 'bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-800'
-                        : 'bg-amber-50 border-amber-200 dark:bg-amber-900/20 dark:border-amber-800'
-                    }`}>
-                      <div className="flex items-start gap-3">
-                        <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${
-                          selected.status === 'verified'
-                            ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
-                            : selected.status === 'rejected'
-                            ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300'
-                            : 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200'
-                        }`}>
-                          {selected.status === 'verified' ? (
-                            <CheckCircle className="w-4 h-4" />
-                          ) : selected.status === 'rejected' ? (
-                            <XCircle className="w-4 h-4" />
-                          ) : (
-                            <UserRound className="w-4 h-4" />
-                          )}
-                        </div>
-                        <div className="min-w-0">
-                          <p className={`text-sm font-semibold ${
-                            selected.status === 'verified'
-                              ? 'text-green-900 dark:text-green-100'
-                              : selected.status === 'rejected'
-                              ? 'text-red-900 dark:text-red-100'
-                              : 'text-amber-950 dark:text-amber-100'
-                          }`}>
-                            {selected.status === 'verified'
-                              ? 'Verified in person'
-                              : selected.status === 'rejected'
-                              ? 'Pay in Person rejected'
-                              : 'Waiting for student to verify in person'}
-                          </p>
-                          <p className={`text-sm mt-1 leading-snug ${
-                            selected.status === 'verified'
-                              ? 'text-green-800 dark:text-green-200'
-                              : selected.status === 'rejected'
-                              ? 'text-red-800 dark:text-red-200'
-                              : 'text-amber-900 dark:text-amber-200'
-                          }`}>
-                            {selected.status === 'verified'
-                              ? 'Official Receipt and REQ ID were confirmed at the Registrar.'
-                              : selected.status === 'rejected'
-                              ? 'Ask the student to confirm Pay in Person again and return with a valid Official Receipt and REQ ID.'
-                              : 'No receipt photo is uploaded in the app. Wait for the student to bring their Official Receipt and REQ ID form, then verify here.'}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </>
-                )}
-              </div>
-
-              <dl className="grid grid-cols-2 gap-x-4 gap-y-4 px-5 py-4">
-                <Field label={selected.method === 'gcash' ? 'GCash ref no.' : 'REQ ID'} value={selected.refNo || selected.reqId || '—'} mono highlight />
-                <Field label="Date" value={selected.date} />
-                <Field label="Student" value={selected.student} />
-                <Field label="Request ID" value={selected.reqId} mono />
-                <Field label="Document" value={selected.document} wide />
-              </dl>
+              <button
+                type="button"
+                onClick={closeDetail}
+                disabled={saving !== null || advancing}
+                aria-label="Close details"
+                className="p-2 -m-1 rounded-xl text-gray-400 hover:text-gray-700 hover:bg-gray-100 dark:hover:text-gray-200 dark:hover:bg-slate-700 disabled:opacity-50"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
 
-            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm p-5">
-              <h3 className="font-semibold text-gray-900 dark:text-white" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                Decision
-              </h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5 mb-3">
+            {/* Decision first */}
+            <div className="flex-shrink-0 px-5 py-4 border-b border-gray-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50">
+              <p className="text-sm font-semibold text-gray-900 dark:text-white">Decision</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-3">
                 {selected.method === 'gcash'
-                  ? 'Make sure the amount and reference number match the screenshot.'
+                  ? 'Match the amount and reference number with the screenshot.'
                   : selected.status === 'pending'
-                  ? 'When the student arrives, check their Official Receipt and REQ ID, confirm the amount, then Verify.'
+                  ? 'When the student arrives, check Official Receipt + REQ ID, then Verify.'
                   : 'Update the verification result for this Pay in Person payment.'}
               </p>
 
@@ -507,7 +438,7 @@ export default function AdminPayments() {
                   className={`inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold transition-colors ${
                     selected.status === 'rejected'
                       ? 'bg-red-50 text-red-700 ring-1 ring-inset ring-red-200 dark:bg-red-900/20 dark:text-red-300 dark:ring-red-800 cursor-default'
-                      : 'border border-red-200 text-red-700 hover:bg-red-50 dark:border-red-900/60 dark:text-red-300 dark:hover:bg-red-900/20 disabled:opacity-60'
+                      : 'border border-red-200 bg-white text-red-700 hover:bg-red-50 dark:bg-slate-800 dark:border-red-900/60 dark:text-red-300 dark:hover:bg-red-900/20 disabled:opacity-60'
                   }`}
                 >
                   {saving === 'rejected' ? <Loader2 className="w-4 h-4 animate-spin" /> : <XCircle className="w-4 h-4" />}
@@ -516,7 +447,7 @@ export default function AdminPayments() {
               </div>
 
               {selected.status === 'pending' && selected.requestStatus === 'approved' && (
-                <label className="mt-3 flex items-start gap-2.5 p-3 rounded-xl bg-gray-50 dark:bg-slate-900/50 border border-gray-200 dark:border-slate-700 cursor-pointer">
+                <label className="mt-3 flex items-start gap-2.5 p-3 rounded-xl bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={autoProcess}
@@ -526,7 +457,7 @@ export default function AdminPayments() {
                   <span className="text-sm text-gray-700 dark:text-gray-300 leading-snug">
                     Start processing right after verifying
                     <span className="block text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                      Moves {selected.reqId} to “Processing” in the same click, no need to open Manage Requests.
+                      Moves {selected.reqId} to “Processing” in the same click.
                     </span>
                   </span>
                 </label>
@@ -538,12 +469,107 @@ export default function AdminPayments() {
                   <p className="text-sm text-green-800 dark:text-green-200">{notice}</p>
                 </div>
               )}
+            </div>
+
+            <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-5 py-4 space-y-4">
+              {selected.method === 'gcash' ? (
+                <div>
+                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">GCash screenshot</p>
+                  {screenshotUrl(selected.screenshotPath) ? (
+                    <a
+                      href={selected.screenshotPath}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="group block rounded-xl overflow-hidden border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-900"
+                    >
+                      <img
+                        src={selected.screenshotPath}
+                        alt="GCash proof"
+                        className="w-full max-h-56 object-contain"
+                      />
+                      <span className="flex items-center justify-center gap-1.5 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 border-t border-gray-200 dark:border-slate-700 group-hover:bg-blue-50 dark:group-hover:bg-blue-900/20">
+                        <ExternalLink className="w-3.5 h-3.5" /> Open full size
+                      </span>
+                    </a>
+                  ) : (
+                    <div className="rounded-xl border border-dashed border-gray-300 dark:border-slate-600 px-4 py-5 flex flex-col items-center justify-center gap-1.5 text-center text-gray-500 dark:text-gray-400">
+                      <ImageOff className="w-5 h-5" />
+                      <p className="text-sm">No screenshot uploaded</p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div>
+                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">Pay in Person status</p>
+                  <div className={`rounded-xl border px-4 py-4 ${
+                    selected.status === 'verified'
+                      ? 'bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800'
+                      : selected.status === 'rejected'
+                      ? 'bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-800'
+                      : 'bg-amber-50 border-amber-200 dark:bg-amber-900/20 dark:border-amber-800'
+                  }`}>
+                    <div className="flex items-start gap-3">
+                      <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${
+                        selected.status === 'verified'
+                          ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
+                          : selected.status === 'rejected'
+                          ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300'
+                          : 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200'
+                      }`}>
+                        {selected.status === 'verified' ? (
+                          <CheckCircle className="w-4 h-4" />
+                        ) : selected.status === 'rejected' ? (
+                          <XCircle className="w-4 h-4" />
+                        ) : (
+                          <UserRound className="w-4 h-4" />
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <p className={`text-sm font-semibold ${
+                          selected.status === 'verified'
+                            ? 'text-green-900 dark:text-green-100'
+                            : selected.status === 'rejected'
+                            ? 'text-red-900 dark:text-red-100'
+                            : 'text-amber-950 dark:text-amber-100'
+                        }`}>
+                          {selected.status === 'verified'
+                            ? 'Verified in person'
+                            : selected.status === 'rejected'
+                            ? 'Pay in Person rejected'
+                            : 'Waiting for student to verify in person'}
+                        </p>
+                        <p className={`text-sm mt-1 leading-snug ${
+                          selected.status === 'verified'
+                            ? 'text-green-800 dark:text-green-200'
+                            : selected.status === 'rejected'
+                            ? 'text-red-800 dark:text-red-200'
+                            : 'text-amber-900 dark:text-amber-200'
+                        }`}>
+                          {selected.status === 'verified'
+                            ? 'Official Receipt and REQ ID were confirmed at the Registrar.'
+                            : selected.status === 'rejected'
+                            ? 'Ask the student to confirm Pay in Person again and return with a valid Official Receipt and REQ ID.'
+                            : 'No receipt photo is uploaded in the app. Wait for the student to bring Official Receipt + REQ ID, then verify here.'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <dl className="grid grid-cols-2 gap-x-4 gap-y-3.5">
+                <Field label={selected.method === 'gcash' ? 'GCash ref no.' : 'REQ ID'} value={selected.refNo || selected.reqId || '—'} mono highlight />
+                <Field label="Date" value={selected.date} />
+                <Field label="Student" value={selected.student} />
+                <Field label="Request ID" value={selected.reqId} mono />
+                <Field label="Document" value={selected.document} wide />
+              </dl>
 
               {selected.status === 'verified' && (() => {
                 const next = NEXT_REQUEST_STEP[selected.requestStatus];
                 return (
-                  <div className="mt-4 pt-4 border-t border-gray-100 dark:border-slate-700">
-                    <div className="flex items-center justify-between gap-3 mb-2">
+                  <div className="pt-1 border-t border-gray-100 dark:border-slate-700">
+                    <div className="flex items-center justify-between gap-3 mb-2 mt-3">
                       <p className="text-sm font-semibold text-gray-900 dark:text-white">Request {selected.reqId}</p>
                       <StatusBadge status={selected.requestStatus} />
                     </div>
@@ -578,7 +604,7 @@ export default function AdminPayments() {
                   type="button"
                   onClick={() => updateStatus(selected, 'pending')}
                   disabled={saving !== null}
-                  className="mt-3 w-full inline-flex items-center justify-center gap-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white disabled:opacity-60"
+                  className="w-full inline-flex items-center justify-center gap-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white disabled:opacity-60 py-2"
                 >
                   {saving === 'pending' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RotateCcw className="w-3.5 h-3.5" />}
                   Move back to “To Verify”
@@ -586,8 +612,8 @@ export default function AdminPayments() {
               )}
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       <RejectReasonDialog
         open={rejecting && Boolean(selected)}

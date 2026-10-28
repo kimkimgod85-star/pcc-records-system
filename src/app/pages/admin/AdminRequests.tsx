@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { Search, CheckCircle, X, ChevronRight, ArrowRight, AlertCircle, Loader2, StickyNote, CalendarClock, Copy } from 'lucide-react';
 import { fetchRequests, subscribeRequests, updateRequestStatus, type StudentRequest } from '../../lib/requests';
 import { formatPickup, formatShortDate, paymentLabel, type PaymentStatus, type RequestStatus } from '../../lib/status';
-import { useRevealOnSmallScreen } from '../../lib/useRevealOnSmallScreen';
 import { StatusBadge } from '../../components/StatusBadge';
 import { RejectReasonDialog, REQUEST_REJECT_REASONS } from '../../components/RejectReasonDialog';
 import { RejectionNotice } from '../../components/RejectionNotice';
@@ -107,7 +106,6 @@ export default function AdminRequests() {
   const [saving, setSaving] = useState<RequestStatus | null>(null);
   const [error, setError] = useState('');
   const [rejecting, setRejecting] = useState(false);
-  const detailRef = useRevealOnSmallScreen<HTMLDivElement>(selectedId ?? undefined);
 
   useEffect(() => {
     const refresh = () => { fetchRequests().then(list => setRequests(list.map(toRow))); };
@@ -116,6 +114,26 @@ export default function AdminRequests() {
   }, []);
 
   const selectedReq = requests.find(r => r.id === selectedId) ?? null;
+  const detailOpen = Boolean(selectedReq);
+
+  useEffect(() => {
+    if (!detailOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = prev; };
+  }, [detailOpen]);
+
+  useEffect(() => {
+    if (!detailOpen || rejecting) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && saving === null) {
+        setSelectedId(null);
+        setError('');
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [detailOpen, rejecting, saving]);
 
   const query = search.trim().toLowerCase();
   const searched = requests.filter(r =>
@@ -128,6 +146,12 @@ export default function AdminRequests() {
   const filtered = statusFilter === 'all' ? searched : searched.filter(r => r.status === statusFilter);
   const countFor = (value: 'all' | RequestStatus) =>
     value === 'all' ? searched.length : searched.filter(r => r.status === value).length;
+
+  const closeDetail = () => {
+    if (saving !== null) return;
+    setSelectedId(null);
+    setError('');
+  };
 
   const select = (id: string) => {
     setSelectedId(id);
@@ -166,11 +190,10 @@ export default function AdminRequests() {
           Manage Requests
         </h1>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-          Click a request to update its status. Copies and payment show in the details.
+          Click a request to open details and update its status.
         </p>
       </div>
 
-      {/* Search + filters */}
       <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm p-3 sm:p-4 mb-5 space-y-3">
         <div className="relative">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -218,206 +241,209 @@ export default function AdminRequests() {
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-5 gap-6 items-start">
-        {/* List */}
-        <div className={`${selectedReq ? 'lg:col-span-3' : 'lg:col-span-5'} bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm overflow-hidden`}>
-          <div className="px-5 py-3 border-b border-gray-100 dark:border-slate-700">
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              {filtered.length} request{filtered.length !== 1 ? 's' : ''}
-              {statusFilter !== 'all' && <span className="text-gray-400"> · {STATUS_LABEL[statusFilter]}</span>}
-            </span>
-          </div>
-
-          {filtered.length === 0 && (
-            <div className="py-12 text-center text-sm text-gray-500 dark:text-gray-400">
-              No requests found matching your filters.
-            </div>
-          )}
-
-          {/* Phone: cards */}
-          <div className="sm:hidden divide-y divide-gray-100 dark:divide-slate-700">
-            {filtered.map(req => (
-              <button
-                key={req.id}
-                type="button"
-                onClick={() => select(req.id)}
-                className={`w-full text-left px-4 py-4 transition-colors ${
-                  selectedId === req.id ? 'bg-blue-50 dark:bg-blue-900/20' : 'active:bg-gray-50 dark:active:bg-slate-700/50'
-                }`}
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold text-gray-900 dark:text-white leading-snug">{req.type}</p>
-                    <p className="text-sm text-gray-600 dark:text-gray-300 mt-0.5">{req.student}</p>
-                  </div>
-                  <StatusBadge status={req.status} label={STATUS_LABEL[req.status]} />
-                </div>
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-xs">
-                  <span className="font-mono text-blue-600 dark:text-blue-400 break-all">{req.id}</span>
-                  <span className="inline-flex items-center gap-1 font-medium text-slate-700 dark:text-slate-200">
-                    <Copy className="w-3 h-3" /> {req.copiesLabel}
-                  </span>
-                  <span className="text-gray-500 dark:text-gray-400 whitespace-nowrap ml-auto">{req.submitted}</span>
-                </div>
-                {req.pickup && (
-                  <p className="mt-1.5 inline-flex items-center gap-1.5 text-xs font-medium text-cyan-700 dark:text-cyan-400">
-                    <CalendarClock className="w-3.5 h-3.5" /> Pickup: {req.pickup}
-                  </p>
-                )}
-              </button>
-            ))}
-          </div>
-
-          {/* Tablet & desktop: table */}
-          {filtered.length > 0 && (
-            <div className="hidden sm:block overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 bg-gray-50/80 dark:bg-slate-900/40 border-b border-gray-100 dark:border-slate-700">
-                    <th className="px-5 py-3">Request</th>
-                    <th className="px-5 py-3">Student</th>
-                    <th className={`px-5 py-3 ${selectedReq ? 'hidden' : 'hidden md:table-cell'}`}>Copies</th>
-                    <th className={`px-5 py-3 ${selectedReq ? 'hidden' : 'hidden lg:table-cell'}`}>Payment</th>
-                    <th className={`px-5 py-3 ${selectedReq ? 'hidden' : 'hidden xl:table-cell'}`}>Submitted</th>
-                    <th className="px-5 py-3">Status</th>
-                    <th className="w-8" />
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100 dark:divide-slate-700">
-                  {filtered.map(req => {
-                    const active = selectedId === req.id;
-                    return (
-                      <tr
-                        key={req.id}
-                        onClick={() => select(req.id)}
-                        className={`cursor-pointer transition-colors ${
-                          active ? 'bg-blue-50 dark:bg-blue-900/20' : 'hover:bg-gray-50 dark:hover:bg-slate-700/40'
-                        }`}
-                      >
-                        <td className="px-5 py-3.5 align-top">
-                          <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug">{req.type}</p>
-                          <p className="text-xs font-mono text-blue-600 dark:text-blue-400 mt-0.5">{req.id}</p>
-                        </td>
-                        <td className="px-5 py-3.5 align-top">
-                          <p className="text-sm text-gray-900 dark:text-white leading-snug">{req.student}</p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{req.studentId}</p>
-                        </td>
-                        <td className={`px-5 py-3.5 align-top ${selectedReq ? 'hidden' : 'hidden md:table-cell'}`}>
-                          <span className="text-sm font-semibold text-gray-900 dark:text-white tabular-nums">{req.copiesLabel}</span>
-                        </td>
-                        <td className={`px-5 py-3.5 align-top ${selectedReq ? 'hidden' : 'hidden lg:table-cell'}`}>
-                          <span className={`text-sm font-medium ${paymentTone(req.paymentStatus)}`}>{req.payment}</span>
-                        </td>
-                        <td className={`px-5 py-3.5 align-top ${selectedReq ? 'hidden' : 'hidden xl:table-cell'}`}>
-                          <span className="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">{req.submitted}</span>
-                        </td>
-                        <td className="px-5 py-3.5 align-top">
-                          <StatusBadge status={req.status} label={STATUS_LABEL[req.status]} />
-                        </td>
-                        <td className="pr-4 py-3.5 align-top">
-                          <ChevronRight className={`w-4 h-4 ${active ? 'text-blue-500' : 'text-gray-300 dark:text-slate-600'}`} />
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
+      {/* Full-width list */}
+      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm overflow-hidden">
+        <div className="px-5 py-3 border-b border-gray-100 dark:border-slate-700">
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            {filtered.length} request{filtered.length !== 1 ? 's' : ''}
+            {statusFilter !== 'all' && <span className="text-gray-400"> · {STATUS_LABEL[statusFilter]}</span>}
+          </span>
         </div>
 
-        {/* Detail panel — Payments-style: actions first, compact details */}
-        {selectedReq && (
-          <div ref={detailRef} className="lg:col-span-2 lg:sticky lg:top-6 space-y-4 scroll-mt-16">
-            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm overflow-hidden">
-              <div className="flex items-start justify-between gap-3 px-5 py-4 border-b border-gray-100 dark:border-slate-700">
+        {filtered.length === 0 && (
+          <div className="py-12 text-center text-sm text-gray-500 dark:text-gray-400">
+            No requests found matching your filters.
+          </div>
+        )}
+
+        <div className="sm:hidden divide-y divide-gray-100 dark:divide-slate-700">
+          {filtered.map(req => (
+            <button
+              key={req.id}
+              type="button"
+              onClick={() => select(req.id)}
+              className="w-full text-left px-4 py-4 transition-colors active:bg-gray-50 dark:active:bg-slate-700/50"
+            >
+              <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Request</p>
-                  <p className="text-lg font-semibold text-gray-900 dark:text-white leading-snug" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                    {selectedReq.type}
-                  </p>
-                  <p className="text-xs font-mono text-blue-600 dark:text-blue-400 mt-0.5 break-all">{selectedReq.id}</p>
-                  <div className="flex flex-wrap items-center gap-2 mt-2">
-                    <StatusBadge status={selectedReq.status} label={STATUS_LABEL[selectedReq.status]} />
-                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-800 ring-1 ring-inset ring-slate-200 dark:bg-slate-700 dark:text-slate-100 dark:ring-slate-600">
-                      <Copy className="w-3 h-3" />
-                      {selectedReq.copiesLabel}
-                    </span>
-                  </div>
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white leading-snug">{req.type}</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-300 mt-0.5">{req.student}</p>
                 </div>
+                <StatusBadge status={req.status} label={STATUS_LABEL[req.status]} />
+              </div>
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-xs">
+                <span className="font-mono text-blue-600 dark:text-blue-400 break-all">{req.id}</span>
+                <span className="inline-flex items-center gap-1 font-medium text-slate-700 dark:text-slate-200">
+                  <Copy className="w-3 h-3" /> {req.copiesLabel}
+                </span>
+                <span className="text-gray-500 dark:text-gray-400 whitespace-nowrap ml-auto">{req.submitted}</span>
+              </div>
+              {req.pickup && (
+                <p className="mt-1.5 inline-flex items-center gap-1.5 text-xs font-medium text-cyan-700 dark:text-cyan-400">
+                  <CalendarClock className="w-3.5 h-3.5" /> Pickup: {req.pickup}
+                </p>
+              )}
+            </button>
+          ))}
+        </div>
+
+        {filtered.length > 0 && (
+          <div className="hidden sm:block overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 bg-gray-50/80 dark:bg-slate-900/40 border-b border-gray-100 dark:border-slate-700">
+                  <th className="px-5 py-3">Request</th>
+                  <th className="px-5 py-3">Student</th>
+                  <th className="px-5 py-3 hidden md:table-cell">Copies</th>
+                  <th className="px-5 py-3 hidden lg:table-cell">Payment</th>
+                  <th className="px-5 py-3 hidden xl:table-cell">Submitted</th>
+                  <th className="px-5 py-3">Status</th>
+                  <th className="w-8" />
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 dark:divide-slate-700">
+                {filtered.map(req => (
+                  <tr
+                    key={req.id}
+                    onClick={() => select(req.id)}
+                    className="cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-slate-700/40"
+                  >
+                    <td className="px-5 py-3.5 align-top">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug">{req.type}</p>
+                      <p className="text-xs font-mono text-blue-600 dark:text-blue-400 mt-0.5">{req.id}</p>
+                    </td>
+                    <td className="px-5 py-3.5 align-top">
+                      <p className="text-sm text-gray-900 dark:text-white leading-snug">{req.student}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{req.studentId}</p>
+                    </td>
+                    <td className="px-5 py-3.5 align-top hidden md:table-cell">
+                      <span className="text-sm font-semibold text-gray-900 dark:text-white tabular-nums">{req.copiesLabel}</span>
+                    </td>
+                    <td className="px-5 py-3.5 align-top hidden lg:table-cell">
+                      <span className={`text-sm font-medium ${paymentTone(req.paymentStatus)}`}>{req.payment}</span>
+                    </td>
+                    <td className="px-5 py-3.5 align-top hidden xl:table-cell">
+                      <span className="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">{req.submitted}</span>
+                    </td>
+                    <td className="px-5 py-3.5 align-top">
+                      <StatusBadge status={req.status} label={STATUS_LABEL[req.status]} />
+                    </td>
+                    <td className="pr-4 py-3.5 align-top">
+                      <ChevronRight className="w-4 h-4 text-gray-300 dark:text-slate-600" />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* Centered detail modal */}
+      {selectedReq && (
+        <div
+          className="fade-in fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/40 backdrop-blur-md"
+          style={{ WebkitBackdropFilter: 'blur(12px)' }}
+          onClick={closeDetail}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="request-detail-title"
+            onClick={e => e.stopPropagation()}
+            className="pop-in w-full sm:max-w-xl max-h-[92dvh] sm:max-h-[88dvh] flex flex-col bg-white dark:bg-slate-800 rounded-t-2xl sm:rounded-2xl shadow-2xl ring-1 ring-black/5 dark:ring-white/10 overflow-hidden"
+          >
+            {/* Header */}
+            <div className="flex-shrink-0 flex items-start justify-between gap-3 px-5 pt-5 pb-4 border-b border-gray-100 dark:border-slate-700">
+              <div className="min-w-0">
+                <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Request details</p>
+                <h2
+                  id="request-detail-title"
+                  className="text-lg font-semibold text-gray-900 dark:text-white leading-snug mt-0.5"
+                  style={{ fontFamily: 'Poppins, sans-serif' }}
+                >
+                  {selectedReq.type}
+                </h2>
+                <p className="text-xs font-mono text-blue-600 dark:text-blue-400 mt-1 break-all">{selectedReq.id}</p>
+                <div className="flex flex-wrap items-center gap-2 mt-2.5">
+                  <StatusBadge status={selectedReq.status} label={STATUS_LABEL[selectedReq.status]} />
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-800 ring-1 ring-inset ring-slate-200 dark:bg-slate-700 dark:text-slate-100 dark:ring-slate-600">
+                    <Copy className="w-3 h-3" />
+                    {selectedReq.copiesLabel}
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={closeDetail}
+                disabled={saving !== null}
+                aria-label="Close details"
+                className="p-2 -m-1 rounded-xl text-gray-400 hover:text-gray-700 hover:bg-gray-100 dark:hover:text-gray-200 dark:hover:bg-slate-700 disabled:opacity-50"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Status actions — always visible at top */}
+            <div className="flex-shrink-0 px-5 py-4 border-b border-gray-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50">
+              <p className="text-sm font-semibold text-gray-900 dark:text-white">Update status</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-3">
+                {next ? next.hint : 'No next step. You can still set another status below.'}
+              </p>
+
+              {error && (
+                <div className="mb-3 p-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0 text-red-500" />
+                  <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
+                </div>
+              )}
+
+              {next && (
                 <button
                   type="button"
-                  onClick={() => setSelectedId(null)}
-                  aria-label="Close details"
-                  className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:text-gray-200 dark:hover:bg-slate-700"
+                  onClick={() => updateStatus(selectedReq, next.status)}
+                  disabled={saving !== null}
+                  className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition-colors disabled:opacity-60 mb-3"
                 >
-                  <X className="w-4 h-4" />
+                  {saving === next.status ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
+                  {next.label}
                 </button>
+              )}
+
+              <div className="grid grid-cols-3 gap-2">
+                {ALL_ACTIONS.map(action => {
+                  const current = selectedReq.status === action.status;
+                  return (
+                    <button
+                      key={action.status}
+                      type="button"
+                      onClick={() => chooseStatus(selectedReq, action.status)}
+                      disabled={current || saving !== null}
+                      className={`inline-flex items-center justify-center gap-1 px-2 py-2.5 rounded-xl text-xs sm:text-sm font-medium border transition-colors ${
+                        current
+                          ? 'border-blue-300 bg-blue-50 text-blue-700 dark:border-blue-700 dark:bg-blue-900/30 dark:text-blue-300 cursor-default'
+                          : action.status === 'rejected'
+                            ? 'border-red-200 text-red-700 hover:bg-red-50 dark:border-red-900/60 dark:text-red-300 dark:hover:bg-red-900/20 disabled:opacity-50'
+                            : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50 dark:bg-slate-800 dark:border-slate-600 dark:text-gray-200 dark:hover:bg-slate-700 disabled:opacity-50'
+                      }`}
+                    >
+                      {saving === action.status ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : current ? (
+                        <CheckCircle className="w-3.5 h-3.5" />
+                      ) : (
+                        <span className={`w-1.5 h-1.5 rounded-full ${action.dot}`} />
+                      )}
+                      {action.label}
+                    </button>
+                  );
+                })}
               </div>
+            </div>
 
-              {/* Update status first — no scroll needed for primary action */}
-              <div className="px-5 py-4 border-b border-gray-100 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-900/40">
-                <h3 className="font-semibold text-gray-900 dark:text-white" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                  Update status
-                </h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5 mb-3">
-                  {next ? next.hint : 'This request has no next step. You can still set another status below.'}
-                </p>
-
-                {error && (
-                  <div className="mb-3 p-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 flex items-start gap-2">
-                    <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0 text-red-500" />
-                    <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
-                  </div>
-                )}
-
-                {next && (
-                  <button
-                    type="button"
-                    onClick={() => updateStatus(selectedReq, next.status)}
-                    disabled={saving !== null}
-                    className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition-colors disabled:opacity-60 mb-3"
-                  >
-                    {saving === next.status ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
-                    {next.label}
-                  </button>
-                )}
-
-                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">
-                  {next ? 'Or set status to' : 'Set status to'}
-                </p>
-                <div className="grid grid-cols-2 gap-2">
-                  {ALL_ACTIONS.map(action => {
-                    const current = selectedReq.status === action.status;
-                    return (
-                      <button
-                        key={action.status}
-                        type="button"
-                        onClick={() => chooseStatus(selectedReq, action.status)}
-                        disabled={current || saving !== null}
-                        className={`inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-sm font-medium border transition-colors ${
-                          current
-                            ? 'border-blue-300 bg-blue-50 text-blue-700 dark:border-blue-700 dark:bg-blue-900/30 dark:text-blue-300 cursor-default'
-                            : action.status === 'rejected'
-                              ? 'border-red-200 text-red-700 hover:bg-red-50 dark:border-red-900/60 dark:text-red-300 dark:hover:bg-red-900/20 disabled:opacity-50'
-                              : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50 dark:bg-slate-800 dark:border-slate-600 dark:text-gray-200 dark:hover:bg-slate-700 disabled:opacity-50'
-                        }`}
-                      >
-                        {saving === action.status ? (
-                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        ) : current ? (
-                          <CheckCircle className="w-3.5 h-3.5" />
-                        ) : (
-                          <span className={`w-2 h-2 rounded-full ${action.dot}`} />
-                        )}
-                        {action.label}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <dl className="grid grid-cols-2 gap-x-4 gap-y-3.5 px-5 py-4">
+            {/* Scrollable details */}
+            <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-5 py-4 space-y-4">
+              <dl className="grid grid-cols-2 gap-x-4 gap-y-3.5">
                 <Field label="Student" value={selectedReq.student} />
                 <Field label="Student ID" value={selectedReq.studentId} mono />
                 <Field label="Copies" value={selectedReq.copiesLabel} highlight />
@@ -426,7 +452,7 @@ export default function AdminRequests() {
                 <Field label="Purpose" value={selectedReq.purpose} wide />
               </dl>
 
-              <div className={`mx-5 mb-4 p-3 rounded-xl border flex items-start gap-2.5 ${
+              <div className={`p-3 rounded-xl border flex items-start gap-2.5 ${
                 selectedReq.pickup
                   ? 'bg-cyan-50 border-cyan-200 dark:bg-cyan-900/15 dark:border-cyan-800/60'
                   : 'bg-gray-50 border-gray-200 dark:bg-slate-900/40 dark:border-slate-700'
@@ -443,7 +469,6 @@ export default function AdminRequests() {
               {selectedReq.status === 'rejected' && (
                 <RejectionNotice
                   compact
-                  className="mx-5 mb-4"
                   title="Rejected · sent to student"
                   text={selectedReq.rejectionReason}
                   fallback="No reason recorded."
@@ -451,15 +476,15 @@ export default function AdminRequests() {
               )}
 
               {selectedReq.notes && (
-                <div className="mx-5 mb-5 p-3 rounded-xl bg-amber-50 dark:bg-amber-900/15 border border-amber-200 dark:border-amber-800/60 flex items-start gap-2">
+                <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-900/15 border border-amber-200 dark:border-amber-800/60 flex items-start gap-2">
                   <StickyNote className="w-4 h-4 mt-0.5 flex-shrink-0 text-amber-600 dark:text-amber-400" />
                   <p className="text-sm text-amber-900 dark:text-amber-100 leading-relaxed break-words">{selectedReq.notes}</p>
                 </div>
               )}
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       <RejectReasonDialog
         open={rejecting && Boolean(selectedReq)}
