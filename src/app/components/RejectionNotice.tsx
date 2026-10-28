@@ -35,14 +35,16 @@ export function RejectionNotice({
   const { reason, message } = splitReason(text, knownReasons);
 
   return (
-    <div className={`flex items-start gap-3 rounded-xl border border-red-200 dark:border-red-900/60 bg-red-50/60 dark:bg-red-900/10 ${compact ? 'p-3' : 'p-3.5'} ${className}`}>
-      <XCircle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+    <div className={`flex items-start gap-3 rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 ${compact ? 'p-3' : 'p-3.5'} ${className}`}>
+      <span className="w-8 h-8 rounded-full bg-red-100 dark:bg-red-900/50 flex items-center justify-center flex-shrink-0">
+        <XCircle className="w-4 h-4 text-red-600 dark:text-red-400" />
+      </span>
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-semibold text-red-800 dark:text-red-200">{title}</p>
-        <p className="text-sm text-gray-800 dark:text-gray-200 mt-0.5 leading-snug break-words">{reason || fallback}</p>
+        <p className="text-sm font-semibold text-red-900 dark:text-red-100">{title}</p>
+        <p className="text-sm text-red-950/80 dark:text-red-50/90 mt-0.5 leading-snug break-words">{reason || fallback}</p>
         {message && (
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 leading-snug break-words">
-            <span className="font-medium text-gray-700 dark:text-gray-300">Registrar:</span> {message}
+          <p className="text-sm text-red-900/70 dark:text-red-100/70 mt-1.5 leading-snug break-words">
+            <span className="font-semibold">Note:</span> {message}
           </p>
         )}
         {action && <div className="mt-2.5">{action}</div>}
