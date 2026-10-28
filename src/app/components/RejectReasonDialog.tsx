@@ -7,7 +7,43 @@ export { CASHIER_PAYMENT_REJECT_REASONS, PAYMENT_REJECT_REASONS, REQUEST_REJECT_
 const OTHER = '__other__';
 
 const FIELD =
-  'w-full px-3.5 py-2.5 bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-600 rounded-xl text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500';
+  'w-full px-3 py-2 bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-600 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500';
+
+function ReasonOption({
+  label,
+  selected,
+  disabled,
+  onSelect,
+}: {
+  label: string;
+  selected: boolean;
+  disabled: boolean;
+  onSelect: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      role="radio"
+      aria-checked={selected}
+      disabled={disabled}
+      onClick={onSelect}
+      className={`h-full w-full text-left px-3 py-2 rounded-lg border text-[13px] leading-snug transition-colors flex items-start gap-2 ${
+        selected
+          ? 'border-red-400 bg-red-50 text-red-900 ring-1 ring-red-300 dark:border-red-600 dark:bg-red-900/25 dark:text-red-100 dark:ring-red-700'
+          : 'border-gray-200 bg-white text-gray-700 hover:border-red-200 hover:bg-red-50/40 dark:border-slate-600 dark:bg-slate-900 dark:text-gray-200 dark:hover:border-red-800 dark:hover:bg-red-900/10'
+      }`}
+    >
+      <span
+        className={`mt-px w-4 h-4 rounded-full border flex items-center justify-center flex-shrink-0 ${
+          selected ? 'border-red-500 bg-red-600 text-white' : 'border-gray-300 dark:border-slate-500'
+        }`}
+      >
+        {selected && <Check className="w-2.5 h-2.5" strokeWidth={3.5} />}
+      </span>
+      <span className="min-w-0 flex-1">{label}</span>
+    </button>
+  );
+}
 
 export function RejectReasonDialog({
   open,
@@ -79,12 +115,11 @@ export function RejectReasonDialog({
         role="dialog"
         aria-modal="true"
         aria-labelledby="reject-title"
-        className="pop-in w-full sm:max-w-lg max-h-[92dvh] sm:max-h-[88dvh] flex flex-col bg-white dark:bg-slate-800 rounded-t-2xl sm:rounded-2xl shadow-2xl ring-1 ring-black/5 dark:ring-white/10 overflow-hidden"
+        className="pop-in w-full sm:max-w-2xl max-h-[94dvh] flex flex-col bg-white dark:bg-slate-800 rounded-t-2xl sm:rounded-2xl shadow-2xl ring-1 ring-black/5 dark:ring-white/10 overflow-hidden"
       >
-        {/* Header */}
-        <div className="flex-shrink-0 flex items-start gap-3 px-5 pt-5 pb-4 border-b border-gray-100 dark:border-slate-700">
-          <span className="w-11 h-11 rounded-full bg-red-100 dark:bg-red-900/40 flex items-center justify-center flex-shrink-0">
-            <XCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
+        <div className="flex-shrink-0 flex items-center gap-3 px-5 py-3.5 border-b border-gray-100 dark:border-slate-700">
+          <span className="w-9 h-9 rounded-full bg-red-100 dark:bg-red-900/40 flex items-center justify-center flex-shrink-0">
+            <XCircle className="w-[18px] h-[18px] text-red-600 dark:text-red-400" />
           </span>
           <div className="min-w-0 flex-1">
             <h2
@@ -94,83 +129,45 @@ export function RejectReasonDialog({
             >
               {title}
             </h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 leading-snug break-words">{subject}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate" title={subject}>{subject}</p>
           </div>
           <button
             type="button"
             onClick={onCancel}
             disabled={busy}
             aria-label="Close"
-            className="p-2 -m-1 rounded-xl text-gray-400 hover:text-gray-700 hover:bg-gray-100 dark:hover:text-gray-200 dark:hover:bg-slate-700 disabled:opacity-50"
+            className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 dark:hover:text-gray-200 dark:hover:bg-slate-700 disabled:opacity-50"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Body */}
-        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-5 py-4 space-y-4">
+        {/* Fits on desktop without scrolling; scrolls only on very small screens */}
+        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-5 py-4 space-y-3.5">
           <div>
-            <p className="text-sm font-semibold text-gray-900 dark:text-white mb-1">
-              Reason <span className="text-red-500">*</span>
-            </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-2.5">
-              Tap one reason. The student will see this in their notification.
-            </p>
+            <div className="flex items-baseline justify-between gap-2 mb-2">
+              <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                Reason <span className="text-red-500">*</span>
+              </p>
+              <p className="text-[11px] text-gray-500 dark:text-gray-400">Tap one</p>
+            </div>
 
-            <div className="space-y-2" role="radiogroup" aria-label="Rejection reason">
-              {reasons.map(option => {
-                const selected = choice === option;
-                return (
-                  <button
-                    key={option}
-                    type="button"
-                    role="radio"
-                    aria-checked={selected}
-                    disabled={busy}
-                    onClick={() => setChoice(option)}
-                    className={`w-full text-left px-3.5 py-3 rounded-xl border text-sm leading-snug transition-colors flex items-start gap-2.5 ${
-                      selected
-                        ? 'border-red-400 bg-red-50 text-red-900 ring-1 ring-red-300 dark:border-red-600 dark:bg-red-900/25 dark:text-red-100 dark:ring-red-700'
-                        : 'border-gray-200 bg-white text-gray-800 hover:border-red-200 hover:bg-red-50/40 dark:border-slate-600 dark:bg-slate-900 dark:text-gray-200 dark:hover:border-red-800 dark:hover:bg-red-900/10'
-                    }`}
-                  >
-                    <span
-                      className={`mt-0.5 w-5 h-5 rounded-full border flex items-center justify-center flex-shrink-0 ${
-                        selected
-                          ? 'border-red-500 bg-red-600 text-white'
-                          : 'border-gray-300 dark:border-slate-500'
-                      }`}
-                    >
-                      {selected && <Check className="w-3 h-3" strokeWidth={3} />}
-                    </span>
-                    <span className="min-w-0 flex-1">{option}</span>
-                  </button>
-                );
-              })}
-
-              <button
-                type="button"
-                role="radio"
-                aria-checked={choice === OTHER}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2" role="radiogroup" aria-label="Rejection reason">
+              {reasons.map(option => (
+                <ReasonOption
+                  key={option}
+                  label={option}
+                  selected={choice === option}
+                  disabled={busy}
+                  onSelect={() => setChoice(option)}
+                />
+              ))}
+              <ReasonOption
+                label="Other reason…"
+                selected={choice === OTHER}
                 disabled={busy}
-                onClick={() => setChoice(OTHER)}
-                className={`w-full text-left px-3.5 py-3 rounded-xl border text-sm leading-snug transition-colors flex items-start gap-2.5 ${
-                  choice === OTHER
-                    ? 'border-red-400 bg-red-50 text-red-900 ring-1 ring-red-300 dark:border-red-600 dark:bg-red-900/25 dark:text-red-100 dark:ring-red-700'
-                    : 'border-gray-200 bg-white text-gray-800 hover:border-red-200 hover:bg-red-50/40 dark:border-slate-600 dark:bg-slate-900 dark:text-gray-200 dark:hover:border-red-800 dark:hover:bg-red-900/10'
-                }`}
-              >
-                <span
-                  className={`mt-0.5 w-5 h-5 rounded-full border flex items-center justify-center flex-shrink-0 ${
-                    choice === OTHER
-                      ? 'border-red-500 bg-red-600 text-white'
-                      : 'border-gray-300 dark:border-slate-500'
-                  }`}
-                >
-                  {choice === OTHER && <Check className="w-3 h-3" strokeWidth={3} />}
-                </span>
-                <span className="font-medium">Other reason…</span>
-              </button>
+                onSelect={() => setChoice(OTHER)}
+              />
             </div>
 
             {choice === OTHER && (
@@ -180,14 +177,14 @@ export function RejectReasonDialog({
                 value={custom}
                 onChange={e => setCustom(e.target.value)}
                 maxLength={200}
-                placeholder="Type the reason (at least 3 characters)"
+                placeholder="Type the reason"
                 disabled={busy}
-                className={`${FIELD} mt-2.5`}
+                className={`${FIELD} mt-2`}
               />
             )}
 
             {touched && !valid && (
-              <p className="mt-2 text-xs text-red-600 dark:text-red-400">Choose a reason, or type one under Other.</p>
+              <p className="mt-1.5 text-xs text-red-600 dark:text-red-400">Choose a reason, or type one under Other.</p>
             )}
           </div>
 
@@ -195,44 +192,42 @@ export function RejectReasonDialog({
             <label htmlFor="reject-message" className="block text-sm font-semibold text-gray-900 dark:text-white mb-1.5">
               Note to student <span className="font-normal text-gray-400">(optional)</span>
             </label>
-            <textarea
+            <input
               id="reject-message"
-              rows={2}
+              type="text"
               value={message}
               onChange={e => setMessage(e.target.value)}
               maxLength={400}
               disabled={busy}
               placeholder="e.g. Please visit the Registrar’s Office with your valid ID."
-              className={`${FIELD} resize-none`}
+              className={FIELD}
             />
           </div>
 
-          <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-            The student will get a notification with this reason. This cannot be undone from their side.
-          </p>
-
           {error && (
-            <div className="p-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 flex items-start gap-2">
+            <div className="p-2.5 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 flex items-start gap-2">
               <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0 text-red-500" />
               <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
             </div>
           )}
         </div>
 
-        {/* Footer actions */}
-        <div className="flex-shrink-0 flex gap-2.5 px-5 py-4 border-t border-gray-100 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-900/40">
+        <div className="flex-shrink-0 flex items-center gap-2.5 px-5 py-3 border-t border-gray-100 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-900/40">
+          <p className="hidden sm:block flex-1 text-[11px] text-gray-500 dark:text-gray-400 leading-snug">
+            The student is notified with this reason.
+          </p>
           <button
             type="button"
             onClick={onCancel}
             disabled={busy}
-            className="flex-1 px-4 py-3 rounded-xl text-sm font-semibold bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 dark:bg-slate-800 dark:text-gray-200 dark:border-slate-600 dark:hover:bg-slate-700 disabled:opacity-60"
+            className="flex-1 sm:flex-none sm:w-28 px-4 py-2.5 rounded-xl text-sm font-semibold bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 dark:bg-slate-800 dark:text-gray-200 dark:border-slate-600 dark:hover:bg-slate-700 disabled:opacity-60"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={busy}
-            className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold bg-red-600 hover:bg-red-700 text-white shadow-sm disabled:opacity-60"
+            className="flex-1 sm:flex-none sm:w-32 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold bg-red-600 hover:bg-red-700 text-white shadow-sm disabled:opacity-60"
           >
             {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <XCircle className="w-4 h-4" />}
             Reject
