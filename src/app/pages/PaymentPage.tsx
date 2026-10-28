@@ -193,28 +193,48 @@ export default function PaymentPage() {
       amountLabel: req.amount,
     };
   }, [req, user]);
-  const reqIdPreview = useMemo(
-    () => (reqIdProofInput ? reqIdProofDataUrl(reqIdProofInput) : ''),
-    [reqIdProofInput],
-  );
+  const [reqIdPreview, setReqIdPreview] = useState('');
+  const [proofBusy, setProofBusy] = useState(false);
 
   useEffect(() => {
     setProofSaved(false);
   }, [req?.id, paymentMethod]);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!reqIdProofInput || paymentMethod !== 'cashier') {
+      setReqIdPreview('');
+      return;
+    }
+    setReqIdPreview('');
+    reqIdProofDataUrl(reqIdProofInput)
+      .then(url => {
+        if (!cancelled) setReqIdPreview(url);
+      })
+      .catch(() => {
+        if (!cancelled) setReqIdPreview('');
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [reqIdProofInput, paymentMethod]);
 
   const canSubmit =
     paymentMethod === 'gcash'
       ? Boolean(req && gcashRef.trim() && screenshot)
       : Boolean(req && proofSaved);
 
-  const handleSaveReqId = () => {
+  const handleSaveReqId = async () => {
     if (!reqIdProofInput) return;
+    setProofBusy(true);
+    setFormError('');
     try {
-      downloadReqIdProof(reqIdProofInput);
+      await downloadReqIdProof(reqIdProofInput);
       setProofSaved(true);
-      setFormError('');
     } catch {
       setFormError('Could not save the REQ ID picture. Please try again.');
+    } finally {
+      setProofBusy(false);
     }
   };
 
@@ -576,13 +596,13 @@ export default function PaymentPage() {
                 </p>
               </div>
 
-              {req && reqIdPreview && (
+              {req && (
                 <div className="rounded-xl border border-gray-200 dark:border-slate-600 overflow-hidden bg-white dark:bg-slate-900">
                   <div className="flex items-center justify-between gap-2 px-3.5 py-2.5 border-b border-gray-100 dark:border-slate-700">
                     <div className="flex items-center gap-2 min-w-0">
                       <ImageIcon className="w-4 h-4 text-green-600 dark:text-green-400 flex-shrink-0" />
                       <div className="min-w-0">
-                        <p className="text-sm font-semibold text-gray-900 dark:text-white">Your REQ ID proof</p>
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white">Your REQ ID form</p>
                         <p className="text-xs text-gray-500 dark:text-gray-400 font-mono truncate">{req.id}</p>
                       </div>
                     </div>
@@ -592,21 +612,30 @@ export default function PaymentPage() {
                       </span>
                     )}
                   </div>
-                  <div className="p-3 bg-gray-50 dark:bg-slate-950/50">
-                    <img
-                      src={reqIdPreview}
-                      alt={`REQ ID proof for ${req.id}`}
-                      className="w-full max-w-sm mx-auto rounded-lg shadow-sm border border-gray-200 dark:border-slate-700"
-                    />
+                  <div className="p-3 bg-gray-50 dark:bg-slate-950/50 min-h-[12rem] flex items-center justify-center">
+                    {reqIdPreview ? (
+                      <img
+                        src={reqIdPreview}
+                        alt={`REQ ID form for ${req.id}`}
+                        className="w-full max-w-sm mx-auto rounded-lg shadow-sm border border-gray-200 dark:border-slate-700"
+                      />
+                    ) : (
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Preparing official form…</p>
+                    )}
                   </div>
                   <div className="p-3 border-t border-gray-100 dark:border-slate-700">
                     <button
                       type="button"
                       onClick={handleSaveReqId}
-                      className="w-full inline-flex items-center justify-center gap-2 py-2.5 rounded-xl bg-green-600 hover:bg-green-700 text-white text-sm font-medium transition-colors"
+                      disabled={proofBusy || !reqIdPreview}
+                      className="w-full inline-flex items-center justify-center gap-2 py-2.5 rounded-xl bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white text-sm font-medium transition-colors"
                     >
-                      <Download className="w-4 h-4" />
-                      {proofSaved ? 'Save REQ ID again' : 'Save REQ ID to phone'}
+                      {proofBusy ? (
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      ) : (
+                        <Download className="w-4 h-4" />
+                      )}
+                      {proofBusy ? 'Saving…' : proofSaved ? 'Save REQ ID again' : 'Save REQ ID to phone'}
                     </button>
                     <p className="mt-2 text-xs text-center text-gray-500 dark:text-gray-400">
                       Download the picture, then confirm Pay in Person below.
