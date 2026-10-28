@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { AlertCircle, Check, Loader2, X, XCircle } from 'lucide-react';
 import { composeReason } from '../lib/requests';
 
@@ -103,9 +104,9 @@ export function RejectReasonDialog({
     onConfirm(composeReason(reason, message));
   };
 
-  return (
+  return createPortal(
     <div
-      className="fade-in fixed inset-0 z-[70] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/40 backdrop-blur-md"
+      className="fade-in fixed inset-0 z-[70] flex items-end sm:items-start justify-center p-0 sm:px-4 sm:pt-[5vh] sm:pb-4 bg-slate-900/40 backdrop-blur-md"
       style={{ WebkitBackdropFilter: 'blur(12px)' }}
       onClick={() => !busy && onCancel()}
     >
@@ -115,7 +116,7 @@ export function RejectReasonDialog({
         role="dialog"
         aria-modal="true"
         aria-labelledby="reject-title"
-        className="pop-in w-full sm:max-w-2xl max-h-[94dvh] flex flex-col bg-white dark:bg-slate-800 rounded-t-2xl sm:rounded-2xl shadow-2xl ring-1 ring-black/5 dark:ring-white/10 overflow-hidden"
+        className="pop-in w-full sm:max-w-2xl max-h-[92dvh] sm:max-h-[90dvh] flex flex-col bg-white dark:bg-slate-800 rounded-t-2xl sm:rounded-2xl shadow-2xl ring-1 ring-black/5 dark:ring-white/10 overflow-hidden"
       >
         <div className="flex-shrink-0 flex items-center gap-3 px-5 py-3.5 border-b border-gray-100 dark:border-slate-700">
           <span className="w-9 h-9 rounded-full bg-red-100 dark:bg-red-900/40 flex items-center justify-center flex-shrink-0">
@@ -234,6 +235,7 @@ export function RejectReasonDialog({
           </button>
         </div>
       </form>
-    </div>
+    </div>,
+    document.body,
   );
 }
