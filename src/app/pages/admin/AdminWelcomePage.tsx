@@ -77,14 +77,15 @@ const workflow = [
 const reminders = [
   'Verify payment before moving a request to Processing.',
   'Students get a notification every time you change a request or payment status.',
-  'For Pay in Person, confirm the student’s Official Receipt and REQ ID in person before verifying — no receipt photo is uploaded in the app.',
+  'For Pay in Person, status shows “Waiting for student to verify in person.” Confirm Official Receipt + REQ ID at the counter — no receipt photo is uploaded in the app.',
+  'Major documents are estimated at about 5 business days under normal operations, and may take longer when the office is busy.',
   'Office hours shown to students: Monday – Saturday, 8:00 AM – 4:00 PM. Closed Sunday.',
 ];
 
 const flow: { label: string; who: 'Student' | 'You' }[] = [
   { label: 'Submits a request', who: 'Student' },
   { label: 'Approve or reject', who: 'You' },
-  { label: 'Pays online or at cashier', who: 'Student' },
+  { label: 'Pays via GCash or Pay in Person', who: 'Student' },
   { label: 'Verify the payment', who: 'You' },
   { label: 'Prepare the document', who: 'You' },
   { label: 'Mark Ready for Pickup', who: 'You' },

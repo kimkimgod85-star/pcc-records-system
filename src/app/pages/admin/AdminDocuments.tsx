@@ -223,7 +223,7 @@ export default function AdminDocuments() {
         <div className="rounded-xl border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-900/15 p-3.5">
           <p className="text-sm font-semibold text-indigo-900 dark:text-indigo-100">Major documents</p>
           <p className="text-xs text-indigo-800 dark:text-indigo-200 mt-1 leading-snug">
-            Honorable dismissal, transfer credential, transcript of records, and diploma. Require verification, online pickup scheduling, and completed clearances before release.
+            Honorable dismissal, transfer credential, transcript of records, and diploma. Estimated about 5 business days under normal operations (may take longer if the office is busy). Require verification, online pickup scheduling, and completed clearances before release.
           </p>
         </div>
       </div>

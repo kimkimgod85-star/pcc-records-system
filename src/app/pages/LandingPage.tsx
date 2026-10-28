@@ -250,7 +250,7 @@ export default function LandingPage() {
             </div>
             <div className="rounded-2xl border border-indigo-200 dark:border-indigo-800 bg-indigo-50/60 dark:bg-indigo-900/10 p-5">
               <p className="text-sm font-semibold text-indigo-800 dark:text-indigo-200">Major documents</p>
-              <p className="text-xs text-indigo-700 dark:text-indigo-300 mt-1 mb-4">Require verification before release. Schedule pickup online and complete school clearances before claiming.</p>
+              <p className="text-xs text-indigo-700 dark:text-indigo-300 mt-1 mb-4">Estimated about 5 business days under normal operations; may take longer if the office is busy. Schedule pickup online and complete school clearances before claiming.</p>
               <div className="grid grid-cols-2 gap-3">
                 {[
                   { title: 'Honorable Dismissal', icon: '🗂️' },

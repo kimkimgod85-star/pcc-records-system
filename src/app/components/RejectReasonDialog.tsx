@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { AlertCircle, ChevronDown, Loader2, X, XCircle } from 'lucide-react';
 import { composeReason } from '../lib/requests';
 
-export { PAYMENT_REJECT_REASONS, REQUEST_REJECT_REASONS } from '../lib/rejectReasons';
+export { CASHIER_PAYMENT_REJECT_REASONS, PAYMENT_REJECT_REASONS, REQUEST_REJECT_REASONS } from '../lib/rejectReasons';
 
 const OTHER = '__other__';
 

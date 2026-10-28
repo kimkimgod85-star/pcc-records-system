@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import {
   Search, CheckCircle, XCircle, X, Smartphone, MapPin, ChevronRight, Loader2,
-  AlertCircle, Wallet, Clock, Receipt, RotateCcw, ImageOff, ExternalLink, ArrowRight,
+  AlertCircle, Wallet, Clock, Receipt, RotateCcw, ImageOff, ExternalLink, ArrowRight, UserRound,
 } from 'lucide-react';
 import { Link } from 'react-router';
 import { fetchPayments, screenshotUrl, subscribePayments, updatePaymentStatus, type PaymentRecord } from '../../lib/payments';
@@ -9,7 +9,7 @@ import { subscribeRequests, updateRequestStatus } from '../../lib/requests';
 import { REQUEST_STATUS_LABEL, type RequestStatus } from '../../lib/status';
 import { StatusBadge } from '../../components/StatusBadge';
 import { useRevealOnSmallScreen } from '../../lib/useRevealOnSmallScreen';
-import { PAYMENT_REJECT_REASONS, RejectReasonDialog } from '../../components/RejectReasonDialog';
+import { CASHIER_PAYMENT_REJECT_REASONS, PAYMENT_REJECT_REASONS, RejectReasonDialog } from '../../components/RejectReasonDialog';
 
 type PayStatus = PaymentRecord['status'];
 
@@ -76,10 +76,10 @@ function MethodTag({ method }: { method: PaymentRecord['method'] }) {
     </span>
   ) : (
     <span className="inline-flex items-center gap-1.5 text-sm text-gray-700 dark:text-gray-300">
-      <span className="w-6 h-6 rounded-md bg-green-50 dark:bg-green-900/30 flex items-center justify-center">
-        <MapPin className="w-3.5 h-3.5 text-green-600 dark:text-green-400" />
+      <span className="w-6 h-6 rounded-md bg-slate-100 dark:bg-slate-700 flex items-center justify-center">
+        <MapPin className="w-3.5 h-3.5 text-slate-700 dark:text-slate-200" />
       </span>
-      Cashier
+      Pay in Person
     </span>
   );
 }
@@ -208,7 +208,7 @@ export default function AdminPayments() {
             type="text"
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Search by student, request ID, or reference / OR number"
+            placeholder="Search by student, request ID, GCash ref, or REQ ID"
             className="w-full pl-10 pr-10 py-2.5 bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           {search && (
@@ -368,41 +368,96 @@ export default function AdminPayments() {
                 </button>
               </div>
 
-              {/* Proof */}
+              {/* Proof / verification status */}
               <div className="px-5 pt-4">
-                <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
-                  {selected.method === 'gcash' ? 'GCash screenshot' : 'Pay in Person proof'}
-                </p>
-                {screenshotUrl(selected.screenshotPath) ? (
-                  <a
-                    href={selected.screenshotPath}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="group block rounded-xl overflow-hidden border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-900"
-                  >
-                    <img
-                      src={selected.screenshotPath}
-                      alt={selected.method === 'gcash' ? 'GCash proof' : 'Payment proof'}
-                      className="w-full max-h-72 object-contain"
-                    />
-                    <span className="flex items-center justify-center gap-1.5 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 border-t border-gray-200 dark:border-slate-700 group-hover:bg-blue-50 dark:group-hover:bg-blue-900/20">
-                      <ExternalLink className="w-3.5 h-3.5" /> Open full size
-                    </span>
-                  </a>
+                {selected.method === 'gcash' ? (
+                  <>
+                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">GCash screenshot</p>
+                    {screenshotUrl(selected.screenshotPath) ? (
+                      <a
+                        href={selected.screenshotPath}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="group block rounded-xl overflow-hidden border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-900"
+                      >
+                        <img
+                          src={selected.screenshotPath}
+                          alt="GCash proof"
+                          className="w-full max-h-72 object-contain"
+                        />
+                        <span className="flex items-center justify-center gap-1.5 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 border-t border-gray-200 dark:border-slate-700 group-hover:bg-blue-50 dark:group-hover:bg-blue-900/20">
+                          <ExternalLink className="w-3.5 h-3.5" /> Open full size
+                        </span>
+                      </a>
+                    ) : (
+                      <div className="rounded-xl border border-dashed border-gray-300 dark:border-slate-600 px-4 py-5 flex flex-col items-center justify-center gap-1.5 text-center text-gray-500 dark:text-gray-400">
+                        <ImageOff className="w-5 h-5" />
+                        <p className="text-sm">No screenshot uploaded</p>
+                      </div>
+                    )}
+                  </>
                 ) : (
-                  <div className="rounded-xl border border-dashed border-gray-300 dark:border-slate-600 px-4 py-5 flex flex-col items-center justify-center gap-1.5 text-center text-gray-500 dark:text-gray-400">
-                    <ImageOff className="w-5 h-5" />
-                    <p className="text-sm">
-                      {selected.method === 'cashier'
-                        ? 'No photo in app — verify with Official Receipt + REQ ID in person'
-                        : 'No screenshot uploaded'}
-                    </p>
-                  </div>
+                  <>
+                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">Pay in Person status</p>
+                    <div className={`rounded-xl border px-4 py-4 ${
+                      selected.status === 'verified'
+                        ? 'bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800'
+                        : selected.status === 'rejected'
+                        ? 'bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-800'
+                        : 'bg-amber-50 border-amber-200 dark:bg-amber-900/20 dark:border-amber-800'
+                    }`}>
+                      <div className="flex items-start gap-3">
+                        <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${
+                          selected.status === 'verified'
+                            ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
+                            : selected.status === 'rejected'
+                            ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300'
+                            : 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200'
+                        }`}>
+                          {selected.status === 'verified' ? (
+                            <CheckCircle className="w-4 h-4" />
+                          ) : selected.status === 'rejected' ? (
+                            <XCircle className="w-4 h-4" />
+                          ) : (
+                            <UserRound className="w-4 h-4" />
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <p className={`text-sm font-semibold ${
+                            selected.status === 'verified'
+                              ? 'text-green-900 dark:text-green-100'
+                              : selected.status === 'rejected'
+                              ? 'text-red-900 dark:text-red-100'
+                              : 'text-amber-950 dark:text-amber-100'
+                          }`}>
+                            {selected.status === 'verified'
+                              ? 'Verified in person'
+                              : selected.status === 'rejected'
+                              ? 'Pay in Person rejected'
+                              : 'Waiting for student to verify in person'}
+                          </p>
+                          <p className={`text-sm mt-1 leading-snug ${
+                            selected.status === 'verified'
+                              ? 'text-green-800 dark:text-green-200'
+                              : selected.status === 'rejected'
+                              ? 'text-red-800 dark:text-red-200'
+                              : 'text-amber-900 dark:text-amber-200'
+                          }`}>
+                            {selected.status === 'verified'
+                              ? 'Official Receipt and REQ ID were confirmed at the Registrar.'
+                              : selected.status === 'rejected'
+                              ? 'Ask the student to confirm Pay in Person again and return with a valid Official Receipt and REQ ID.'
+                              : 'No receipt photo is uploaded in the app. Wait for the student to bring their Official Receipt and REQ ID form, then verify here.'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </>
                 )}
               </div>
 
               <dl className="grid grid-cols-2 gap-x-4 gap-y-4 px-5 py-4">
-                <Field label={selected.method === 'gcash' ? 'GCash ref no.' : 'REQ ID'} value={selected.refNo || '—'} mono highlight />
+                <Field label={selected.method === 'gcash' ? 'GCash ref no.' : 'REQ ID'} value={selected.refNo || selected.reqId || '—'} mono highlight />
                 <Field label="Date" value={selected.date} />
                 <Field label="Student" value={selected.student} />
                 <Field label="Request ID" value={selected.reqId} mono />
@@ -417,7 +472,9 @@ export default function AdminPayments() {
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5 mb-3">
                 {selected.method === 'gcash'
                   ? 'Make sure the amount and reference number match the screenshot.'
-                  : 'Verify in person: student shows Official Receipt and REQ ID for this request, then confirm the amount.'}
+                  : selected.status === 'pending'
+                  ? 'When the student arrives, check their Official Receipt and REQ ID, confirm the amount, then Verify.'
+                  : 'Update the verification result for this Pay in Person payment.'}
               </p>
 
               {error && (
@@ -536,7 +593,7 @@ export default function AdminPayments() {
         open={rejecting && Boolean(selected)}
         title="Reject this payment?"
         subject={selected ? `${selected.amount} · ${selected.document} (${selected.reqId}) · ${selected.student}` : ''}
-        reasons={PAYMENT_REJECT_REASONS}
+        reasons={selected?.method === 'cashier' ? CASHIER_PAYMENT_REJECT_REASONS : PAYMENT_REJECT_REASONS}
         busy={saving === 'rejected'}
         error={rejecting ? error : ''}
         onCancel={() => setRejecting(false)}

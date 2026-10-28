@@ -111,7 +111,7 @@ export default function AdminDashboard() {
       {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
         <StatCard icon={Clock} label="Pending Review" value={pending} sub="Needs your action" color="text-orange-500" bg="bg-orange-100 dark:bg-orange-900/30" />
-        <StatCard icon={CreditCard} label="Payments to Verify" value={pendingPayments} sub="Receipts submitted" color="text-yellow-600" bg="bg-yellow-100 dark:bg-yellow-900/30" />
+        <StatCard icon={CreditCard} label="Payments to Verify" value={pendingPayments} sub="GCash or Pay in Person" color="text-yellow-600" bg="bg-yellow-100 dark:bg-yellow-900/30" />
         <StatCard icon={Calendar} label="Pickups Today" value={scheduledToday} sub="Scheduled claims" color="text-indigo-500" bg="bg-indigo-100 dark:bg-indigo-900/30" />
         <StatCard icon={Users} label="Registered Users" value={users} sub="Students & alumni" color="text-purple-500" bg="bg-purple-100 dark:bg-purple-900/30" />
       </div>

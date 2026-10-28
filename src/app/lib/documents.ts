@@ -43,9 +43,10 @@ export function categoryLabel(category: DocumentCategory) {
 export function categoryAdvice(category: DocumentCategory) {
   if (category === 'major') {
     return {
-      eta: 'Extended processing',
-      detail: 'These records require verification before release. After approval, reserve a pickup schedule online and complete all school clearances before claiming the document.',
-      short: 'Verification required · schedule online · clearances before release',
+      eta: 'About 5 business days',
+      detail:
+        'Estimated about 5 business days under normal office operations. It may take longer when the office is busy. These records require verification before release. After approval, reserve a pickup schedule online and complete all school clearances before claiming.',
+      short: 'About 5 business days · may take longer if the office is busy',
     };
   }
   return {

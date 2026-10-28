@@ -79,7 +79,7 @@ export function useAdminAlerts(enabled: boolean) {
           id: `pay-${row.id}`,
           kind: 'payment',
           title: 'New payment to verify',
-          detail: `${who} · ${formatPeso(Number(row.amount))} via ${row.method === 'cashier' ? 'Cashier' : 'GCash'} for ${doc}${row.ref_no ? ` · Ref ${row.ref_no}` : ''}`,
+          detail: `${who} · ${formatPeso(Number(row.amount))} via ${row.method === 'cashier' ? 'Pay in Person' : 'GCash'} for ${doc}${row.ref_no ? ` · ${row.method === 'cashier' ? 'REQ' : 'Ref'} ${row.ref_no}` : ''}`,
           link: '/admin/payments',
           at: Date.now(),
         });

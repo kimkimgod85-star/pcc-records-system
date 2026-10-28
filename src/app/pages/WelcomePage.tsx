@@ -71,7 +71,7 @@ const steps = [
 
 const tips = [
   'Minor documents are prepared within one business day under normal office operations.',
-  'Major documents require verification. Reserve pickup online and complete clearances before claiming.',
+  'Major documents take about 5 business days under normal operations, and may take longer if the office is busy. Reserve pickup online and complete clearances before claiming.',
   'Check Notifications for approval, payment verification, and ready-for-pickup updates.',
   'For GCash, upload a clear screenshot with a readable reference number.',
   'For Pay in Person, save your REQ ID to your phone, pay at the Cashier, then verify at the Registrar with your receipt and REQ ID.',
