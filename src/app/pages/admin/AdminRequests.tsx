@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Search, CheckCircle, X, ChevronRight, ArrowRight, AlertCircle, Loader2, StickyNote, CalendarClock } from 'lucide-react';
+import { Search, CheckCircle, X, ChevronRight, ArrowRight, AlertCircle, Loader2, StickyNote, CalendarClock, Copy } from 'lucide-react';
 import { fetchRequests, subscribeRequests, updateRequestStatus, type StudentRequest } from '../../lib/requests';
 import { formatPickup, formatShortDate, paymentLabel, type PaymentStatus, type RequestStatus } from '../../lib/status';
 import { useRevealOnSmallScreen } from '../../lib/useRevealOnSmallScreen';
@@ -15,6 +15,8 @@ type AdminRequestRow = {
   userId: string;
   type: string;
   purpose: string;
+  quantity: number;
+  copiesLabel: string;
   submitted: string;
   status: RequestStatus;
   paymentStatus: PaymentStatus;
@@ -25,7 +27,13 @@ type AdminRequestRow = {
   rejectionReason: string;
 };
 
+function copiesLabel(quantity: number) {
+  const n = Math.max(1, quantity || 1);
+  return `${n} ${n === 1 ? 'copy' : 'copies'}`;
+}
+
 function toRow(item: StudentRequest): AdminRequestRow {
+  const quantity = Math.max(1, Number(item.quantity) || 1);
   return {
     uuid: item.uuid,
     id: item.id,
@@ -34,6 +42,8 @@ function toRow(item: StudentRequest): AdminRequestRow {
     userId: item.userId,
     type: item.type,
     purpose: item.purpose || '—',
+    quantity,
+    copiesLabel: copiesLabel(quantity),
     submitted: formatShortDate(item.createdAt),
     status: item.status,
     paymentStatus: item.paymentStatus,
@@ -156,7 +166,7 @@ export default function AdminRequests() {
           Manage Requests
         </h1>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-          Click a request to see its details and update its status.
+          Click a request to update its status. Copies and payment show in the details.
         </p>
       </div>
 
@@ -242,9 +252,12 @@ export default function AdminRequests() {
                   </div>
                   <StatusBadge status={req.status} label={STATUS_LABEL[req.status]} />
                 </div>
-                <div className="flex items-center justify-between gap-3 mt-2 text-xs">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-xs">
                   <span className="font-mono text-blue-600 dark:text-blue-400 break-all">{req.id}</span>
-                  <span className="text-gray-500 dark:text-gray-400 whitespace-nowrap">{req.submitted}</span>
+                  <span className="inline-flex items-center gap-1 font-medium text-slate-700 dark:text-slate-200">
+                    <Copy className="w-3 h-3" /> {req.copiesLabel}
+                  </span>
+                  <span className="text-gray-500 dark:text-gray-400 whitespace-nowrap ml-auto">{req.submitted}</span>
                 </div>
                 {req.pickup && (
                   <p className="mt-1.5 inline-flex items-center gap-1.5 text-xs font-medium text-cyan-700 dark:text-cyan-400">
@@ -263,9 +276,9 @@ export default function AdminRequests() {
                   <tr className="text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 bg-gray-50/80 dark:bg-slate-900/40 border-b border-gray-100 dark:border-slate-700">
                     <th className="px-5 py-3">Request</th>
                     <th className="px-5 py-3">Student</th>
-                    <th className={`px-5 py-3 ${selectedReq ? 'hidden' : 'hidden md:table-cell'}`}>Payment</th>
+                    <th className={`px-5 py-3 ${selectedReq ? 'hidden' : 'hidden md:table-cell'}`}>Copies</th>
+                    <th className={`px-5 py-3 ${selectedReq ? 'hidden' : 'hidden lg:table-cell'}`}>Payment</th>
                     <th className={`px-5 py-3 ${selectedReq ? 'hidden' : 'hidden xl:table-cell'}`}>Submitted</th>
-                    <th className={`px-5 py-3 ${selectedReq ? 'hidden' : 'hidden lg:table-cell'}`}>Pickup</th>
                     <th className="px-5 py-3">Status</th>
                     <th className="w-8" />
                   </tr>
@@ -290,15 +303,13 @@ export default function AdminRequests() {
                           <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{req.studentId}</p>
                         </td>
                         <td className={`px-5 py-3.5 align-top ${selectedReq ? 'hidden' : 'hidden md:table-cell'}`}>
+                          <span className="text-sm font-semibold text-gray-900 dark:text-white tabular-nums">{req.copiesLabel}</span>
+                        </td>
+                        <td className={`px-5 py-3.5 align-top ${selectedReq ? 'hidden' : 'hidden lg:table-cell'}`}>
                           <span className={`text-sm font-medium ${paymentTone(req.paymentStatus)}`}>{req.payment}</span>
                         </td>
                         <td className={`px-5 py-3.5 align-top ${selectedReq ? 'hidden' : 'hidden xl:table-cell'}`}>
                           <span className="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">{req.submitted}</span>
-                        </td>
-                        <td className={`px-5 py-3.5 align-top ${selectedReq ? 'hidden' : 'hidden lg:table-cell'}`}>
-                          {req.pickup
-                            ? <span className="text-sm font-medium text-cyan-700 dark:text-cyan-400 whitespace-nowrap">{req.pickup}</span>
-                            : <span className="text-sm text-gray-400">Not booked</span>}
                         </td>
                         <td className="px-5 py-3.5 align-top">
                           <StatusBadge status={req.status} label={STATUS_LABEL[req.status]} />
@@ -315,18 +326,23 @@ export default function AdminRequests() {
           )}
         </div>
 
-        {/* Detail panel */}
+        {/* Detail panel — Payments-style: actions first, compact details */}
         {selectedReq && (
           <div ref={detailRef} className="lg:col-span-2 lg:sticky lg:top-6 space-y-4 scroll-mt-16">
             <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm overflow-hidden">
               <div className="flex items-start justify-between gap-3 px-5 py-4 border-b border-gray-100 dark:border-slate-700">
                 <div className="min-w-0">
-                  <p className="text-xs font-mono text-blue-600 dark:text-blue-400 break-all">{selectedReq.id}</p>
-                  <h3 className="font-semibold text-gray-900 dark:text-white leading-snug mt-0.5" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Request</p>
+                  <p className="text-lg font-semibold text-gray-900 dark:text-white leading-snug" style={{ fontFamily: 'Poppins, sans-serif' }}>
                     {selectedReq.type}
-                  </h3>
-                  <div className="mt-2">
+                  </p>
+                  <p className="text-xs font-mono text-blue-600 dark:text-blue-400 mt-0.5 break-all">{selectedReq.id}</p>
+                  <div className="flex flex-wrap items-center gap-2 mt-2">
                     <StatusBadge status={selectedReq.status} label={STATUS_LABEL[selectedReq.status]} />
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-800 ring-1 ring-inset ring-slate-200 dark:bg-slate-700 dark:text-slate-100 dark:ring-slate-600">
+                      <Copy className="w-3 h-3" />
+                      {selectedReq.copiesLabel}
+                    </span>
                   </div>
                 </div>
                 <button
@@ -339,11 +355,74 @@ export default function AdminRequests() {
                 </button>
               </div>
 
-              <dl className="grid grid-cols-2 gap-x-4 gap-y-4 px-5 py-4">
+              {/* Update status first — no scroll needed for primary action */}
+              <div className="px-5 py-4 border-b border-gray-100 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-900/40">
+                <h3 className="font-semibold text-gray-900 dark:text-white" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                  Update status
+                </h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5 mb-3">
+                  {next ? next.hint : 'This request has no next step. You can still set another status below.'}
+                </p>
+
+                {error && (
+                  <div className="mb-3 p-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 flex items-start gap-2">
+                    <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0 text-red-500" />
+                    <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
+                  </div>
+                )}
+
+                {next && (
+                  <button
+                    type="button"
+                    onClick={() => updateStatus(selectedReq, next.status)}
+                    disabled={saving !== null}
+                    className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition-colors disabled:opacity-60 mb-3"
+                  >
+                    {saving === next.status ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
+                    {next.label}
+                  </button>
+                )}
+
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">
+                  {next ? 'Or set status to' : 'Set status to'}
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  {ALL_ACTIONS.map(action => {
+                    const current = selectedReq.status === action.status;
+                    return (
+                      <button
+                        key={action.status}
+                        type="button"
+                        onClick={() => chooseStatus(selectedReq, action.status)}
+                        disabled={current || saving !== null}
+                        className={`inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-sm font-medium border transition-colors ${
+                          current
+                            ? 'border-blue-300 bg-blue-50 text-blue-700 dark:border-blue-700 dark:bg-blue-900/30 dark:text-blue-300 cursor-default'
+                            : action.status === 'rejected'
+                              ? 'border-red-200 text-red-700 hover:bg-red-50 dark:border-red-900/60 dark:text-red-300 dark:hover:bg-red-900/20 disabled:opacity-50'
+                              : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50 dark:bg-slate-800 dark:border-slate-600 dark:text-gray-200 dark:hover:bg-slate-700 disabled:opacity-50'
+                        }`}
+                      >
+                        {saving === action.status ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : current ? (
+                          <CheckCircle className="w-3.5 h-3.5" />
+                        ) : (
+                          <span className={`w-2 h-2 rounded-full ${action.dot}`} />
+                        )}
+                        {action.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <dl className="grid grid-cols-2 gap-x-4 gap-y-3.5 px-5 py-4">
                 <Field label="Student" value={selectedReq.student} />
                 <Field label="Student ID" value={selectedReq.studentId} mono />
-                <Field label="Submitted" value={selectedReq.submitted} />
+                <Field label="Copies" value={selectedReq.copiesLabel} highlight />
                 <Field label="Payment" value={selectedReq.payment} tone={paymentTone(selectedReq.paymentStatus)} />
+                <Field label="Submitted" value={selectedReq.submitted} />
                 <Field label="Purpose" value={selectedReq.purpose} wide />
               </dl>
 
@@ -378,67 +457,6 @@ export default function AdminRequests() {
                 </div>
               )}
             </div>
-
-            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm p-5">
-              <h3 className="font-semibold text-gray-900 dark:text-white mb-3" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                Update Status
-              </h3>
-
-              {error && (
-                <div className="mb-3 p-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 flex items-start gap-2">
-                  <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0 text-red-500" />
-                  <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
-                </div>
-              )}
-
-              {next && (
-                <div className="mb-4">
-                  <button
-                    type="button"
-                    onClick={() => updateStatus(selectedReq, next.status)}
-                    disabled={saving !== null}
-                    className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition-colors disabled:opacity-60"
-                  >
-                    {saving === next.status ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
-                    {next.label}
-                  </button>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5 text-center">{next.hint}</p>
-                </div>
-              )}
-
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">
-                {next ? 'Or set status to' : 'Set status to'}
-              </p>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 gap-2">
-                {ALL_ACTIONS.map(action => {
-                  const current = selectedReq.status === action.status;
-                  return (
-                    <button
-                      key={action.status}
-                      type="button"
-                      onClick={() => chooseStatus(selectedReq, action.status)}
-                      disabled={current || saving !== null}
-                      className={`inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium border transition-colors ${
-                        current
-                          ? 'border-blue-300 bg-blue-50 text-blue-700 dark:border-blue-700 dark:bg-blue-900/30 dark:text-blue-300 cursor-default'
-                          : action.status === 'rejected'
-                            ? 'border-red-200 text-red-700 hover:bg-red-50 dark:border-red-900/60 dark:text-red-300 dark:hover:bg-red-900/20 disabled:opacity-50'
-                            : 'border-gray-200 text-gray-700 hover:bg-gray-50 dark:border-slate-600 dark:text-gray-200 dark:hover:bg-slate-700 disabled:opacity-50'
-                      }`}
-                    >
-                      {saving === action.status ? (
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      ) : current ? (
-                        <CheckCircle className="w-3.5 h-3.5" />
-                      ) : (
-                        <span className={`w-2 h-2 rounded-full ${action.dot}`} />
-                      )}
-                      {action.label}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
           </div>
         )}
       </div>
@@ -446,7 +464,7 @@ export default function AdminRequests() {
       <RejectReasonDialog
         open={rejecting && Boolean(selectedReq)}
         title="Reject this request?"
-        subject={selectedReq ? `${selectedReq.type} (${selectedReq.id}) · ${selectedReq.student}` : ''}
+        subject={selectedReq ? `${selectedReq.type} (${selectedReq.id}) · ${selectedReq.copiesLabel} · ${selectedReq.student}` : ''}
         reasons={REQUEST_REJECT_REASONS}
         busy={saving === 'rejected'}
         error={rejecting ? error : ''}
@@ -457,11 +475,27 @@ export default function AdminRequests() {
   );
 }
 
-function Field({ label, value, mono, wide, tone }: { label: string; value: string; mono?: boolean; wide?: boolean; tone?: string }) {
+function Field({
+  label,
+  value,
+  mono,
+  wide,
+  tone,
+  highlight,
+}: {
+  label: string;
+  value: string;
+  mono?: boolean;
+  wide?: boolean;
+  tone?: string;
+  highlight?: boolean;
+}) {
   return (
     <div className={wide ? 'col-span-2' : 'min-w-0'}>
       <dt className="text-xs font-medium text-gray-500 dark:text-gray-400">{label}</dt>
-      <dd className={`text-sm font-medium mt-0.5 break-words leading-snug ${tone || 'text-gray-900 dark:text-white'} ${mono ? 'font-mono' : ''}`}>
+      <dd className={`text-sm mt-0.5 break-words leading-snug ${
+        highlight ? 'font-semibold text-gray-900 dark:text-white' : `font-medium ${tone || 'text-gray-900 dark:text-white'}`
+      } ${mono ? 'font-mono' : ''}`}>
         {value}
       </dd>
     </div>
