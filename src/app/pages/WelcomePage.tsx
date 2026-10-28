@@ -34,7 +34,7 @@ const steps = [
   {
     icon: CreditCard,
     title: 'Pay the fee',
-    desc: 'Pay through GCash and upload the screenshot, or pay at the Cashier in the PCC New Building and upload a photo of your official receipt.',
+    desc: 'Pay through GCash and upload the screenshot, or choose Pay in Person: save your REQ ID, pay at the PCC New Building Cashier, then bring your receipt and REQ ID to the Registrar.',
     href: '/payment',
     action: 'Payments',
     color: 'text-orange-600 dark:text-orange-400',
@@ -73,7 +73,8 @@ const tips = [
   'Minor documents are prepared within one business day under normal office operations.',
   'Major documents require verification. Reserve pickup online and complete clearances before claiming.',
   'Check Notifications for approval, payment verification, and ready-for-pickup updates.',
-  'Upload clear GCash screenshots or official receipts so the reference or OR number is readable.',
+  'For GCash, upload a clear screenshot with a readable reference number.',
+  'For Pay in Person, save your REQ ID to your phone, pay at the Cashier, then verify at the Registrar with your receipt and REQ ID.',
   'Cashier and Registrar hours: Monday – Saturday, 8:00 AM – 4:00 PM. Closed on Sunday.',
 ];
 

@@ -189,7 +189,7 @@ export default function AdminPayments() {
           Payment Verification
         </h1>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-          Check each GCash screenshot or cashier receipt, then verify or reject it.
+          Check GCash screenshots online. For Pay in Person, verify when the student brings their Official Receipt and REQ ID.
         </p>
       </div>
 
@@ -371,7 +371,7 @@ export default function AdminPayments() {
               {/* Proof */}
               <div className="px-5 pt-4">
                 <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
-                  {selected.method === 'gcash' ? 'GCash screenshot' : 'Cashier official receipt'}
+                  {selected.method === 'gcash' ? 'GCash screenshot' : 'Pay in Person proof'}
                 </p>
                 {screenshotUrl(selected.screenshotPath) ? (
                   <a
@@ -382,7 +382,7 @@ export default function AdminPayments() {
                   >
                     <img
                       src={selected.screenshotPath}
-                      alt={selected.method === 'gcash' ? 'GCash proof' : 'Official receipt'}
+                      alt={selected.method === 'gcash' ? 'GCash proof' : 'Payment proof'}
                       className="w-full max-h-72 object-contain"
                     />
                     <span className="flex items-center justify-center gap-1.5 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 border-t border-gray-200 dark:border-slate-700 group-hover:bg-blue-50 dark:group-hover:bg-blue-900/20">
@@ -390,15 +390,19 @@ export default function AdminPayments() {
                     </span>
                   </a>
                 ) : (
-                  <div className="h-28 rounded-xl border border-dashed border-gray-300 dark:border-slate-600 flex flex-col items-center justify-center gap-1.5 text-gray-500 dark:text-gray-400">
+                  <div className="rounded-xl border border-dashed border-gray-300 dark:border-slate-600 px-4 py-5 flex flex-col items-center justify-center gap-1.5 text-center text-gray-500 dark:text-gray-400">
                     <ImageOff className="w-5 h-5" />
-                    <p className="text-sm">{selected.method === 'cashier' ? 'No receipt photo uploaded' : 'No screenshot uploaded'}</p>
+                    <p className="text-sm">
+                      {selected.method === 'cashier'
+                        ? 'No photo in app — verify with Official Receipt + REQ ID in person'
+                        : 'No screenshot uploaded'}
+                    </p>
                   </div>
                 )}
               </div>
 
               <dl className="grid grid-cols-2 gap-x-4 gap-y-4 px-5 py-4">
-                <Field label={selected.method === 'gcash' ? 'GCash ref no.' : 'OR number'} value={selected.refNo || '—'} mono highlight />
+                <Field label={selected.method === 'gcash' ? 'GCash ref no.' : 'REQ ID'} value={selected.refNo || '—'} mono highlight />
                 <Field label="Date" value={selected.date} />
                 <Field label="Student" value={selected.student} />
                 <Field label="Request ID" value={selected.reqId} mono />
@@ -411,7 +415,9 @@ export default function AdminPayments() {
                 Decision
               </h3>
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5 mb-3">
-                Make sure the amount and {selected.method === 'gcash' ? 'reference number' : 'OR number'} match the photo.
+                {selected.method === 'gcash'
+                  ? 'Make sure the amount and reference number match the screenshot.'
+                  : 'Verify in person: student shows Official Receipt and REQ ID for this request, then confirm the amount.'}
               </p>
 
               {error && (

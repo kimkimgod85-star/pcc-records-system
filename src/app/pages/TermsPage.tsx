@@ -26,7 +26,7 @@ const SECTIONS: { id: string; title: string; body: ReactNode }[] = [
       <ul>
         <li><strong>Account details:</strong> full name, Student ID, email address, and whether you are a student or alumni.</li>
         <li><strong>Request details:</strong> documents you request, purpose, number of copies, processing type, and notes.</li>
-        <li><strong>Payment details:</strong> amount, payment method, GCash reference or OR number, and the photo of your proof of payment.</li>
+        <li><strong>Payment details:</strong> amount, payment method, GCash reference and screenshot when paying online, or Pay in Person confirmation with your Request ID (receipt verified at the Registrar).</li>
         <li><strong>Pickup details:</strong> the date and time you book to claim your documents.</li>
         <li><strong>Device details:</strong> if you turn on notifications, a technical address that lets us send alerts to your device.</li>
       </ul>
@@ -97,7 +97,7 @@ const SECTIONS: { id: string; title: string; body: ReactNode }[] = [
     body: (
       <ul>
         <li>Give true and complete information. False details can lead to your request being rejected.</li>
-        <li>Upload only real proofs of payment. Fake or edited receipts may result in account suspension and school action.</li>
+        <li>Upload only real GCash proofs of payment. For Pay in Person, present your real Official Receipt and REQ ID to the Registrar. Fake or edited proofs may result in account suspension and school action.</li>
         <li>Keep your password private. You are responsible for activity on your account.</li>
         <li>Bring a valid ID when claiming documents. Only you or a person with your written authorization can claim them.</li>
       </ul>

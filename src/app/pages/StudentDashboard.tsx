@@ -296,11 +296,13 @@ export default function StudentDashboard() {
                     {isPaid
                       ? `Paid via ${req.paymentMethod || 'online'} · ${req.submittedDate}`
                       : isVerifying
-                      ? 'Payment received. Waiting for the Registrar to verify it.'
+                      ? req.paymentMethod === 'cashier' || req.paymentMethod === 'Cashier'
+                        ? 'Pay in Person confirmed. Bring your Official Receipt and REQ ID to the Registrar.'
+                        : 'Payment received. Waiting for the Registrar to verify it.'
                       : isAwaiting
                       ? 'Don’t pay yet. Payment opens after the Registrar approves this request.'
                       : isPayLater
-                      ? 'You can pay this later at the Cashier (PCC New Building), or pay online anytime.'
+                      ? 'You can pay later via GCash, or Pay in Person (save REQ ID → Cashier → Registrar with receipt).'
                       : 'Approved. Payment is required so processing can continue.'}
                   </p>
                 </div>

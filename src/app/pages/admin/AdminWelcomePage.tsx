@@ -30,7 +30,7 @@ const workflow = [
   {
     icon: CreditCard,
     title: 'Verify payments',
-    desc: 'Open Payments. Compare the GCash screenshot or the cashier Official Receipt photo with the reference / OR number and amount, then Verify or Reject.',
+    desc: 'Open Payments. For GCash, check the screenshot and reference number. For Pay in Person, verify in office when the student brings their Official Receipt and REQ ID, then Verify or Reject.',
     href: '/admin/payments',
     action: 'Payments',
     color: 'text-orange-600 dark:text-orange-400',
@@ -77,7 +77,7 @@ const workflow = [
 const reminders = [
   'Verify payment before moving a request to Processing.',
   'Students get a notification every time you change a request or payment status.',
-  'Check that the OR number and amount on the receipt photo match before verifying.',
+  'For Pay in Person, confirm the student’s Official Receipt and REQ ID in person before verifying — no receipt photo is uploaded in the app.',
   'Office hours shown to students: Monday – Saturday, 8:00 AM – 4:00 PM. Closed Sunday.',
 ];
 

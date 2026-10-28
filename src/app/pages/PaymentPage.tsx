@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
-import { ChevronRight, Upload, CheckCircle, Clock, Smartphone, MapPin, X, Copy, Check } from 'lucide-react';
+import { ChevronRight, Upload, CheckCircle, Clock, Smartphone, MapPin, X, Copy, Check, Download, ImageIcon } from 'lucide-react';
 import { formatPeso, fetchDocumentCatalog } from '../lib/documents';
 import { fetchRequests, subscribeRequests, type StudentRequest } from '../lib/requests';
 import { submitPayment } from '../lib/payments';
+import { downloadReqIdProof, reqIdProofDataUrl } from '../lib/reqIdProof';
 import { canPayFor } from '../lib/status';
 import { playSubmitSound } from '../lib/officeChime';
 import { useAuth } from '../context/AuthContext';
@@ -85,6 +86,7 @@ const MAX_PROOF_BYTES = 5 * 1024 * 1024;
 
 function PaidRow({ item, highlight = false }: { item: StudentRequest; highlight?: boolean }) {
   const verified = item.paymentStatus === 'verified';
+  const cashier = item.paymentMethod === 'cashier';
   return (
     <div className={`p-3 sm:p-4 rounded-xl border flex items-start gap-3 ${
       highlight
@@ -107,6 +109,8 @@ function PaidRow({ item, highlight = false }: { item: StudentRequest; highlight?
         <p className={`text-xs mt-1.5 ${verified ? 'text-green-700 dark:text-green-300' : 'text-blue-700 dark:text-blue-300'}`}>
           {verified
             ? 'Payment verified. You’re fully paid, so there is nothing else to pay.'
+            : cashier
+            ? 'Pay in Person confirmed. Pay at the Cashier with your REQ ID, then bring your receipt and REQ ID to the Registrar.'
             : 'Payment received. Waiting for the Registrar to verify it. You don’t need to pay again.'}
         </p>
         <Link
@@ -163,8 +167,8 @@ export default function PaymentPage() {
   const [paymentMethod, setPaymentMethod] = useState<'gcash' | 'cashier'>('gcash');
   const [gcashRef, setGcashRef] = useState('');
   const [screenshot, setScreenshot] = useState<File | null>(null);
-  const [orNumber, setOrNumber] = useState('');
   const [copied, setCopied] = useState(false);
+  const [proofSaved, setProofSaved] = useState(false);
 
   const copyGcashNumber = async () => {
     try {
@@ -175,24 +179,83 @@ export default function PaymentPage() {
       /* clipboard blocked */
     }
   };
-  const [receipt, setReceipt] = useState<File | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const req = payable.find(r => r.id === (selectedRequest || initialRequest));
-  const refNo = paymentMethod === 'gcash' ? gcashRef.trim() : orNumber.trim();
-  const proof = paymentMethod === 'gcash' ? screenshot : receipt;
-  const canSubmit = Boolean(req && refNo && proof);
+  const reqIdProofInput = useMemo(() => {
+    if (!req || !user) return null;
+    return {
+      requestId: req.id,
+      studentName: user.name,
+      studentId: user.studentId,
+      documentName: req.type,
+      amountLabel: req.amount,
+    };
+  }, [req, user]);
+  const reqIdPreview = useMemo(
+    () => (reqIdProofInput ? reqIdProofDataUrl(reqIdProofInput) : ''),
+    [reqIdProofInput],
+  );
+
+  useEffect(() => {
+    setProofSaved(false);
+  }, [req?.id, paymentMethod]);
+
+  const canSubmit =
+    paymentMethod === 'gcash'
+      ? Boolean(req && gcashRef.trim() && screenshot)
+      : Boolean(req && proofSaved);
+
+  const handleSaveReqId = () => {
+    if (!reqIdProofInput) return;
+    try {
+      downloadReqIdProof(reqIdProofInput);
+      setProofSaved(true);
+      setFormError('');
+    } catch {
+      setFormError('Could not save the REQ ID picture. Please try again.');
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !req || !refNo || !proof) return;
-    if (!proof.type.startsWith('image/')) {
-      setFormError('Upload a photo (PNG or JPG) of your proof of payment.');
+    if (!user || !req) return;
+
+    if (paymentMethod === 'gcash') {
+      const refNo = gcashRef.trim();
+      if (!refNo || !screenshot) return;
+      if (!screenshot.type.startsWith('image/')) {
+        setFormError('Upload a photo (PNG or JPG) of your proof of payment.');
+        return;
+      }
+      if (screenshot.size > MAX_PROOF_BYTES) {
+        setFormError('Photo is too large. Use an image under 5MB.');
+        return;
+      }
+      setLoading(true);
+      setFormError('');
+      try {
+        await submitPayment({
+          requestUuid: req.uuid,
+          userId: user.id,
+          method: 'gcash',
+          amount: req.amountValue,
+          refNo,
+          screenshot,
+        });
+        setSubmitted(true);
+        playSubmitSound();
+      } catch (err) {
+        setFormError(err instanceof Error ? err.message : 'Could not save payment.');
+      } finally {
+        setLoading(false);
+      }
       return;
     }
-    if (proof.size > MAX_PROOF_BYTES) {
-      setFormError('Photo is too large. Use an image under 5MB.');
+
+    if (!proofSaved) {
+      setFormError('Save your REQ ID picture to your phone first, then confirm.');
       return;
     }
     setLoading(true);
@@ -201,10 +264,9 @@ export default function PaymentPage() {
       await submitPayment({
         requestUuid: req.uuid,
         userId: user.id,
-        method: paymentMethod,
+        method: 'cashier',
         amount: req.amountValue,
-        refNo,
-        screenshot: proof,
+        refNo: req.id,
       });
       setSubmitted(true);
       playSubmitSound();
@@ -229,12 +291,12 @@ export default function PaymentPage() {
             <CheckCircle className="w-8 h-8 text-green-600 dark:text-green-400" />
           </div>
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
-            {paymentMethod === 'gcash' ? 'Payment Submitted!' : 'Receipt Submitted!'}
+            {paymentMethod === 'gcash' ? 'Payment Submitted!' : 'Pay in Person Confirmed'}
           </h2>
           <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
             {paymentMethod === 'gcash'
               ? 'Your GCash payment has been submitted for verification. You will be notified once it\'s confirmed.'
-              : 'Your Official Receipt from the PCC New Building Cashier was sent to the Registrar for verification. You will be notified once it\'s confirmed. Keep the original receipt for claiming.'}
+              : 'Next: show your saved REQ ID at the PCC New Building Cashier, pay, keep your Official Receipt, then go to the Registrar with your receipt and REQ ID for verification.'}
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link to="/track" className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-medium transition-colors">
@@ -488,19 +550,18 @@ export default function PaymentPage() {
                   </div>
                 </div>
                 <p className="px-3 py-1.5 text-[11px] text-center bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-300 border-t border-green-200 dark:border-green-800">
-                  Closed on Sundays
+                  Closed on Sundays · No receipt photo upload needed
                 </p>
               </div>
 
               <div className="p-3.5 sm:p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl">
-                <p className="text-sm font-semibold text-green-800 dark:text-green-300 mb-2.5">How to pay</p>
+                <p className="text-sm font-semibold text-green-800 dark:text-green-300 mb-2.5">How Pay in Person works</p>
                 <ol className="space-y-2">
                   {[
-                    'Bring your Request ID and valid school ID',
-                    'Proceed to the Cashier’s Office at the PCC New Building',
-                    `Pay ${req?.amount ?? 'the amount'} for your document`,
-                    'Take a clear photo of your Official Receipt and upload it below',
-                    'The Registrar verifies the receipt, then processes your request',
+                    'Save your REQ ID proof picture below to your phone',
+                    'Go to the Cashier’s Office at the PCC New Building and show your REQ ID',
+                    `Pay ${req?.amount ?? 'the amount'} and keep your Official Receipt`,
+                    'Go to the Registrar with your Official Receipt and REQ ID so they can verify your documents',
                   ].map((step, i) => (
                     <li key={i} className="flex items-start gap-2.5">
                       <span className="w-5 h-5 bg-green-600 text-white rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 text-[11px] font-bold">
@@ -510,26 +571,49 @@ export default function PaymentPage() {
                     </li>
                   ))}
                 </ol>
+                <p className="mt-3 text-xs text-green-700 dark:text-green-300/90 leading-relaxed">
+                  You do not upload a receipt photo in the app for Pay in Person. Verification is done at the Registrar with your physical receipt and REQ ID.
+                </p>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                  Official Receipt (OR) Number <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={orNumber}
-                  onChange={e => setOrNumber(e.target.value)}
-                  placeholder="e.g. OR-0012345"
-                  required
-                  className="w-full px-4 py-2.5 bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-600 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-mono"
-                />
-              </div>
-
-              <ProofUpload label="Photo of Official Receipt" file={receipt} onChange={setReceipt} />
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                Make sure the OR number, amount, date, and cashier stamp are readable.
-              </p>
+              {req && reqIdPreview && (
+                <div className="rounded-xl border border-gray-200 dark:border-slate-600 overflow-hidden bg-white dark:bg-slate-900">
+                  <div className="flex items-center justify-between gap-2 px-3.5 py-2.5 border-b border-gray-100 dark:border-slate-700">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <ImageIcon className="w-4 h-4 text-green-600 dark:text-green-400 flex-shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white">Your REQ ID proof</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 font-mono truncate">{req.id}</p>
+                      </div>
+                    </div>
+                    {proofSaved && (
+                      <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700 dark:text-green-300 flex-shrink-0">
+                        <CheckCircle className="w-3.5 h-3.5" /> Saved
+                      </span>
+                    )}
+                  </div>
+                  <div className="p-3 bg-gray-50 dark:bg-slate-950/50">
+                    <img
+                      src={reqIdPreview}
+                      alt={`REQ ID proof for ${req.id}`}
+                      className="w-full max-w-sm mx-auto rounded-lg shadow-sm border border-gray-200 dark:border-slate-700"
+                    />
+                  </div>
+                  <div className="p-3 border-t border-gray-100 dark:border-slate-700">
+                    <button
+                      type="button"
+                      onClick={handleSaveReqId}
+                      className="w-full inline-flex items-center justify-center gap-2 py-2.5 rounded-xl bg-green-600 hover:bg-green-700 text-white text-sm font-medium transition-colors"
+                    >
+                      <Download className="w-4 h-4" />
+                      {proofSaved ? 'Save REQ ID again' : 'Save REQ ID to phone'}
+                    </button>
+                    <p className="mt-2 text-xs text-center text-gray-500 dark:text-gray-400">
+                      Download the picture, then confirm Pay in Person below.
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -550,7 +634,7 @@ export default function PaymentPage() {
             ? 'Processing...'
             : paymentMethod === 'gcash'
             ? 'Submit Payment'
-            : 'Submit Receipt'}
+            : 'Confirm Pay in Person'}
         </button>
       </form>
       )}

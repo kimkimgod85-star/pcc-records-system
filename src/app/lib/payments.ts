@@ -119,8 +119,10 @@ export async function submitPayment(input: {
   await addNotification({
     userId: input.userId,
     type: 'payment',
-    title: input.method === 'gcash' ? 'GCash payment submitted' : 'Cashier receipt submitted',
-    message: `${record.amount} for ${record.document} (${record.reqId})${input.refNo ? ` · ${input.method === 'gcash' ? 'Ref' : 'OR'} ${input.refNo}` : ''}. Waiting for Registrar verification. You don’t need to pay again.`,
+    title: input.method === 'gcash' ? 'GCash payment submitted' : 'Pay in Person confirmed',
+    message: input.method === 'gcash'
+      ? `${record.amount} for ${record.document} (${record.reqId})${input.refNo ? ` · Ref ${input.refNo}` : ''}. Waiting for Registrar verification. You don’t need to pay again.`
+      : `${record.amount} for ${record.document} (${record.reqId}). Show your REQ ID at the Cashier, then bring your Official Receipt and REQ ID to the Registrar for verification.`,
     link: trackLink(record.reqId),
   });
 
@@ -146,7 +148,8 @@ export async function updatePaymentStatus(uuid: string, status: 'pending' | 'ver
 
   const doc = `${request.type} (${request.id})`;
   const amount = formatPeso(Number(payment?.amount ?? request.amount));
-  const ref = payment?.ref_no ? ` · ${payment.method === 'cashier' ? 'OR' : 'Ref'} ${payment.ref_no}` : '';
+  const method = payment?.method === 'cashier' ? 'cashier' : 'gcash';
+  const ref = payment?.ref_no ? ` · ${method === 'cashier' ? 'REQ' : 'Ref'} ${payment.ref_no}` : '';
   await addNotification({
     userId,
     type: status === 'verified' ? 'approved' : 'payment',
@@ -154,7 +157,9 @@ export async function updatePaymentStatus(uuid: string, status: 'pending' | 'ver
     message: status === 'verified'
       ? `${amount} for ${doc}${ref} is confirmed. You’re fully paid, so there is nothing else to pay.`
       : status === 'rejected'
-      ? `Your proof of payment for ${doc}${ref} could not be verified.${reason ? ` Reason: ${reason.replace(/[.\s]+$/, '')}.` : ''} Please upload your proof of payment again.`
+      ? method === 'cashier'
+        ? `Your Pay in Person payment for ${doc}${ref} could not be verified.${reason ? ` Reason: ${reason.replace(/[.\s]+$/, '')}.` : ''} Please confirm Pay in Person again and bring your Official Receipt plus REQ ID to the Registrar.`
+        : `Your proof of payment for ${doc}${ref} could not be verified.${reason ? ` Reason: ${reason.replace(/[.\s]+$/, '')}.` : ''} Please upload your proof of payment again.`
       : `Your payment of ${amount} for ${doc} is waiting for Registrar verification. You don’t need to pay again.`,
     link: status === 'rejected' ? `/payment?request=${encodeURIComponent(request.id)}` : trackLink(request.id),
   });
