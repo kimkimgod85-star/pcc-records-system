@@ -232,8 +232,8 @@ export default function LandingPage() {
 
           <div className="grid md:grid-cols-2 gap-6">
             <div className="rounded-2xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50/60 dark:bg-emerald-900/10 p-5">
-              <p className="text-sm font-semibold text-emerald-800 dark:text-emerald-200">Minor documents · about 1 working day</p>
-              <p className="text-xs text-emerald-700 dark:text-emerald-300 mt-1 mb-4">Usually ready quickly if the Registrar is not busy. You can still schedule pickup online.</p>
+              <p className="text-sm font-semibold text-emerald-800 dark:text-emerald-200">Minor documents</p>
+              <p className="text-xs text-emerald-700 dark:text-emerald-300 mt-1 mb-4">Prepared within one business day under normal office operations. Pickup may be scheduled online after approval.</p>
               <div className="grid grid-cols-2 gap-3">
                 {[
                   { title: 'Certificate of Enrollment', icon: '📄' },
@@ -249,8 +249,8 @@ export default function LandingPage() {
               </div>
             </div>
             <div className="rounded-2xl border border-indigo-200 dark:border-indigo-800 bg-indigo-50/60 dark:bg-indigo-900/10 p-5">
-              <p className="text-sm font-semibold text-indigo-800 dark:text-indigo-200">Major documents · schedule + clearance</p>
-              <p className="text-xs text-indigo-700 dark:text-indigo-300 mt-1 mb-4">Longer processing. Book pickup online and complete clearance upon release.</p>
+              <p className="text-sm font-semibold text-indigo-800 dark:text-indigo-200">Major documents</p>
+              <p className="text-xs text-indigo-700 dark:text-indigo-300 mt-1 mb-4">Require verification before release. Schedule pickup online and complete school clearances before claiming.</p>
               <div className="grid grid-cols-2 gap-3">
                 {[
                   { title: 'Honorable Dismissal', icon: '🗂️' },

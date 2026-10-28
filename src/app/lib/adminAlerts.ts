@@ -63,7 +63,7 @@ export function useAdminAlerts(enabled: boolean) {
           id: `req-${row.id}`,
           kind: 'request',
           title: 'New document request',
-          detail: `${who} · ${row.document_name || 'Document'} (${row.request_code}) · ${copies(row.quantity)} · ${formatPeso(Number(row.amount))}${row.urgency === 'rush' ? ' · Rush' : ''}`,
+          detail: `${who} · ${row.document_name || 'Document'} (${row.request_code}) · ${copies(row.quantity)} · ${formatPeso(Number(row.amount))}`,
           link: '/admin/requests',
           at: Date.now(),
         });

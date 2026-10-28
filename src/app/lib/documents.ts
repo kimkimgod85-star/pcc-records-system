@@ -43,13 +43,15 @@ export function categoryLabel(category: DocumentCategory) {
 export function categoryAdvice(category: DocumentCategory) {
   if (category === 'major') {
     return {
-      eta: 'Longer processing time',
-      detail: 'Major documents need more time to prepare. You can book your pickup schedule online. Complete your school clearance before claiming / upon release.',
+      eta: 'Extended processing',
+      detail: 'These records require verification before release. After approval, reserve a pickup schedule online and complete all school clearances before claiming the document.',
+      short: 'Verification required · schedule online · clearances before release',
     };
   }
   return {
-    eta: 'About 1 working day',
-    detail: 'Minor documents are usually ready in about 1 working day if the Registrar is not busy. You can still book a pickup schedule online.',
+    eta: 'Ready in 1 business day',
+    detail: 'These certificates are prepared within one business day under normal office operations. After approval, you may reserve a pickup schedule online.',
+    short: 'Prepared within one business day under normal office operations',
   };
 }
 
@@ -174,7 +176,7 @@ export async function repriceUnpaidRequests(catalog: DocumentCatalog) {
   for (const row of data || []) {
     const doc = catalog.documents.find(item => item.code === row.document_code || item.name === row.document_name);
     if (!doc) continue;
-    const amount = doc.fee * Math.max(1, Number(row.quantity) || 1) + (row.urgency === 'rush' ? catalog.rushFee : 0);
+    const amount = doc.fee * Math.max(1, Number(row.quantity) || 1);
     if (Number(row.amount) === amount) continue;
     const { error: updateError } = await client
       .from('document_requests')
@@ -274,16 +276,15 @@ export function getRushFee(catalog = cached) {
   return catalog.rushFee;
 }
 
-export function computeRequestTotal(code: string, quantity: number, urgency: 'regular' | 'rush', catalog = cached) {
+export function computeRequestTotal(code: string, quantity: number, _urgency: 'regular' | 'rush' = 'regular', catalog = cached) {
   const doc = catalog.documents.find(item => item.code === code);
   const base = (doc?.fee || 0) * Math.max(1, quantity);
-  const rush = urgency === 'rush' ? catalog.rushFee : 0;
-  return { base: doc?.fee || 0, rush, total: base + rush };
+  return { base: doc?.fee || 0, rush: 0, total: base };
 }
 
 export function priceCaption(catalog = cached) {
   const parts = catalog.documents
     .filter(item => item.available)
     .map(item => `${item.code.toUpperCase()} ${formatPeso(item.fee)}`);
-  return `Current fees: ${parts.join(', ')}, rush +${formatPeso(catalog.rushFee)}.`;
+  return `Current fees: ${parts.join(', ')}.`;
 }

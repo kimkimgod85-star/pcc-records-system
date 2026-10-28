@@ -48,7 +48,7 @@ const workflow = [
   {
     icon: Banknote,
     title: 'Update document fees',
-    desc: 'Open Document Fees to change prices, add or hide documents, and set the rush fee. Click Save changes, and students are notified automatically.',
+    desc: 'Open Document Fees to change prices, add or hide documents, and set each record as Minor or Major. Click Save changes, and students are notified automatically.',
     href: '/admin/documents',
     action: 'Document Fees',
     color: 'text-amber-600 dark:text-amber-400',

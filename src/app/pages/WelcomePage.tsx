@@ -25,7 +25,7 @@ const steps = [
   {
     icon: FileText,
     title: 'Request a record',
-    desc: 'Open Request Record, choose a Minor document (about 1 day) or a Major document (TOR, diploma, honorable dismissal, and more), then submit the form.',
+    desc: 'Open Request Record, select a minor or major document, then submit the form for Registrar review.',
     href: '/request',
     action: 'Request Record',
     color: 'text-blue-600 dark:text-blue-400',
@@ -61,7 +61,7 @@ const steps = [
   {
     icon: Package,
     title: 'Claim your document',
-    desc: 'Go to the Registrar’s Office on your schedule. Bring a valid school ID and your official receipt. For major documents, complete your clearance upon release.',
+    desc: 'Claim your document at the Registrar’s Office on your scheduled date. Bring a valid ID and official receipt. Major documents also require completed school clearances.',
     href: '',
     action: '',
     color: 'text-teal-600 dark:text-teal-400',
@@ -70,10 +70,10 @@ const steps = [
 ];
 
 const tips = [
-  'Minor documents (enrollment, registration, grades, good moral) are usually ready in about 1 working day if the Registrar is not busy.',
-  'Major documents (TOR, diploma, honorable dismissal, transfer credential) take longer. Schedule pickup online and complete clearance upon release.',
-  'Check Notifications often. You get alerts when your payment is verified or your document is ready.',
-  'Make sure receipt and GCash photos are clear so the OR or reference number is readable.',
+  'Minor documents are prepared within one business day under normal office operations.',
+  'Major documents require verification. Reserve pickup online and complete clearances before claiming.',
+  'Check Notifications for approval, payment verification, and ready-for-pickup updates.',
+  'Upload clear GCash screenshots or official receipts so the reference or OR number is readable.',
   'Cashier and Registrar hours: Monday – Saturday, 8:00 AM – 4:00 PM. Closed on Sunday.',
 ];
 

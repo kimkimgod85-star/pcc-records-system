@@ -72,10 +72,18 @@ export function parseISODate(iso: string) {
   return { year, monthIndex: month - 1, day };
 }
 
-export function getProcessingWindow(urgency: ProcessingUrgency) {
-  return urgency === 'rush'
-    ? { minBusinessDays: 2, maxBusinessDays: 3, label: 'Rush (2–3 business days)' }
-    : { minBusinessDays: 5, maxBusinessDays: 7, label: 'Regular (5–7 business days)' };
+export function getProcessingWindow(urgency: ProcessingUrgency, category?: 'minor' | 'major') {
+  if (category === 'minor') {
+    return { minBusinessDays: 1, maxBusinessDays: 2, label: 'Minor document (1–2 business days)' };
+  }
+  if (category === 'major') {
+    return { minBusinessDays: 5, maxBusinessDays: 10, label: 'Major document (5–10 business days)' };
+  }
+  // Legacy rush requests (no longer offered to new students)
+  if (urgency === 'rush') {
+    return { minBusinessDays: 2, maxBusinessDays: 3, label: 'Priority processing (2–3 business days)' };
+  }
+  return { minBusinessDays: 3, maxBusinessDays: 7, label: 'Standard processing (3–7 business days)' };
 }
 
 function isWeekendISO(iso: string) {
@@ -98,9 +106,9 @@ export function addBusinessDays(startISO: string, days: number, state: ScheduleS
   return toISODate(cursor.getFullYear(), cursor.getMonth(), cursor.getDate());
 }
 
-export function getPickupWindow(urgency: ProcessingUrgency, state: ScheduleState) {
+export function getPickupWindow(urgency: ProcessingUrgency, state: ScheduleState, category?: 'minor' | 'major') {
   const today = todayISO();
-  const { minBusinessDays, maxBusinessDays, label } = getProcessingWindow(urgency);
+  const { minBusinessDays, maxBusinessDays, label } = getProcessingWindow(urgency, category);
   return {
     earliestISO: addBusinessDays(today, minBusinessDays, state),
     latestISO: addBusinessDays(today, maxBusinessDays, state),
@@ -108,12 +116,12 @@ export function getPickupWindow(urgency: ProcessingUrgency, state: ScheduleState
   };
 }
 
-export function isBeforeProcessingWindow(iso: string, urgency: ProcessingUrgency, state: ScheduleState) {
-  return iso < getPickupWindow(urgency, state).earliestISO;
+export function isBeforeProcessingWindow(iso: string, urgency: ProcessingUrgency, state: ScheduleState, category?: 'minor' | 'major') {
+  return iso < getPickupWindow(urgency, state, category).earliestISO;
 }
 
-export function findFirstBookableDate(state: ScheduleState, urgency: ProcessingUrgency) {
-  const { earliestISO, latestISO } = getPickupWindow(urgency, state);
+export function findFirstBookableDate(state: ScheduleState, urgency: ProcessingUrgency, category?: 'minor' | 'major') {
+  const { earliestISO, latestISO } = getPickupWindow(urgency, state, category);
   const { year, monthIndex, day } = parseISODate(earliestISO);
   const cursor = new Date(year, monthIndex, day);
 

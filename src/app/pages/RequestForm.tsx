@@ -12,14 +12,12 @@ import {
   fetchDocumentCatalog,
   formatPeso,
   getAvailableDocuments,
-  getRushFee,
   groupDocumentsByCategory,
   normalizeCategory,
   subscribeDocumentCatalog,
   type CatalogDocument,
   type DocumentCatalog,
 } from '../lib/documents';
-import type { ProcessingUrgency } from '../lib/scheduling';
 
 const PURPOSES = [
   'Employment',
@@ -39,7 +37,6 @@ export default function RequestForm() {
     purpose: '',
     quantity: '1',
     notes: '',
-    urgency: 'regular' as ProcessingUrgency,
   });
   // The step lives in the URL so the phone/browser Back button returns to the previous step instead of leaving the form.
   const requestedStep = Number(searchParams.get('step')) || 1;
@@ -58,7 +55,6 @@ export default function RequestForm() {
   const [submittedCategory, setSubmittedCategory] = useState<'minor' | 'major'>('minor');
   const [loading, setLoading] = useState(false);
   const [documents, setDocuments] = useState<CatalogDocument[]>([]);
-  const [rushFee, setRushFee] = useState(0);
   const [submitError, setSubmitError] = useState('');
   const [priceNotice, setPriceNotice] = useState<string[]>([]);
   const lastCatalog = useRef<DocumentCatalog | null>(null);
@@ -69,14 +65,13 @@ export default function RequestForm() {
       const previous = lastCatalog.current;
       lastCatalog.current = { rushFee: catalog.rushFee, documents: catalog.documents.map(item => ({ ...item })) };
       if (previous) {
-        const changes = describeCatalogChanges(previous, catalog).filter(item => item.kind !== 'details');
+        const changes = describeCatalogChanges(previous, catalog).filter(item => item.kind !== 'details' && item.kind !== 'rush');
         if (changes.length) {
           setPriceNotice(prev => Array.from(new Set([...prev, ...changes.map(item => item.label)])));
         }
       }
       const available = getAvailableDocuments(catalog);
       setDocuments(available);
-      setRushFee(getRushFee(catalog));
       setForm(prev => {
         if (!prev.documentType || available.some(item => item.code === prev.documentType)) return prev;
         return { ...prev, documentType: '' };
@@ -90,17 +85,7 @@ export default function RequestForm() {
   const selectedCategory = normalizeCategory(selectedDoc?.category);
   const advice = categoryAdvice(selectedCategory);
   const grouped = groupDocumentsByCategory(documents);
-  const totals = computeRequestTotal(form.documentType, Number(form.quantity), form.urgency);
-
-  const processingOptions = selectedCategory === 'minor'
-    ? [
-        { value: 'regular' as const, label: 'Regular', desc: 'About 1 working day if not busy', fee: '' },
-        { value: 'rush' as const, label: 'Rush', desc: 'Same-day / priority when available', fee: `+${formatPeso(rushFee)}` },
-      ]
-    : [
-        { value: 'regular' as const, label: 'Regular', desc: 'Standard major-document processing', fee: '' },
-        { value: 'rush' as const, label: 'Rush', desc: 'Faster preparation when available', fee: `+${formatPeso(rushFee)}` },
-      ];
+  const totals = computeRequestTotal(form.documentType, Number(form.quantity));
 
   const handleSubmit = async () => {
     if (!user) return;
@@ -114,7 +99,7 @@ export default function RequestForm() {
         purpose: form.purpose,
         quantity: Number(form.quantity) || 1,
         notes: form.notes,
-        urgency: form.urgency,
+        urgency: 'regular',
         amount: totals.total,
       });
       setSubmittedId(created.id);
@@ -254,21 +239,21 @@ export default function RequestForm() {
               Select Document Type
             </h2>
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">
-              Minor documents are usually ready in about 1 working day. Major documents take longer and need clearance upon release.
+              Choose the record you need. Processing time depends on whether it is classified as a minor or major document.
             </p>
 
             {([
               {
                 key: 'minor' as const,
                 title: 'Minor documents',
-                hint: 'About 1 working day if the Registrar is not busy',
+                hint: categoryAdvice('minor').short,
                 items: grouped.minor,
                 tone: 'bg-emerald-50 text-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-200 border-emerald-200 dark:border-emerald-800',
               },
               {
                 key: 'major' as const,
                 title: 'Major documents',
-                hint: 'Longer processing · schedule online · complete clearance upon release',
+                hint: categoryAdvice('major').short,
                 items: grouped.major,
                 tone: 'bg-indigo-50 text-indigo-800 dark:bg-indigo-900/20 dark:text-indigo-200 border-indigo-200 dark:border-indigo-800',
               },
@@ -423,34 +408,13 @@ export default function RequestForm() {
                 {selectedCategory === 'major'
                   ? <CalendarDays className="w-4 h-4 text-indigo-600 dark:text-indigo-400 flex-shrink-0 mt-0.5" />
                   : <Clock className="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0 mt-0.5" />}
-                <p className={`text-sm leading-snug ${selectedCategory === 'major' ? 'text-indigo-800 dark:text-indigo-200' : 'text-emerald-800 dark:text-emerald-200'}`}>
-                  {advice.detail}
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                  Processing Type
-                </label>
-                <div className="grid grid-cols-2 gap-3">
-                  {processingOptions.map(opt => (
-                    <button
-                      key={opt.value}
-                      type="button"
-                      onClick={() => setForm({ ...form, urgency: opt.value as ProcessingUrgency })}
-                      className={`p-3 rounded-xl border-2 text-left transition-all ${
-                        form.urgency === opt.value
-                          ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20'
-                          : 'border-gray-200 dark:border-slate-700'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-gray-900 dark:text-white">{opt.label}</span>
-                        {opt.fee && <span className="text-xs text-orange-500">{opt.fee}</span>}
-                      </div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{opt.desc}</p>
-                    </button>
-                  ))}
+                <div className="min-w-0">
+                  <p className={`text-sm font-semibold ${selectedCategory === 'major' ? 'text-indigo-900 dark:text-indigo-100' : 'text-emerald-900 dark:text-emerald-100'}`}>
+                    {categoryLabel(selectedCategory)} · {advice.eta}
+                  </p>
+                  <p className={`text-sm leading-snug mt-0.5 ${selectedCategory === 'major' ? 'text-indigo-800 dark:text-indigo-200' : 'text-emerald-800 dark:text-emerald-200'}`}>
+                    {advice.detail}
+                  </p>
                 </div>
               </div>
 
@@ -501,9 +465,7 @@ export default function RequestForm() {
                 { label: 'Category', value: `${categoryLabel(selectedCategory)} · ${advice.eta}` },
                 { label: 'Purpose', value: form.purpose },
                 { label: 'Quantity', value: `${form.quantity} copy/copies` },
-                { label: 'Processing', value: form.urgency === 'rush' ? 'Rush' : 'Regular' },
-                { label: 'Base Fee', value: selectedDoc ? formatPeso(selectedDoc.fee) : '—' },
-                { label: 'Rush Fee', value: form.urgency === 'rush' ? formatPeso(rushFee) : 'N/A' },
+                { label: 'Document Fee', value: selectedDoc ? formatPeso(selectedDoc.fee) : '—' },
                 {
                   label: 'Total Amount',
                   value: formatPeso(totals.total),

@@ -4,6 +4,7 @@ import { Calendar, Clock, ChevronLeft, ChevronRight, CheckCircle, AlertCircle, F
 import { useAuth } from '../context/AuthContext';
 import { fetchRequests, getBookableRequests, type StudentRequest } from '../lib/requests';
 import { playSubmitSound } from '../lib/officeChime';
+import { fetchDocumentCatalog, getDocumentByCode, normalizeCategory, type DocumentCategory } from '../lib/documents';
 import {
   countBookingsForSlot,
   findBookingForRequest,
@@ -22,6 +23,11 @@ import {
   DEFAULT_SLOTS,
   type ScheduleState,
 } from '../lib/scheduling';
+
+function requestCategory(request: StudentRequest | null | undefined): DocumentCategory | undefined {
+  if (!request?.documentCode) return undefined;
+  return normalizeCategory(getDocumentByCode(request.documentCode)?.category);
+}
 
 const DAYS_OF_WEEK = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -51,7 +57,11 @@ export default function SchedulingPage() {
 
   useEffect(() => {
     const refresh = () => { void loadSchedule().then(setSchedule); };
-    Promise.all([loadSchedule(), user ? fetchRequests(user.id) : Promise.resolve([] as StudentRequest[])])
+    Promise.all([
+      loadSchedule(),
+      user ? fetchRequests(user.id) : Promise.resolve([] as StudentRequest[]),
+      fetchDocumentCatalog(),
+    ])
       .then(([sched, reqs]) => {
         setSchedule(sched);
         setRequests(reqs);
@@ -68,14 +78,15 @@ export default function SchedulingPage() {
   }, [user, requestedId]);
 
   const selectedRequest = bookableRequests.find(request => request.id === selectedRequestId) || null;
-  const pickupWindow = selectedRequest ? getPickupWindow(selectedRequest.urgency, schedule) : null;
+  const selectedCategory = requestCategory(selectedRequest);
+  const pickupWindow = selectedRequest ? getPickupWindow(selectedRequest.urgency, schedule, selectedCategory) : null;
   const existingBooking = user && selectedRequest
     ? findBookingForRequest(schedule, user.id, selectedRequest.id)
     : null;
 
   useEffect(() => {
     if (!selectedRequest) return;
-    const targetISO = existingBooking?.date || findFirstBookableDate(schedule, selectedRequest.urgency);
+    const targetISO = existingBooking?.date || findFirstBookableDate(schedule, selectedRequest.urgency, selectedCategory);
     const parsed = parseISODate(targetISO);
     setCurrentMonth(parsed.monthIndex);
     setCurrentYear(parsed.year);
@@ -129,8 +140,8 @@ export default function SchedulingPage() {
 
   const handleConfirm = async () => {
     if (!selectedIso || !selectedSlot || !selectedRequest || !user) return;
-    if (isBeforeProcessingWindow(selectedIso, selectedRequest.urgency, schedule)) {
-      setError(`Pickup for ${selectedRequest.urgency === 'rush' ? 'rush' : 'regular'} requests opens in ${selectedRequest.urgency === 'rush' ? '2–3' : '5–7'} business days.`);
+    if (isBeforeProcessingWindow(selectedIso, selectedRequest.urgency, schedule, selectedCategory)) {
+      setError(`Pickup for this request opens after ${pickupWindow?.label || 'the required processing period'}.`);
       return;
     }
     const dateStatus = getStudentDateStatus(schedule, selectedIso);
@@ -223,7 +234,7 @@ export default function SchedulingPage() {
             Time: <span className="font-medium text-gray-900 dark:text-white">{selectedSlot}</span>
           </p>
           <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl text-sm text-blue-700 dark:text-blue-300 mb-6 text-left">
-            Bring a valid ID and your request reference number when claiming. For major documents (TOR, diploma, honorable dismissal, transfer credential), complete your school clearance upon release.
+            Bring a valid ID and your request reference number when claiming. For major documents, complete all required school clearances before release.
           </div>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link to="/dashboard" className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-medium transition-colors">
@@ -250,8 +261,7 @@ export default function SchedulingPage() {
           Schedule Document Pickup
         </h1>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-          Book a pickup date and time for your approved request. Minor documents are usually ready in about 1 working day;
-          major documents take longer. For major documents, complete your clearance upon release.
+          Reserve an available pickup date and time for your approved request. Major documents require completed school clearances before release.
         </p>
       </div>
 
@@ -278,8 +288,8 @@ export default function SchedulingPage() {
               <p className="text-xs font-mono text-gray-500 dark:text-gray-400 mt-0.5">{request.id}</p>
               <p className="text-xs mt-1">
                 <span className="text-gray-500 dark:text-gray-400">{request.status}</span>
-                <span className={`ml-1.5 font-semibold ${request.urgency === 'rush' ? 'text-orange-600 dark:text-orange-400' : 'text-blue-600 dark:text-blue-400'}`}>
-                  {request.urgency === 'rush' ? 'Rush 2–3 days' : 'Regular 5–7 days'}
+                <span className={`ml-1.5 font-semibold ${requestCategory(request) === 'major' ? 'text-indigo-600 dark:text-indigo-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
+                  {requestCategory(request) === 'major' ? 'Major document' : 'Minor document'}
                 </span>
               </p>
             </button>
@@ -328,7 +338,7 @@ export default function SchedulingPage() {
             {Array.from({ length: daysInMonth }).map((_, i) => {
               const day = i + 1;
               const iso = toISODate(currentYear, currentMonth, day);
-              const tooSoon = selectedRequest ? isBeforeProcessingWindow(iso, selectedRequest.urgency, schedule) : isPastDate(iso);
+              const tooSoon = selectedRequest ? isBeforeProcessingWindow(iso, selectedRequest.urgency, schedule, selectedCategory) : isPastDate(iso);
               const status = tooSoon ? 'closed' : getStudentDateStatus(schedule, iso);
               const inWindow = pickupWindow ? iso >= pickupWindow.earliestISO && iso <= pickupWindow.latestISO : false;
               const isSelected = selectedDate === day;

@@ -140,7 +140,7 @@ export async function createRequest(input: {
     userId: input.userId,
     type: 'approved',
     title: 'Request submitted',
-    message: `${created.type} (${created.id}) · ${copies(created.quantity)} · ${formatPeso(created.amount)}${created.urgency === 'rush' ? ' · Rush' : ''}. The Registrar will review it within 1–2 business days. Don’t pay yet — you’ll be notified when it is approved and ready for payment.`,
+    message: `${created.type} (${created.id}) · ${copies(created.quantity)} · ${formatPeso(created.amount)}. The Registrar will review your request. Don’t pay yet — you’ll be notified when it is approved and ready for payment.`,
     link: trackLink(created.id),
   });
   emit();

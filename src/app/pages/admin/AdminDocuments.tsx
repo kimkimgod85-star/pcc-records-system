@@ -17,7 +17,7 @@ import {
 import { notifyAllStudents } from '../../lib/notifications';
 
 const cloneCatalog = (catalog: DocumentCatalog): DocumentCatalog => ({
-  rushFee: catalog.rushFee,
+  rushFee: 0,
   documents: catalog.documents.map(item => ({ ...item, category: normalizeCategory(item.category) })),
 });
 
@@ -141,17 +141,18 @@ export default function AdminDocuments() {
       setMessage({ type: 'error', text: 'Every document needs a name.' });
       return;
     }
-    if (draft.documents.some(item => !Number.isFinite(Number(item.fee)) || Number(item.fee) < 0) || Number(draft.rushFee) < 0) {
+    if (draft.documents.some(item => !Number.isFinite(Number(item.fee)) || Number(item.fee) < 0)) {
       setMessage({ type: 'error', text: 'Prices must be 0 or higher.' });
       return;
     }
 
-    const summary = changes.filter(item => item.kind !== 'details');
+    const summary = changes.filter(item => item.kind !== 'details' && item.kind !== 'rush');
     setSaving(true);
     setMessage(null);
     try {
       const stored = await persistDocumentCatalog({
         ...draft,
+        rushFee: 0,
         documents: draft.documents.map(item => ({ ...item, name: item.name.trim(), description: item.description.trim() })),
       });
       setSaved(cloneCatalog(stored));
@@ -159,7 +160,7 @@ export default function AdminDocuments() {
 
       let repriced = 0;
       let repriceFailed = false;
-      if (reprice && changes.some(item => item.kind === 'price' || item.kind === 'rush')) {
+      if (reprice && changes.some(item => item.kind === 'price')) {
         try {
           repriced = await repriceUnpaidRequests(stored);
         } catch (err) {
@@ -174,7 +175,7 @@ export default function AdminDocuments() {
         try {
           notified = await notifyAllStudents({
             type: 'price',
-            title: summary.some(item => item.kind === 'price' || item.kind === 'rush') ? 'Document fees updated' : 'Document list updated',
+            title: summary.some(item => item.kind === 'price') ? 'Document fees updated' : 'Document list updated',
             message: `Update from the Registrar: ${summary.map(item => item.label).join('; ')}.`,
             link: '/request',
           });
@@ -207,8 +208,8 @@ export default function AdminDocuments() {
           Document Fees
         </h1>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-          Edit prices and set each document as <span className="font-semibold">Minor</span> (about 1 working day) or <span className="font-semibold">Major</span> (longer + clearance advice).
-          Students see the update right away on the request page. Paid requests always keep the price they paid.
+          Manage document fees and classify each record as <span className="font-semibold">Minor</span> or <span className="font-semibold">Major</span>.
+          Students see updates immediately on the request page. Paid requests keep the amount already charged.
         </p>
       </div>
 
@@ -216,13 +217,13 @@ export default function AdminDocuments() {
         <div className="rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/15 p-3.5">
           <p className="text-sm font-semibold text-emerald-900 dark:text-emerald-100">Minor documents</p>
           <p className="text-xs text-emerald-800 dark:text-emerald-200 mt-1 leading-snug">
-            Certificate of Enrollment, Registration, Grades, Good Moral. Usually ready in about 1 working day if not busy. Students can still schedule online.
+            Enrollment, registration, grades, and good moral certificates. Prepared within one business day under normal office operations. Students may reserve pickup online after approval.
           </p>
         </div>
         <div className="rounded-xl border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-900/15 p-3.5">
           <p className="text-sm font-semibold text-indigo-900 dark:text-indigo-100">Major documents</p>
           <p className="text-xs text-indigo-800 dark:text-indigo-200 mt-1 leading-snug">
-            Honorable Dismissal, Transfer Credential, TOR, Diploma. Longer processing. Students should schedule online and complete clearance upon release.
+            Honorable dismissal, transfer credential, transcript of records, and diploma. Require verification, online pickup scheduling, and completed clearances before release.
           </p>
         </div>
       </div>
@@ -239,32 +240,6 @@ export default function AdminDocuments() {
           {message.text}
         </div>
       )}
-
-      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm p-5 mb-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center flex-shrink-0">
-              <Banknote className="w-5 h-5 text-orange-600 dark:text-orange-400" />
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-gray-900 dark:text-white">Rush processing fee</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">Added on top of the document price when a student chooses Rush.</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            {Number(saved.rushFee) !== Number(draft.rushFee) && (
-              <span className="text-xs text-gray-400 line-through">{formatPeso(saved.rushFee)}</span>
-            )}
-            <span className="text-sm text-gray-500">₱</span>
-            <PriceInput
-              label="Rush fee"
-              value={draft.rushFee}
-              onChange={rushFee => { setMessage(null); setDraft(prev => ({ ...prev, rushFee })); }}
-              className={`w-28 ${inputClass} ${Number(saved.rushFee) !== Number(draft.rushFee) ? 'ring-2 ring-amber-400' : ''}`}
-            />
-          </div>
-        </div>
-      </div>
 
       <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm overflow-hidden mb-6">
         <div className="px-5 py-4 border-b border-gray-100 dark:border-slate-700 flex items-center justify-between gap-3">
@@ -442,7 +417,7 @@ export default function AdminDocuments() {
                   <Bell className="w-3.5 h-3.5" />
                   Notify all students about this update
                 </label>
-                {changes.some(item => item.kind === 'price' || item.kind === 'rush') && (
+                {changes.some(item => item.kind === 'price') && (
                   <label className="mt-1 flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300 cursor-pointer select-none">
                     <input
                       type="checkbox"
