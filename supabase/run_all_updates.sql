@@ -5,6 +5,7 @@
 --   4. Pay after approval (same as pay_after_approval.sql)
 --   5. Booking alerts     (same as booking_alerts.sql)
 --   6. Block deactivated  (same as block_deactivated.sql)
+--   7. Document categories (same as document_categories.sql)
 -- Paste everything into Supabase > SQL Editor and press Run once.
 -- Safe to run more than once.
 
@@ -290,3 +291,53 @@ drop trigger if exists pickup_bookings_block_deactivated on public.pickup_bookin
 create trigger pickup_bookings_block_deactivated
   before insert or update on public.pickup_bookings
   for each row execute function public.block_deactivated_user();
+
+-- =====================================================================
+-- 7. Document categories (minor / major)
+-- =====================================================================
+
+alter table public.documents
+  add column if not exists category text not null default 'minor';
+
+alter table public.documents
+  drop constraint if exists documents_category_check;
+
+alter table public.documents
+  add constraint documents_category_check
+  check (category in ('minor', 'major'));
+
+update public.documents
+set category = 'major'
+where code in ('tor', 'diploma', 'hd', 'ctc', 'transfer', 'honorable')
+   or lower(name) like '%transcript%'
+   or lower(name) like '%diploma%'
+   or lower(name) like '%honorable%'
+   or lower(name) like '%transfer credential%';
+
+update public.documents
+set category = 'minor'
+where category is distinct from 'major'
+  and (
+    code in ('coe', 'cor', 'cog', 'goodmoral', 'grades', 'registration', 'enrollment')
+    or lower(name) like '%enrollment%'
+    or lower(name) like '%registration%'
+    or lower(name) like '%grade%'
+    or lower(name) like '%good moral%'
+  );
+
+insert into public.documents (code, name, description, icon, fee, available, sort_order, category)
+values
+  ('coe', 'Certificate of Enrollment', 'Proof of current or past enrollment', '📄', 50, true, 1, 'minor'),
+  ('cor', 'Certificate of Registration', 'Proof of subjects registered for the term', '📝', 50, true, 2, 'minor'),
+  ('cog', 'Certificate of Grades', 'Certified grades for the requested term', '📊', 50, true, 3, 'minor'),
+  ('goodmoral', 'Good Moral Certificate', 'Certificate of good character', '⭐', 75, true, 4, 'minor'),
+  ('hd', 'Honorable Dismissal', 'Clearance to leave / transfer from the school', '🗂️', 100, true, 5, 'major'),
+  ('ctc', 'Certificate of Transfer Credential', 'Credentials needed for transfer to another school', '📑', 100, true, 6, 'major'),
+  ('tor', 'Transcript of Records', 'Official academic transcript', '📋', 150, true, 7, 'major'),
+  ('diploma', 'Diploma', 'Certified diploma / diploma copy', '🎓', 200, true, 8, 'major')
+on conflict (code) do update set
+  name = excluded.name,
+  description = excluded.description,
+  icon = excluded.icon,
+  sort_order = excluded.sort_order,
+  category = excluded.category;

@@ -222,8 +222,8 @@ export default function SchedulingPage() {
           <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
             Time: <span className="font-medium text-gray-900 dark:text-white">{selectedSlot}</span>
           </p>
-          <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl text-sm text-blue-700 dark:text-blue-300 mb-6">
-            Please bring a valid ID and your request reference number when claiming your document.
+          <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl text-sm text-blue-700 dark:text-blue-300 mb-6 text-left">
+            Bring a valid ID and your request reference number when claiming. For major documents (TOR, diploma, honorable dismissal, transfer credential), complete your school clearance upon release.
           </div>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link to="/dashboard" className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-medium transition-colors">
@@ -250,8 +250,8 @@ export default function SchedulingPage() {
           Schedule Document Pickup
         </h1>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-          Choose one of your requests, then book a date and time opened by the Registrar.
-          Regular processing jumps to a 5–7 business day pickup window; rush jumps to 2–3 business days.
+          Book a pickup date and time for your approved request. Minor documents are usually ready in about 1 working day;
+          major documents take longer. For major documents, complete your clearance upon release.
         </p>
       </div>
 

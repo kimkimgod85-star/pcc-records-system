@@ -1,16 +1,20 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
-import { FileText, ChevronRight, CheckCircle, AlertCircle, Tag, X, Clock, ArrowLeft, Pencil } from 'lucide-react';
+import { FileText, ChevronRight, CheckCircle, AlertCircle, Tag, X, Clock, ArrowLeft, Pencil, ShieldCheck, CalendarDays } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { createRequest } from '../lib/requests';
 import { playSubmitSound } from '../lib/officeChime';
 import {
+  categoryAdvice,
+  categoryLabel,
   computeRequestTotal,
   describeCatalogChanges,
   fetchDocumentCatalog,
   formatPeso,
   getAvailableDocuments,
   getRushFee,
+  groupDocumentsByCategory,
+  normalizeCategory,
   subscribeDocumentCatalog,
   type CatalogDocument,
   type DocumentCatalog,
@@ -51,6 +55,7 @@ export default function RequestForm() {
   };
   const [submitted, setSubmitted] = useState(false);
   const [submittedId, setSubmittedId] = useState('');
+  const [submittedCategory, setSubmittedCategory] = useState<'minor' | 'major'>('minor');
   const [loading, setLoading] = useState(false);
   const [documents, setDocuments] = useState<CatalogDocument[]>([]);
   const [rushFee, setRushFee] = useState(0);
@@ -82,7 +87,20 @@ export default function RequestForm() {
   }, []);
 
   const selectedDoc = documents.find(d => d.code === form.documentType);
+  const selectedCategory = normalizeCategory(selectedDoc?.category);
+  const advice = categoryAdvice(selectedCategory);
+  const grouped = groupDocumentsByCategory(documents);
   const totals = computeRequestTotal(form.documentType, Number(form.quantity), form.urgency);
+
+  const processingOptions = selectedCategory === 'minor'
+    ? [
+        { value: 'regular' as const, label: 'Regular', desc: 'About 1 working day if not busy', fee: '' },
+        { value: 'rush' as const, label: 'Rush', desc: 'Same-day / priority when available', fee: `+${formatPeso(rushFee)}` },
+      ]
+    : [
+        { value: 'regular' as const, label: 'Regular', desc: 'Standard major-document processing', fee: '' },
+        { value: 'rush' as const, label: 'Rush', desc: 'Faster preparation when available', fee: `+${formatPeso(rushFee)}` },
+      ];
 
   const handleSubmit = async () => {
     if (!user) return;
@@ -100,6 +118,7 @@ export default function RequestForm() {
         amount: totals.total,
       });
       setSubmittedId(created.id);
+      setSubmittedCategory(selectedCategory);
       setSubmitted(true);
       playSubmitSound();
     } catch (err) {
@@ -110,6 +129,7 @@ export default function RequestForm() {
   };
 
   if (submitted) {
+    const doneAdvice = categoryAdvice(submittedCategory);
     return (
       <div className="max-w-2xl mx-auto px-4 py-12 text-center">
         <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 border border-gray-100 dark:border-slate-700 shadow-sm">
@@ -122,9 +142,14 @@ export default function RequestForm() {
           <p className="text-gray-500 dark:text-gray-400 text-sm mb-2">
             Your request ID is <span className="font-mono font-semibold text-blue-600 dark:text-blue-400">{submittedId}</span>
           </p>
-          <p className="text-gray-500 dark:text-gray-400 text-sm mb-6">
-            The Registrar's Office will review your request within 1–2 business days. You will receive a notification once approved.
+          <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">
+            The Registrar’s Office will review your request. You will receive a notification once it is approved.
           </p>
+          <div className="mb-3 p-3 rounded-xl bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 text-left">
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{categoryLabel(submittedCategory)}</p>
+            <p className="text-sm font-medium text-gray-900 dark:text-white mt-0.5">{doneAdvice.eta}</p>
+            <p className="text-sm text-gray-600 dark:text-gray-300 mt-1 leading-snug">{doneAdvice.detail}</p>
+          </div>
           <div className="mb-6 p-3 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 flex items-start gap-2 text-left">
             <Clock className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
             <p className="text-sm text-blue-800 dark:text-blue-200">
@@ -225,42 +250,95 @@ export default function RequestForm() {
         {/* Step 1: Document Type */}
         {step === 1 && (
           <div className="p-6 page-enter">
-            <h2 className="text-base font-semibold text-gray-900 dark:text-white mb-4" style={{ fontFamily: 'Poppins, sans-serif' }}>
+            <h2 className="text-base font-semibold text-gray-900 dark:text-white mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
               Select Document Type
             </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {documents.map(doc => (
-                <button
-                  key={doc.code}
-                  onClick={() => setForm({ ...form, documentType: doc.code })}
-                  className={`text-left p-4 rounded-xl border-2 transition-all ${
-                    form.documentType === doc.code
-                      ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20'
-                      : 'border-gray-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-700'
-                  }`}
-                >
-                  <div className="flex items-start gap-3">
-                    <span className="text-2xl">{doc.icon}</span>
-                    <div className="flex-1">
-                      <div className="flex items-start justify-between gap-2">
-                        <p className="text-sm font-medium text-gray-900 dark:text-white">{doc.name}</p>
-                        <span className="text-xs font-medium text-blue-600 dark:text-blue-400 flex-shrink-0">{formatPeso(doc.fee)}</span>
-                      </div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{doc.description}</p>
-                    </div>
-                  </div>
-                  {form.documentType === doc.code && (
-                    <div className="mt-2 flex items-center gap-1 text-blue-600 dark:text-blue-400">
-                      <CheckCircle className="w-3.5 h-3.5" />
-                      <span className="text-xs">Selected</span>
-                    </div>
-                  )}
-                </button>
-              ))}
-            </div>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">
+              Minor documents are usually ready in about 1 working day. Major documents take longer and need clearance upon release.
+            </p>
 
-            <div className="mt-6 flex justify-end">
+            {([
+              {
+                key: 'minor' as const,
+                title: 'Minor documents',
+                hint: 'About 1 working day if the Registrar is not busy',
+                items: grouped.minor,
+                tone: 'bg-emerald-50 text-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-200 border-emerald-200 dark:border-emerald-800',
+              },
+              {
+                key: 'major' as const,
+                title: 'Major documents',
+                hint: 'Longer processing · schedule online · complete clearance upon release',
+                items: grouped.major,
+                tone: 'bg-indigo-50 text-indigo-800 dark:bg-indigo-900/20 dark:text-indigo-200 border-indigo-200 dark:border-indigo-800',
+              },
+            ]).map(section => (
+              <div key={section.key} className="mb-6 last:mb-0">
+                <div className={`mb-3 px-3 py-2 rounded-xl border ${section.tone}`}>
+                  <p className="text-sm font-semibold">{section.title}</p>
+                  <p className="text-xs mt-0.5 opacity-90">{section.hint}</p>
+                </div>
+                {section.items.length === 0 ? (
+                  <p className="text-sm text-gray-400 px-1">No {section.key} documents available right now.</p>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {section.items.map(doc => (
+                      <button
+                        key={doc.code}
+                        type="button"
+                        onClick={() => setForm({ ...form, documentType: doc.code })}
+                        className={`text-left p-4 rounded-xl border-2 transition-all ${
+                          form.documentType === doc.code
+                            ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20'
+                            : 'border-gray-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-700'
+                        }`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <span className="text-2xl">{doc.icon}</span>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between gap-2">
+                              <p className="text-sm font-medium text-gray-900 dark:text-white">{doc.name}</p>
+                              <span className="text-xs font-medium text-blue-600 dark:text-blue-400 flex-shrink-0">{formatPeso(doc.fee)}</span>
+                            </div>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{doc.description}</p>
+                          </div>
+                        </div>
+                        {form.documentType === doc.code && (
+                          <div className="mt-2 flex items-center gap-1 text-blue-600 dark:text-blue-400">
+                            <CheckCircle className="w-3.5 h-3.5" />
+                            <span className="text-xs">Selected</span>
+                          </div>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+
+            {selectedDoc && (
+              <div className={`mb-5 p-3.5 rounded-xl border flex items-start gap-2.5 ${
+                selectedCategory === 'major'
+                  ? 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-200 dark:border-indigo-800'
+                  : 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800'
+              }`}>
+                {selectedCategory === 'major'
+                  ? <ShieldCheck className="w-4 h-4 text-indigo-600 dark:text-indigo-400 flex-shrink-0 mt-0.5" />
+                  : <Clock className="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0 mt-0.5" />}
+                <div className="min-w-0 text-sm">
+                  <p className={`font-semibold ${selectedCategory === 'major' ? 'text-indigo-900 dark:text-indigo-100' : 'text-emerald-900 dark:text-emerald-100'}`}>
+                    {categoryLabel(selectedCategory)} · {advice.eta}
+                  </p>
+                  <p className={`mt-0.5 leading-snug ${selectedCategory === 'major' ? 'text-indigo-800 dark:text-indigo-200' : 'text-emerald-800 dark:text-emerald-200'}`}>
+                    {advice.detail}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            <div className="mt-2 flex justify-end">
               <button
+                type="button"
                 onClick={() => setStep(2)}
                 disabled={!form.documentType}
                 className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-xl text-sm font-medium transition-colors"
@@ -284,7 +362,9 @@ export default function RequestForm() {
                 <span className="text-xl">{selectedDoc?.icon}</span>
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-blue-700 dark:text-blue-300">{selectedDoc?.name}</p>
-                  <p className="text-xs text-blue-600 dark:text-blue-400">Processing Fee: {selectedDoc ? formatPeso(selectedDoc.fee) : ''}</p>
+                  <p className="text-xs text-blue-600 dark:text-blue-400">
+                    {categoryLabel(selectedCategory)} · Fee {selectedDoc ? formatPeso(selectedDoc.fee) : ''}
+                  </p>
                 </div>
                 <button
                   type="button"
@@ -335,15 +415,25 @@ export default function RequestForm() {
                 </div>
               </div>
 
+              <div className={`p-3.5 rounded-xl border flex items-start gap-2.5 ${
+                selectedCategory === 'major'
+                  ? 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-200 dark:border-indigo-800'
+                  : 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800'
+              }`}>
+                {selectedCategory === 'major'
+                  ? <CalendarDays className="w-4 h-4 text-indigo-600 dark:text-indigo-400 flex-shrink-0 mt-0.5" />
+                  : <Clock className="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0 mt-0.5" />}
+                <p className={`text-sm leading-snug ${selectedCategory === 'major' ? 'text-indigo-800 dark:text-indigo-200' : 'text-emerald-800 dark:text-emerald-200'}`}>
+                  {advice.detail}
+                </p>
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                   Processing Type
                 </label>
                 <div className="grid grid-cols-2 gap-3">
-                  {[
-                    { value: 'regular', label: 'Regular', desc: '5-7 business days', fee: '' },
-                    { value: 'rush', label: 'Rush', desc: '2-3 business days', fee: `+${formatPeso(rushFee)}` },
-                  ].map(opt => (
+                  {processingOptions.map(opt => (
                     <button
                       key={opt.value}
                       type="button"
@@ -408,9 +498,10 @@ export default function RequestForm() {
             <div className="bg-gray-50 dark:bg-slate-900 rounded-xl p-5 space-y-3 mb-5">
               {[
                 { label: 'Document Type', value: selectedDoc?.name },
+                { label: 'Category', value: `${categoryLabel(selectedCategory)} · ${advice.eta}` },
                 { label: 'Purpose', value: form.purpose },
                 { label: 'Quantity', value: `${form.quantity} copy/copies` },
-                { label: 'Processing', value: form.urgency === 'rush' ? 'Rush (2–3 days)' : 'Regular (5–7 days)' },
+                { label: 'Processing', value: form.urgency === 'rush' ? 'Rush' : 'Regular' },
                 { label: 'Base Fee', value: selectedDoc ? formatPeso(selectedDoc.fee) : '—' },
                 { label: 'Rush Fee', value: form.urgency === 'rush' ? formatPeso(rushFee) : 'N/A' },
                 {
@@ -432,6 +523,19 @@ export default function RequestForm() {
                   <p className="text-sm text-gray-700 dark:text-gray-300 mt-1">{form.notes}</p>
                 </div>
               )}
+            </div>
+
+            <div className={`p-3 rounded-xl border flex items-start gap-2 mb-3 ${
+              selectedCategory === 'major'
+                ? 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-200 dark:border-indigo-800'
+                : 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800'
+            }`}>
+              {selectedCategory === 'major'
+                ? <ShieldCheck className="w-4 h-4 text-indigo-600 dark:text-indigo-400 flex-shrink-0 mt-0.5" />
+                : <Clock className="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0 mt-0.5" />}
+              <p className={`text-xs leading-snug ${selectedCategory === 'major' ? 'text-indigo-800 dark:text-indigo-200' : 'text-emerald-800 dark:text-emerald-200'}`}>
+                {advice.detail}
+              </p>
             </div>
 
             <div className="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl flex items-start gap-2 mb-5">

@@ -134,8 +134,16 @@ create table if not exists public.documents (
   icon text default '📄',
   fee numeric not null default 0,
   available boolean not null default true,
-  sort_order int not null default 0
+  sort_order int not null default 0,
+  category text not null default 'minor' check (category in ('minor', 'major'))
 );
+
+alter table public.documents add column if not exists category text;
+update public.documents set category = 'minor' where category is null;
+alter table public.documents alter column category set default 'minor';
+alter table public.documents alter column category set not null;
+alter table public.documents drop constraint if exists documents_category_check;
+alter table public.documents add constraint documents_category_check check (category in ('minor', 'major'));
 
 alter table public.documents enable row level security;
 
@@ -151,12 +159,16 @@ create policy "Admins manage documents"
   using (public.is_admin())
   with check (public.is_admin());
 
-insert into public.documents (code, name, description, icon, fee, available, sort_order)
+insert into public.documents (code, name, description, icon, fee, available, sort_order, category)
 values
-  ('tor', 'Transcript of Records', 'Official academic transcript', '📋', 150, true, 1),
-  ('coe', 'Certificate of Enrollment', 'Proof of current/past enrollment', '📄', 50, true, 2),
-  ('diploma', 'Diploma Copy', 'Certified copy of diploma', '🎓', 200, true, 3),
-  ('goodmoral', 'Good Moral Certificate', 'Certificate of good character', '⭐', 75, true, 4)
+  ('coe', 'Certificate of Enrollment', 'Proof of current or past enrollment', '📄', 50, true, 1, 'minor'),
+  ('cor', 'Certificate of Registration', 'Proof of subjects registered for the term', '📝', 50, true, 2, 'minor'),
+  ('cog', 'Certificate of Grades', 'Certified grades for the requested term', '📊', 50, true, 3, 'minor'),
+  ('goodmoral', 'Good Moral Certificate', 'Certificate of good character', '⭐', 75, true, 4, 'minor'),
+  ('hd', 'Honorable Dismissal', 'Clearance to leave / transfer from the school', '🗂️', 100, true, 5, 'major'),
+  ('ctc', 'Certificate of Transfer Credential', 'Credentials needed for transfer to another school', '📑', 100, true, 6, 'major'),
+  ('tor', 'Transcript of Records', 'Official academic transcript', '📋', 150, true, 7, 'major'),
+  ('diploma', 'Diploma', 'Certified diploma / diploma copy', '🎓', 200, true, 8, 'major')
 on conflict (code) do nothing;
 
 create table if not exists public.app_settings (

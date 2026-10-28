@@ -8,14 +8,17 @@ import {
   subscribeDocumentCatalog,
   describeCatalogChanges,
   DEFAULT_DOCUMENTS,
+  categoryLabel,
+  normalizeCategory,
   type CatalogDocument,
+  type DocumentCategory,
   type DocumentCatalog,
 } from '../../lib/documents';
 import { notifyAllStudents } from '../../lib/notifications';
 
 const cloneCatalog = (catalog: DocumentCatalog): DocumentCatalog => ({
   rushFee: catalog.rushFee,
-  documents: catalog.documents.map(item => ({ ...item })),
+  documents: catalog.documents.map(item => ({ ...item, category: normalizeCategory(item.category) })),
 });
 
 const inputClass =
@@ -57,7 +60,7 @@ export default function AdminDocuments() {
   const [reprice, setReprice] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-  const [newDoc, setNewDoc] = useState({ name: '', description: '', icon: '📄', fee: 100 });
+  const [newDoc, setNewDoc] = useState({ name: '', description: '', icon: '📄', fee: 100, category: 'minor' as DocumentCategory });
 
   const changes = describeCatalogChanges(saved, draft);
   const dirty = changes.length > 0;
@@ -112,10 +115,11 @@ export default function AdminDocuments() {
           icon: newDoc.icon.trim() || '📄',
           fee: Math.max(0, Number(newDoc.fee) || 0),
           available: true,
+          category: normalizeCategory(newDoc.category),
         },
       ],
     }));
-    setNewDoc({ name: '', description: '', icon: '📄', fee: 100 });
+    setNewDoc({ name: '', description: '', icon: '📄', fee: 100, category: 'minor' });
     setMessage(null);
   };
 
@@ -203,9 +207,24 @@ export default function AdminDocuments() {
           Document Fees
         </h1>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-          Edit prices, then click <span className="font-semibold">Save changes</span>. Students see the new fees right away on the request page.
-          Paid requests always keep the price they paid.
+          Edit prices and set each document as <span className="font-semibold">Minor</span> (about 1 working day) or <span className="font-semibold">Major</span> (longer + clearance advice).
+          Students see the update right away on the request page. Paid requests always keep the price they paid.
         </p>
+      </div>
+
+      <div className="mb-6 grid sm:grid-cols-2 gap-3">
+        <div className="rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/15 p-3.5">
+          <p className="text-sm font-semibold text-emerald-900 dark:text-emerald-100">Minor documents</p>
+          <p className="text-xs text-emerald-800 dark:text-emerald-200 mt-1 leading-snug">
+            Certificate of Enrollment, Registration, Grades, Good Moral. Usually ready in about 1 working day if not busy. Students can still schedule online.
+          </p>
+        </div>
+        <div className="rounded-xl border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-900/15 p-3.5">
+          <p className="text-sm font-semibold text-indigo-900 dark:text-indigo-100">Major documents</p>
+          <p className="text-xs text-indigo-800 dark:text-indigo-200 mt-1 leading-snug">
+            Honorable Dismissal, Transfer Credential, TOR, Diploma. Longer processing. Students should schedule online and complete clearance upon release.
+          </p>
+        </div>
       </div>
 
       {message && (
@@ -294,6 +313,22 @@ export default function AdminDocuments() {
 
                 <div className="flex flex-wrap items-center gap-3">
                   <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
+                    <span>Type</span>
+                    <select
+                      aria-label={`${doc.name} category`}
+                      value={normalizeCategory(doc.category)}
+                      onChange={e => updateDoc(doc.code, { category: normalizeCategory(e.target.value) })}
+                      className={`${inputClass} pr-8 ${
+                        normalizeCategory(doc.category) === 'major'
+                          ? 'border-indigo-300 dark:border-indigo-700'
+                          : 'border-emerald-300 dark:border-emerald-700'
+                      }`}
+                    >
+                      <option value="minor">Minor</option>
+                      <option value="major">Major</option>
+                    </select>
+                  </label>
+                  <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
                     <span>Price</span>
                     {priceChanged && (
                       <span className="text-xs text-gray-400 line-through">{formatPeso(original!.fee)}</span>
@@ -338,7 +373,7 @@ export default function AdminDocuments() {
         <h2 className="font-semibold text-gray-900 dark:text-white mb-3" style={{ fontFamily: 'Poppins, sans-serif' }}>
           Add another document
         </h2>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-[70px_1fr_1fr_120px_auto] gap-3">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-[70px_1fr_1fr_120px_120px_auto] gap-3">
           <input
             value={newDoc.icon}
             onChange={e => setNewDoc({ ...newDoc, icon: e.target.value })}
@@ -357,6 +392,15 @@ export default function AdminDocuments() {
             placeholder="Short description"
             className={inputClass}
           />
+          <select
+            aria-label="New document category"
+            value={newDoc.category}
+            onChange={e => setNewDoc(prev => ({ ...prev, category: normalizeCategory(e.target.value) }))}
+            className={inputClass}
+          >
+            <option value="minor">Minor</option>
+            <option value="major">Major</option>
+          </select>
           <PriceInput
             label="New document price"
             value={newDoc.fee}
@@ -372,6 +416,9 @@ export default function AdminDocuments() {
             Add
           </button>
         </div>
+        <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+          New documents default to {categoryLabel(newDoc.category).toLowerCase()}. Change the type before adding if needed.
+        </p>
       </div>
 
       {dirty && (

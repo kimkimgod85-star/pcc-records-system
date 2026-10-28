@@ -230,21 +230,41 @@ export default function LandingPage() {
             </h2>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            {[
-              { title: 'Transcript of Records', icon: '📋', desc: 'Official academic transcript' },
-              { title: 'Certificate of Enrollment', icon: '📄', desc: 'Proof of enrollment' },
-              { title: 'Diploma Copy', icon: '🎓', desc: 'Certified diploma copy' },
-              { title: 'Good Moral Certificate', icon: '⭐', desc: 'Character certificate' },
-            ].map((doc, i) => (
-              <div key={i} className="p-5 bg-gray-50 dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 text-center hover:border-blue-200 dark:hover:border-blue-800 hover:shadow-sm transition-all">
-                <div className="text-3xl mb-3">{doc.icon}</div>
-                <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-1" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                  {doc.title}
-                </h4>
-                <p className="text-xs text-gray-500 dark:text-gray-400">{doc.desc}</p>
+          <div className="grid md:grid-cols-2 gap-6">
+            <div className="rounded-2xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50/60 dark:bg-emerald-900/10 p-5">
+              <p className="text-sm font-semibold text-emerald-800 dark:text-emerald-200">Minor documents · about 1 working day</p>
+              <p className="text-xs text-emerald-700 dark:text-emerald-300 mt-1 mb-4">Usually ready quickly if the Registrar is not busy. You can still schedule pickup online.</p>
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { title: 'Certificate of Enrollment', icon: '📄' },
+                  { title: 'Certificate of Registration', icon: '📝' },
+                  { title: 'Certificate of Grades', icon: '📊' },
+                  { title: 'Good Moral Certificate', icon: '⭐' },
+                ].map(doc => (
+                  <div key={doc.title} className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-emerald-100 dark:border-emerald-900/40 text-center">
+                    <div className="text-2xl mb-1.5">{doc.icon}</div>
+                    <p className="text-xs font-medium text-gray-900 dark:text-white leading-snug">{doc.title}</p>
+                  </div>
+                ))}
               </div>
-            ))}
+            </div>
+            <div className="rounded-2xl border border-indigo-200 dark:border-indigo-800 bg-indigo-50/60 dark:bg-indigo-900/10 p-5">
+              <p className="text-sm font-semibold text-indigo-800 dark:text-indigo-200">Major documents · schedule + clearance</p>
+              <p className="text-xs text-indigo-700 dark:text-indigo-300 mt-1 mb-4">Longer processing. Book pickup online and complete clearance upon release.</p>
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { title: 'Honorable Dismissal', icon: '🗂️' },
+                  { title: 'Transfer Credential', icon: '📑' },
+                  { title: 'Transcript of Records', icon: '📋' },
+                  { title: 'Diploma', icon: '🎓' },
+                ].map(doc => (
+                  <div key={doc.title} className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-indigo-100 dark:border-indigo-900/40 text-center">
+                    <div className="text-2xl mb-1.5">{doc.icon}</div>
+                    <p className="text-xs font-medium text-gray-900 dark:text-white leading-snug">{doc.title}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </section>

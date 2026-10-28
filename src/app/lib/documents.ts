@@ -4,6 +4,8 @@ import { subscribeLocalAndRemote } from './realtime';
 
 const EVENT = 'pcc-documents-updated';
 
+export type DocumentCategory = 'minor' | 'major';
+
 export interface CatalogDocument {
   code: string;
   name: string;
@@ -11,6 +13,7 @@ export interface CatalogDocument {
   icon: string;
   fee: number;
   available: boolean;
+  category: DocumentCategory;
 }
 
 export interface DocumentCatalog {
@@ -19,11 +22,36 @@ export interface DocumentCatalog {
 }
 
 export const DEFAULT_DOCUMENTS: CatalogDocument[] = [
-  { code: 'tor', name: 'Transcript of Records', description: 'Official academic transcript', icon: '📋', fee: 150, available: true },
-  { code: 'coe', name: 'Certificate of Enrollment', description: 'Proof of current/past enrollment', icon: '📄', fee: 50, available: true },
-  { code: 'diploma', name: 'Diploma Copy', description: 'Certified copy of diploma', icon: '🎓', fee: 200, available: true },
-  { code: 'goodmoral', name: 'Good Moral Certificate', description: 'Certificate of good character', icon: '⭐', fee: 75, available: true },
+  { code: 'coe', name: 'Certificate of Enrollment', description: 'Proof of current or past enrollment', icon: '📄', fee: 50, available: true, category: 'minor' },
+  { code: 'cor', name: 'Certificate of Registration', description: 'Proof of subjects registered for the term', icon: '📝', fee: 50, available: true, category: 'minor' },
+  { code: 'cog', name: 'Certificate of Grades', description: 'Certified grades for the requested term', icon: '📊', fee: 50, available: true, category: 'minor' },
+  { code: 'goodmoral', name: 'Good Moral Certificate', description: 'Certificate of good character', icon: '⭐', fee: 75, available: true, category: 'minor' },
+  { code: 'hd', name: 'Honorable Dismissal', description: 'Clearance to leave / transfer from the school', icon: '🗂️', fee: 100, available: true, category: 'major' },
+  { code: 'ctc', name: 'Certificate of Transfer Credential', description: 'Credentials needed for transfer to another school', icon: '📑', fee: 100, available: true, category: 'major' },
+  { code: 'tor', name: 'Transcript of Records', description: 'Official academic transcript', icon: '📋', fee: 150, available: true, category: 'major' },
+  { code: 'diploma', name: 'Diploma', description: 'Certified diploma / diploma copy', icon: '🎓', fee: 200, available: true, category: 'major' },
 ];
+
+export function normalizeCategory(value: unknown): DocumentCategory {
+  return value === 'major' ? 'major' : 'minor';
+}
+
+export function categoryLabel(category: DocumentCategory) {
+  return category === 'major' ? 'Major document' : 'Minor document';
+}
+
+export function categoryAdvice(category: DocumentCategory) {
+  if (category === 'major') {
+    return {
+      eta: 'Longer processing time',
+      detail: 'Major documents need more time to prepare. You can book your pickup schedule online. Complete your school clearance before claiming / upon release.',
+    };
+  }
+  return {
+    eta: 'About 1 working day',
+    detail: 'Minor documents are usually ready in about 1 working day if the Registrar is not busy. You can still book a pickup schedule online.',
+  };
+}
 
 export const DEFAULT_CATALOG: DocumentCatalog = {
   documents: DEFAULT_DOCUMENTS.map(item => ({ ...item })),
@@ -63,6 +91,7 @@ export async function fetchDocumentCatalog(): Promise<DocumentCatalog> {
       icon: String(item.icon || '📄'),
       fee: Math.max(0, Number(item.fee) || 0),
       available: item.available !== false,
+      category: normalizeCategory(item.category),
     }));
     cached = {
       documents: documents.length ? documents : cloneDefault().documents,
@@ -102,6 +131,7 @@ export async function persistDocumentCatalog(next: DocumentCatalog) {
         fee: item.fee,
         available: item.available,
         sort_order: index + 1,
+        category: normalizeCategory(item.category),
       })),
       { onConflict: 'code' },
     )
@@ -157,7 +187,7 @@ export async function repriceUnpaidRequests(catalog: DocumentCatalog) {
 }
 
 export interface CatalogChange {
-  kind: 'price' | 'rush' | 'added' | 'removed' | 'hidden' | 'shown' | 'renamed' | 'details';
+  kind: 'price' | 'rush' | 'added' | 'removed' | 'hidden' | 'shown' | 'renamed' | 'details' | 'category';
   label: string;
 }
 
@@ -177,6 +207,9 @@ export function describeCatalogChanges(before: DocumentCatalog, after: DocumentC
     }
     if (old.description.trim() !== doc.description.trim() || old.icon !== doc.icon) {
       changes.push({ kind: 'details', label: `${doc.name}: description or icon updated` });
+    }
+    if (normalizeCategory(old.category) !== normalizeCategory(doc.category)) {
+      changes.push({ kind: 'category', label: `${doc.name}: now a ${categoryLabel(normalizeCategory(doc.category)).toLowerCase()}` });
     }
     if (Number(old.fee) !== Number(doc.fee)) {
       changes.push({ kind: 'price', label: `${doc.name}: ${formatPeso(old.fee)} → ${formatPeso(doc.fee)}` });
@@ -219,6 +252,13 @@ export function subscribeDocumentCatalog(onChange: () => void) {
 
 export function getAvailableDocuments(catalog = cached) {
   return catalog.documents.filter(item => item.available);
+}
+
+export function groupDocumentsByCategory(docs: CatalogDocument[]) {
+  return {
+    minor: docs.filter(item => normalizeCategory(item.category) === 'minor'),
+    major: docs.filter(item => normalizeCategory(item.category) === 'major'),
+  };
 }
 
 export function getDocumentByCode(code: string, catalog = cached) {
