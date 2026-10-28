@@ -6,7 +6,7 @@ import {
 import { Link } from 'react-router';
 import { fetchPayments, screenshotUrl, subscribePayments, updatePaymentStatus, type PaymentRecord } from '../../lib/payments';
 import { subscribeRequests, updateRequestStatus } from '../../lib/requests';
-import { REQUEST_STATUS_LABEL, type RequestStatus } from '../../lib/status';
+import { canSetRequestStatus, REQUEST_STATUS_LABEL, type RequestStatus } from '../../lib/status';
 import { StatusBadge } from '../../components/StatusBadge';
 import { useRevealOnSmallScreen } from '../../lib/useRevealOnSmallScreen';
 import { CASHIER_PAYMENT_REJECT_REASONS, PAYMENT_REJECT_REASONS, RejectReasonDialog } from '../../components/RejectReasonDialog';
@@ -121,6 +121,12 @@ export default function AdminPayments() {
     setPayments(prev => prev.map(p => p.requestUuid === requestUuid ? { ...p, requestStatus } : p));
 
   const advanceRequest = async (row: PaymentRecord, next: RequestStatus) => {
+    const paymentStatus = row.status === 'verified' ? 'verified' as const : 'pending' as const;
+    const gate = canSetRequestStatus(row.requestStatus, next, paymentStatus);
+    if (!gate.ok) {
+      setError(gate.reason || 'That status change is not allowed.');
+      return;
+    }
     setAdvancing(true);
     setError('');
     setNotice('');
@@ -364,11 +370,12 @@ export default function AdminPayments() {
 
               {/* Decision on top */}
               <div className="px-4 py-3 border-b border-gray-100 dark:border-slate-700 bg-slate-50/90 dark:bg-slate-900/40">
+                <p className="text-xs font-semibold text-gray-900 dark:text-white mb-0.5">Decision</p>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mb-2.5">
                   {selected.method === 'gcash'
-                    ? 'Match amount and reference with the screenshot.'
+                    ? 'Match amount and reference with the screenshot, then Verify or Reject.'
                     : selected.status === 'pending'
-                    ? 'Check Official Receipt + REQ ID in person, then Verify.'
+                    ? 'Check Official Receipt + REQ ID in person, then Verify or Reject.'
                     : 'Update this Pay in Person result.'}
                 </p>
 

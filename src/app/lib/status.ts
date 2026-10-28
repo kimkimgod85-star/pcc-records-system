@@ -41,6 +41,63 @@ export function canPayFor(status: RequestStatus) {
   return status === 'approved' || status === 'processing' || status === 'ready';
 }
 
+/** Processing / Ready / Completed require a verified payment first. */
+export function requiresVerifiedPayment(status: RequestStatus) {
+  return status === 'processing' || status === 'ready' || status === 'completed';
+}
+
+export function isPaymentVerified(paymentStatus: PaymentStatus) {
+  return paymentStatus === 'verified';
+}
+
+/** Whether the registrar may reject this request from its current status. */
+export function canRejectRequest(status: RequestStatus) {
+  return status === 'pending' || status === 'approved' || status === 'processing';
+}
+
+/**
+ * Guards accidental status jumps (e.g. unpaid → Processing, or Pending → Ready).
+ * Reject is handled separately via canRejectRequest.
+ */
+export function canSetRequestStatus(
+  current: RequestStatus,
+  next: RequestStatus,
+  paymentStatus: PaymentStatus,
+): { ok: boolean; reason?: string } {
+  if (next === current) return { ok: false, reason: 'Already set to this status.' };
+
+  if (next === 'rejected') {
+    if (!canRejectRequest(current)) {
+      return { ok: false, reason: 'This request can no longer be rejected from its current status.' };
+    }
+    return { ok: true };
+  }
+
+  if (requiresVerifiedPayment(next) && !isPaymentVerified(paymentStatus)) {
+    return { ok: false, reason: 'Payment is not verified yet. Verify payment first before processing.' };
+  }
+
+  const order: RequestStatus[] = ['pending', 'approved', 'processing', 'ready', 'completed'];
+  const from = order.indexOf(current === 'rejected' ? 'pending' : current);
+  const to = order.indexOf(next);
+  if (to < 0) return { ok: false, reason: 'Unknown status.' };
+
+  // From rejected, only allow moving back to pending/approved carefully
+  if (current === 'rejected') {
+    if (next === 'pending' || next === 'approved') return { ok: true };
+    return { ok: false, reason: 'Re-open as Pending or Approved first.' };
+  }
+
+  if (from < 0) return { ok: false, reason: 'Unknown status.' };
+
+  // Forward: only one step at a time
+  if (to > from + 1) {
+    return { ok: false, reason: 'Complete the previous step first. Do not skip ahead.' };
+  }
+
+  return { ok: true };
+}
+
 export function statusToStep(status: RequestStatus) {
   if (status === 'rejected') return 0;
   const steps: RequestStatus[] = ['pending', 'approved', 'processing', 'ready', 'completed'];

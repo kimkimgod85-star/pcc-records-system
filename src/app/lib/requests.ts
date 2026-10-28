@@ -4,6 +4,7 @@ import { addNotification } from './notifications';
 import { subscribeLocalAndRemote } from './realtime';
 import { formatPeso } from './documents';
 import {
+  canSetRequestStatus,
   formatLongDate,
   isPaymentStatus,
   isRequestStatus,
@@ -184,6 +185,17 @@ export function composeReason(reason: string, message?: string) {
 }
 
 export async function updateRequestStatus(uuid: string, status: RequestStatus, userId?: string, type?: string, code?: string, reason = '') {
+  const client = requireSupabase();
+  const { data: currentRow, error: currentError } = await client
+    .from('document_requests')
+    .select(SELECT)
+    .eq('id', uuid)
+    .single();
+  if (currentError || !currentRow) throw currentError || new Error('Could not load request.');
+  const current = mapRow(currentRow as Record<string, unknown>);
+  const gate = canSetRequestStatus(current.status, status, current.paymentStatus);
+  if (!gate.ok) throw new Error(gate.reason || 'That status change is not allowed.');
+
   const updated = await updateRequestWithOptional(uuid, { status }, { rejection_reason: status === 'rejected' ? reason || null : null });
   if (userId) {
     const doc = `${updated.type || type || 'Your document'} (${updated.id || code})`;

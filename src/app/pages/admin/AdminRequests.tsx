@@ -1,7 +1,21 @@
 import { useEffect, useState } from 'react';
-import { Search, CheckCircle, X, ChevronRight, ArrowRight, AlertCircle, Loader2, StickyNote, CalendarClock, Copy } from 'lucide-react';
+import { Link } from 'react-router';
+import {
+  Search, CheckCircle, X, ChevronRight, ArrowRight, AlertCircle, Loader2,
+  StickyNote, CalendarClock, Copy, XCircle, CreditCard,
+} from 'lucide-react';
 import { fetchRequests, subscribeRequests, updateRequestStatus, type StudentRequest } from '../../lib/requests';
-import { formatPickup, formatShortDate, paymentLabel, type PaymentStatus, type RequestStatus } from '../../lib/status';
+import {
+  canRejectRequest,
+  canSetRequestStatus,
+  formatPickup,
+  formatShortDate,
+  isPaymentVerified,
+  paymentLabel,
+  requiresVerifiedPayment,
+  type PaymentStatus,
+  type RequestStatus,
+} from '../../lib/status';
 import { useRevealOnSmallScreen } from '../../lib/useRevealOnSmallScreen';
 import { StatusBadge } from '../../components/StatusBadge';
 import { RejectReasonDialog, REQUEST_REJECT_REASONS } from '../../components/RejectReasonDialog';
@@ -81,13 +95,13 @@ const NEXT_STEP: Partial<Record<RequestStatus, { status: RequestStatus; label: s
   ready: { status: 'completed', label: 'Mark as Completed', hint: 'Use this once the student claims it.' },
 };
 
-const ALL_ACTIONS: { status: RequestStatus; label: string; dot: string }[] = [
+/** Forward-flow chips only — Reject is a separate button to avoid accidents. */
+const FLOW_ACTIONS: { status: RequestStatus; label: string; dot: string }[] = [
   { status: 'pending', label: 'Pending', dot: 'bg-orange-500' },
   { status: 'approved', label: 'Approved', dot: 'bg-blue-500' },
   { status: 'processing', label: 'Processing', dot: 'bg-purple-500' },
   { status: 'ready', label: 'Ready', dot: 'bg-cyan-500' },
   { status: 'completed', label: 'Completed', dot: 'bg-green-500' },
-  { status: 'rejected', label: 'Rejected', dot: 'bg-red-500' },
 ];
 
 const paymentTone = (status: PaymentStatus) =>
@@ -135,6 +149,11 @@ export default function AdminRequests() {
   };
 
   const updateStatus = async (row: AdminRequestRow, status: RequestStatus, reason = '') => {
+    const gate = canSetRequestStatus(row.status, status, row.paymentStatus);
+    if (!gate.ok) {
+      setError(gate.reason || 'That status change is not allowed.');
+      return;
+    }
     setSaving(status);
     setError('');
     try {
@@ -150,6 +169,10 @@ export default function AdminRequests() {
 
   const chooseStatus = (row: AdminRequestRow, status: RequestStatus) => {
     if (status === 'rejected') {
+      if (!canRejectRequest(row.status)) {
+        setError('This request can no longer be rejected from its current status.');
+        return;
+      }
       setError('');
       setRejecting(true);
       return;
@@ -157,7 +180,16 @@ export default function AdminRequests() {
     void updateStatus(row, status);
   };
 
-  const next = selectedReq ? NEXT_STEP[selectedReq.status] : undefined;
+  const paid = selectedReq ? isPaymentVerified(selectedReq.paymentStatus) : false;
+  const nextDef = selectedReq ? NEXT_STEP[selectedReq.status] : undefined;
+  const nextGate = selectedReq && nextDef
+    ? canSetRequestStatus(selectedReq.status, nextDef.status, selectedReq.paymentStatus)
+    : null;
+  const nextReady = Boolean(nextDef && nextGate?.ok);
+  const nextBlockedUnpaid = Boolean(
+    nextDef && requiresVerifiedPayment(nextDef.status) && selectedReq && !paid,
+  );
+  const showReject = selectedReq ? canRejectRequest(selectedReq.status) : false;
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
@@ -342,45 +374,71 @@ export default function AdminRequests() {
                 </button>
               </div>
 
-              {/* Status actions — first, always visible */}
-              <div className="px-4 py-3 border-b border-gray-100 dark:border-slate-700 bg-slate-50/90 dark:bg-slate-900/40">
+              {/* Status actions — payment-gated, Reject separated */}
+              <div className="px-4 py-3 border-b border-gray-100 dark:border-slate-700 bg-slate-50/90 dark:bg-slate-900/40 space-y-2.5">
+                <p className="text-xs font-semibold text-gray-900 dark:text-white">Update status</p>
+
                 {error && (
-                  <div className="mb-2.5 p-2.5 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 flex items-start gap-2">
+                  <div className="p-2.5 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 flex items-start gap-2">
                     <AlertCircle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0 text-red-500" />
                     <p className="text-xs text-red-700 dark:text-red-300">{error}</p>
                   </div>
                 )}
 
-                {next && (
+                {nextBlockedUnpaid && (
+                  <div className="p-2.5 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 flex items-start gap-2">
+                    <CreditCard className="w-3.5 h-3.5 mt-0.5 flex-shrink-0 text-amber-600 dark:text-amber-400" />
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold text-amber-900 dark:text-amber-100">Payment not verified yet</p>
+                      <p className="text-[11px] text-amber-800 dark:text-amber-200 mt-0.5 leading-snug">
+                        You cannot process this request until payment is verified.
+                      </p>
+                      <Link
+                        to="/admin/payments"
+                        className="inline-flex items-center gap-1 mt-1.5 text-[11px] font-semibold text-amber-900 dark:text-amber-100 underline underline-offset-2"
+                      >
+                        Open Payments
+                      </Link>
+                    </div>
+                  </div>
+                )}
+
+                {nextDef && (
                   <>
                     <button
                       type="button"
-                      onClick={() => updateStatus(selectedReq, next.status)}
-                      disabled={saving !== null}
-                      className="w-full inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-sm disabled:opacity-60"
+                      onClick={() => updateStatus(selectedReq, nextDef.status)}
+                      disabled={saving !== null || !nextReady}
+                      title={!nextReady ? (nextGate?.reason || 'Not available yet') : undefined}
+                      className="w-full inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-sm disabled:opacity-45 disabled:cursor-not-allowed"
                     >
-                      {saving === next.status ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
-                      {next.label}
+                      {saving === nextDef.status ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
+                      {nextDef.label}
                     </button>
-                    <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1.5 mb-2.5 text-center">{next.hint}</p>
+                    <p className="text-[11px] text-gray-500 dark:text-gray-400 text-center -mt-1">
+                      {nextReady ? nextDef.hint : (nextGate?.reason || nextDef.hint)}
+                    </p>
                   </>
                 )}
 
-                <div className="grid grid-cols-3 gap-1.5">
-                  {ALL_ACTIONS.map(action => {
+                <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-5">
+                  {FLOW_ACTIONS.map(action => {
                     const current = selectedReq.status === action.status;
+                    const gate = canSetRequestStatus(selectedReq.status, action.status, selectedReq.paymentStatus);
+                    const locked = !current && !gate.ok;
                     return (
                       <button
                         key={action.status}
                         type="button"
                         onClick={() => chooseStatus(selectedReq, action.status)}
-                        disabled={current || saving !== null}
-                        className={`inline-flex items-center justify-center gap-1 px-1.5 py-2 rounded-lg text-[11px] font-medium border transition-colors ${
+                        disabled={current || locked || saving !== null}
+                        title={locked ? gate.reason : undefined}
+                        className={`inline-flex items-center justify-center gap-1 px-1 py-2 rounded-lg text-[11px] font-medium border transition-colors ${
                           current
                             ? 'border-blue-300 bg-blue-50 text-blue-700 dark:border-blue-700 dark:bg-blue-900/30 dark:text-blue-300 cursor-default'
-                            : action.status === 'rejected'
-                              ? 'border-red-200 text-red-700 hover:bg-red-50 dark:border-red-900/60 dark:text-red-300 dark:hover:bg-red-900/20 disabled:opacity-50'
-                              : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50 dark:bg-slate-800 dark:border-slate-600 dark:text-gray-200 dark:hover:bg-slate-700 disabled:opacity-50'
+                            : locked
+                              ? 'border-gray-100 bg-gray-50 text-gray-400 cursor-not-allowed dark:border-slate-700 dark:bg-slate-900/50 dark:text-slate-500'
+                              : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50 dark:bg-slate-800 dark:border-slate-600 dark:text-gray-200 dark:hover:bg-slate-700'
                         }`}
                       >
                         {saving === action.status ? (
@@ -388,13 +446,27 @@ export default function AdminRequests() {
                         ) : current ? (
                           <CheckCircle className="w-3 h-3" />
                         ) : (
-                          <span className={`w-1.5 h-1.5 rounded-full ${action.dot}`} />
+                          <span className={`w-1.5 h-1.5 rounded-full ${locked ? 'bg-gray-300 dark:bg-slate-600' : action.dot}`} />
                         )}
                         {action.label}
                       </button>
                     );
                   })}
                 </div>
+
+                {showReject ? (
+                  <button
+                    type="button"
+                    onClick={() => chooseStatus(selectedReq, 'rejected')}
+                    disabled={saving !== null}
+                    className="w-full inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-sm font-semibold border border-red-200 text-red-700 bg-white hover:bg-red-50 dark:bg-slate-800 dark:border-red-900/60 dark:text-red-300 dark:hover:bg-red-900/20 disabled:opacity-50"
+                  >
+                    {saving === 'rejected' ? <Loader2 className="w-4 h-4 animate-spin" /> : <XCircle className="w-4 h-4" />}
+                    Reject request
+                  </button>
+                ) : selectedReq.status === 'rejected' ? (
+                  <p className="text-[11px] text-center text-red-600 dark:text-red-400 font-medium">This request was rejected.</p>
+                ) : null}
               </div>
 
               {/* Compact details — same card */}
