@@ -90,12 +90,14 @@ export function Header({ variant = 'app' }: HeaderProps) {
   const isActive = (href: string) => location.pathname === href;
 
   return (
-    <header className={`sticky top-0 z-50 w-full border-b transition-all duration-300 backdrop-blur-xl backdrop-saturate-150 ${
+    <header className={`sticky top-0 z-50 w-full border-b backdrop-blur-xl backdrop-saturate-150 ${
       overHero
-        ? 'bg-white/45 dark:bg-slate-900/45 shadow-none border-white/50 dark:border-white/10'
-        : scrolled
-          ? 'bg-white/65 dark:bg-slate-900/70 shadow-md border-white/60 dark:border-slate-700/60'
-          : 'bg-white/55 dark:bg-slate-900/60 shadow-sm border-white/50 dark:border-slate-700/50'
+        ? 'bg-white/45 dark:bg-slate-900/45 shadow-none border-transparent'
+        : isPublicAuth
+          ? 'bg-white/90 dark:bg-slate-900/90 shadow-sm border-gray-200 dark:border-slate-700'
+          : scrolled
+            ? 'bg-white/65 dark:bg-slate-900/70 shadow-md border-gray-200/80 dark:border-slate-700/60 transition-all duration-300'
+            : 'bg-white/55 dark:bg-slate-900/60 shadow-sm border-gray-200/70 dark:border-slate-700/50 transition-all duration-300'
     }`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
