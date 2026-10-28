@@ -547,18 +547,18 @@ export default function PaymentPage() {
           {/* Cashier Instructions */}
           {paymentMethod === 'cashier' && (
             <div className="space-y-3">
-              <div className="rounded-xl overflow-hidden border border-green-200 dark:border-green-800">
-                <div className="flex items-center gap-3 p-3.5 sm:p-4 bg-green-600 dark:bg-green-700 text-white">
-                  <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
+              <div className="rounded-xl overflow-hidden border border-slate-300 dark:border-slate-600">
+                <div className="flex items-center gap-3 p-3.5 sm:p-4 bg-slate-900 dark:bg-slate-950 text-white">
+                  <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
                     <MapPin className="w-5 h-5" />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-[11px] uppercase tracking-wide text-green-100 font-semibold">Proceed to</p>
+                    <p className="text-[11px] uppercase tracking-wide text-slate-300 font-semibold">Proceed to</p>
                     <p className="font-semibold leading-tight">PCC New Building</p>
-                    <p className="text-sm text-green-50">Cashier’s Office</p>
+                    <p className="text-sm text-slate-200">Cashier’s Office</p>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 divide-x divide-green-200 dark:divide-green-800 bg-white dark:bg-slate-900 text-center">
+                <div className="grid grid-cols-2 divide-x divide-slate-200 dark:divide-slate-700 bg-white dark:bg-slate-900 text-center">
                   <div className="p-2.5">
                     <p className="text-[11px] text-gray-500 dark:text-gray-400">Amount to pay</p>
                     <p className="font-semibold text-gray-900 dark:text-white">{req?.amount}</p>
@@ -569,13 +569,13 @@ export default function PaymentPage() {
                     <p className="text-[11px] text-gray-600 dark:text-gray-300">8:00 AM – 4:00 PM</p>
                   </div>
                 </div>
-                <p className="px-3 py-1.5 text-[11px] text-center bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-300 border-t border-green-200 dark:border-green-800">
+                <p className="px-3 py-1.5 text-[11px] text-center bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-300 border-t border-slate-200 dark:border-slate-700">
                   Closed on Sundays · No receipt photo upload needed
                 </p>
               </div>
 
-              <div className="p-3.5 sm:p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl">
-                <p className="text-sm font-semibold text-green-800 dark:text-green-300 mb-2.5">How Pay in Person works</p>
+              <div className="p-3.5 sm:p-4 bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-600 rounded-xl">
+                <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-2.5">How Pay in Person works</p>
                 <ol className="space-y-2">
                   {[
                     'Save your REQ ID proof picture below to your phone',
@@ -584,51 +584,51 @@ export default function PaymentPage() {
                     'Go to the Registrar with your Official Receipt and REQ ID so they can verify your documents',
                   ].map((step, i) => (
                     <li key={i} className="flex items-start gap-2.5">
-                      <span className="w-5 h-5 bg-green-600 text-white rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 text-[11px] font-bold">
+                      <span className="w-5 h-5 bg-blue-800 text-white rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 text-[11px] font-bold">
                         {i + 1}
                       </span>
-                      <span className="text-sm text-green-800 dark:text-green-200 leading-snug">{step}</span>
+                      <span className="text-sm text-slate-700 dark:text-slate-200 leading-snug">{step}</span>
                     </li>
                   ))}
                 </ol>
-                <p className="mt-3 text-xs text-green-700 dark:text-green-300/90 leading-relaxed">
+                <p className="mt-3 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
                   You do not upload a receipt photo in the app for Pay in Person. Verification is done at the Registrar with your physical receipt and REQ ID.
                 </p>
               </div>
 
               {req && (
-                <div className="rounded-xl border border-gray-200 dark:border-slate-600 overflow-hidden bg-white dark:bg-slate-900">
-                  <div className="flex items-center justify-between gap-2 px-3.5 py-2.5 border-b border-gray-100 dark:border-slate-700">
+                <div className="rounded-xl border border-slate-200 dark:border-slate-600 overflow-hidden bg-white dark:bg-slate-900">
+                  <div className="flex items-center justify-between gap-2 px-3.5 py-2.5 border-b border-slate-100 dark:border-slate-700">
                     <div className="flex items-center gap-2 min-w-0">
-                      <ImageIcon className="w-4 h-4 text-green-600 dark:text-green-400 flex-shrink-0" />
+                      <ImageIcon className="w-4 h-4 text-blue-800 dark:text-blue-300 flex-shrink-0" />
                       <div className="min-w-0">
                         <p className="text-sm font-semibold text-gray-900 dark:text-white">Your REQ ID form</p>
                         <p className="text-xs text-gray-500 dark:text-gray-400 font-mono truncate">{req.id}</p>
                       </div>
                     </div>
                     {proofSaved && (
-                      <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700 dark:text-green-300 flex-shrink-0">
+                      <span className="inline-flex items-center gap-1 text-xs font-medium text-blue-800 dark:text-blue-300 flex-shrink-0">
                         <CheckCircle className="w-3.5 h-3.5" /> Saved
                       </span>
                     )}
                   </div>
-                  <div className="p-3 bg-gray-50 dark:bg-slate-950/50 min-h-[12rem] flex items-center justify-center">
+                  <div className="p-3 bg-slate-50 dark:bg-slate-950/50 min-h-[12rem] flex items-center justify-center">
                     {reqIdPreview ? (
                       <img
                         src={reqIdPreview}
                         alt={`REQ ID form for ${req.id}`}
-                        className="w-full max-w-sm mx-auto rounded-lg shadow-sm border border-gray-200 dark:border-slate-700"
+                        className="w-full max-w-sm mx-auto rounded-lg shadow-sm border border-slate-200 dark:border-slate-700"
                       />
                     ) : (
                       <p className="text-sm text-gray-500 dark:text-gray-400">Preparing official form…</p>
                     )}
                   </div>
-                  <div className="p-3 border-t border-gray-100 dark:border-slate-700">
+                  <div className="p-3 border-t border-slate-100 dark:border-slate-700">
                     <button
                       type="button"
                       onClick={handleSaveReqId}
                       disabled={proofBusy || !reqIdPreview}
-                      className="w-full inline-flex items-center justify-center gap-2 py-2.5 rounded-xl bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white text-sm font-medium transition-colors"
+                      className="w-full inline-flex items-center justify-center gap-2 py-2.5 rounded-xl bg-blue-900 hover:bg-blue-950 disabled:opacity-50 text-white text-sm font-medium transition-colors"
                     >
                       {proofBusy ? (
                         <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
