@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 import { Eye, EyeOff, AlertCircle, LogIn, ArrowLeft, Mail, Lock, ShieldCheck, UserX, Clock, Phone } from 'lucide-react';
 import { DEACTIVATED_MESSAGE, isDeactivatedMessage, UNREGISTERED_GOOGLE_MESSAGE, useAuth, type LoginPortal } from '../context/AuthContext';
-import { Header } from '../components/Header';
 import { EmailCodeVerify } from '../components/EmailCodeVerify';
 import { ForgotPassword } from '../components/ForgotPassword';
 import { studentHome } from './WelcomePage';
@@ -24,7 +23,7 @@ function GoogleMark() {
 }
 
 const fieldClass =
-  'w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-700 focus:border-blue-700 text-sm';
+  'w-full h-11 pl-10 pr-4 bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-600 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-700 focus:border-blue-700 focus:bg-white text-sm';
 
 export default function LoginPage() {
   const { login, loginWithGoogle } = useAuth();
@@ -94,70 +93,48 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-svh flex flex-col relative isolate">
-      <div
-        className="absolute inset-0 -z-10 bg-center bg-cover"
-        style={{ backgroundImage: `url(${PCC_BG_URL})` }}
-      />
-      <div className="absolute inset-0 -z-10 bg-white/85 dark:bg-slate-950/85 backdrop-blur-[2px]" />
-
-      <Header variant="landing" />
-
-      <div className="flex-1 flex items-center justify-center px-4 py-6 sm:py-8">
-        <div className="w-full max-w-3xl rounded-2xl border border-gray-200 dark:border-slate-700 shadow-xl bg-white dark:bg-slate-800 grid md:grid-cols-[220px_1fr] overflow-hidden">
-          <aside className={`hidden md:flex flex-col justify-between p-6 text-white ${
-            isStaff ? 'bg-blue-950' : 'bg-blue-800'
-          }`}>
+    <div className="h-svh overflow-hidden grid lg:grid-cols-[minmax(0,1.1fr)_minmax(22rem,30rem)] bg-white dark:bg-slate-950">
+      <aside className="relative hidden lg:block">
+        <img src={PCC_BG_URL} alt="" className="absolute inset-0 h-full w-full object-cover" />
+        <div className={`absolute inset-0 ${isStaff ? 'bg-gradient-to-br from-[#050d24]/95 via-[#0b245c]/88 to-[#123a8a]/80' : 'bg-gradient-to-br from-[#071a45]/92 via-[#0c2f78]/82 to-[#1e4ed8]/72'}`} />
+        <div className="relative h-full flex flex-col justify-between p-10 text-white">
+          <div className="flex items-center gap-3">
+            <img src={PCC_LOGO_URL} alt="PCC logo" className="h-14 w-auto object-contain bg-white rounded-2xl p-1.5" />
             <div>
-              <img src={PCC_LOGO_URL} alt="PCC logo" className="h-16 w-auto object-contain mb-5 drop-shadow" />
-              {isStaff ? (
-                <>
-                  <p className="text-[12px] uppercase tracking-[0.18em] text-blue-200">Staff access</p>
-                  <h2 className="mt-2 text-xl font-semibold leading-snug" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                    Registrar &amp; Admin portal
-                  </h2>
-                </>
-              ) : (
-                <>
-                  <p className="text-[12px] uppercase tracking-[0.18em] text-blue-200">Registrar’s Office</p>
-                  <h2 className="mt-2 text-xl font-semibold leading-snug" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                    Your school records, just a click away.
-                  </h2>
-                </>
-              )}
+              <p className="text-sm font-semibold leading-tight" style={{ fontFamily: 'Poppins, sans-serif' }}>Pagadian Capitol Colleges</p>
+              <p className="text-xs text-blue-100 mt-0.5">Registrar’s Office</p>
             </div>
-            <p className="text-xs text-blue-100 leading-relaxed">
+          </div>
+          <div className="max-w-md">
+            <p className="text-xs uppercase tracking-[0.22em] text-blue-100">{isStaff ? 'Staff portal' : 'Student portal'}</p>
+            <h1 className="mt-3 text-4xl font-semibold leading-tight" style={{ fontFamily: 'Poppins, sans-serif' }}>
+              {isStaff ? 'Sign in for the Registrar and Admin.' : 'Request your school records online.'}
+            </h1>
+            <p className="mt-3 text-sm text-blue-100 leading-relaxed">
               {isStaff
-                ? 'For authorized Registrar’s Office staff only. Student accounts cannot sign in here.'
-                : 'Students and alumni of Pagadian Capitol Colleges can request documents and book pickup here.'}
+                ? 'This entrance is only for authorized staff. Student accounts stay on the student sign-in.'
+                : 'Students and alumni can request a record, pay, message the office, and book a pickup.'}
             </p>
-          </aside>
+          </div>
+          <p className="text-xs text-blue-100/80">Monday to Saturday, 8:00 AM – 4:00 PM</p>
+        </div>
+      </aside>
 
-          <div className="p-5 sm:p-7 min-w-0">
-            {isStaff ? (
-              <button
-                type="button"
-                onClick={() => switchPortal('student')}
-                className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-800 dark:text-blue-300 hover:underline mb-4"
-              >
-                <ArrowLeft className="w-3.5 h-3.5" />
-                Back to student login
-              </button>
-            ) : (
-              <Link
-                to="/"
-                className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-800 dark:text-blue-300 hover:underline mb-4"
-              >
-                <ArrowLeft className="w-3.5 h-3.5" />
-                Back Home Page
-              </Link>
-            )}
-
-            <div className="md:hidden flex items-center gap-3 mb-4">
-              <img src={PCC_LOGO_URL} alt="PCC logo" className="h-12 w-auto object-contain" />
-              <div>
-                <p className="text-sm font-semibold text-gray-900 dark:text-white" style={{ fontFamily: 'Poppins, sans-serif' }}>PCC Records</p>
-                <p className="text-xs text-gray-500">{isStaff ? 'Staff / Registrar' : 'Registrar’s Office'}</p>
+      <div className="h-svh overflow-y-auto">
+        <div className="min-h-full flex flex-col justify-center px-5 sm:px-8 py-5">
+          <div className="w-full max-w-sm mx-auto">
+            <div className="flex items-center justify-between mb-4">
+              {isStaff ? (
+                <button type="button" onClick={() => switchPortal('student')} className="inline-flex items-center gap-1.5 text-xs font-medium text-blue-800 dark:text-blue-300">
+                  <ArrowLeft className="w-3.5 h-3.5" /> Student sign in
+                </button>
+              ) : (
+                <Link to="/" className="inline-flex items-center gap-1.5 text-xs font-medium text-blue-800 dark:text-blue-300">
+                  <ArrowLeft className="w-3.5 h-3.5" /> Home
+                </Link>
+              )}
+              <div className="lg:hidden flex items-center gap-2">
+                <img src={PCC_LOGO_URL} alt="PCC logo" className="h-9 w-auto object-contain" />
               </div>
             </div>
 
@@ -186,28 +163,12 @@ export default function LoginPage() {
               />
             ) : (
             <>
-            {isStaff ? (
-              <div className="mb-5 flex items-start gap-3 rounded-xl border border-blue-100 dark:border-blue-900/50 bg-blue-50 dark:bg-blue-950/30 p-3.5">
-                <span className="w-9 h-9 rounded-full bg-blue-800 flex items-center justify-center flex-shrink-0">
-                  <ShieldCheck className="w-4 h-4 text-white" />
-                </span>
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold text-gray-900 dark:text-white">Staff sign in</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 leading-snug">
-                    Authorized Registrar / Admin accounts only. Students must use the student login.
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <>
-                <h1 className="text-gray-900 dark:text-white" style={{ fontFamily: 'Poppins, sans-serif', fontSize: '1.45rem', fontWeight: 600 }}>
-                  Sign in
-                </h1>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 mb-5">
-                  Use your PCC account to request and track records.
-                </p>
-              </>
-            )}
+            <h1 className="text-gray-900 dark:text-white" style={{ fontFamily: 'Poppins, sans-serif', fontSize: '1.65rem', fontWeight: 600 }}>
+              {isStaff ? 'Staff sign in' : 'Sign in'}
+            </h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 mb-4">
+              {isStaff ? 'Registrar and Admin accounts only.' : 'Use your PCC student or alumni account.'}
+            </p>
 
             {error && isDeactivatedMessage(error) && (
               <div role="alert" className="mb-4 rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 overflow-hidden">
@@ -248,7 +209,7 @@ export default function LoginPage() {
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-3.5">
+            <form onSubmit={handleSubmit} className="space-y-3">
               <div>
                 <label className="block text-sm font-medium text-gray-800 dark:text-gray-200 mb-1">Email</label>
                 <div className="relative">
@@ -296,7 +257,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full flex items-center justify-center gap-2 py-2.5 disabled:opacity-60 text-white rounded-lg font-semibold bg-blue-800 hover:bg-blue-900 transition-colors"
+                className="w-full h-11 flex items-center justify-center gap-2 disabled:opacity-60 text-white rounded-xl font-semibold bg-blue-800 hover:bg-blue-900 transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98]"
               >
                 {loading ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <LogIn className="w-4 h-4" />}
                 {loading ? 'Signing in...' : isStaff ? 'Sign in as staff' : 'Sign in'}
@@ -305,53 +266,41 @@ export default function LoginPage() {
 
             {isStaff ? (
               <p className="mt-4 text-center text-xs text-gray-500 dark:text-gray-400">
-                Staff accounts are created by the system administrator.
+                Staff accounts are issued by the administrator.
               </p>
             ) : (
             <>
-            <div className="relative my-5">
-              <div className="absolute inset-x-0 top-1/2 border-t border-gray-200 dark:border-slate-600" aria-hidden />
-              <span className="relative mx-auto flex w-fit bg-white dark:bg-slate-800 px-3 text-[12px] uppercase tracking-wide text-gray-400">
-                or
-              </span>
+            <div className="relative my-3">
+              <div className="absolute inset-x-0 top-1/2 border-t border-gray-200 dark:border-slate-700" aria-hidden />
+              <span className="relative mx-auto flex w-fit bg-white dark:bg-slate-950 px-3 text-[11px] uppercase tracking-wide text-gray-400">or</span>
             </div>
-
             <button
               type="button"
               disabled={loading}
               onClick={handleGoogle}
-              className="w-full flex items-center justify-center gap-3 py-2.5 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-gray-800 dark:text-gray-200 text-sm font-medium hover:bg-gray-50 dark:hover:bg-slate-800 disabled:opacity-60"
+              title="Google works only if you already created an account."
+              className="w-full h-11 flex items-center justify-center gap-2 rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-900 text-gray-800 dark:text-gray-200 text-sm font-medium transition-all duration-200 hover:-translate-y-0.5 hover:border-gray-300 hover:shadow-sm active:scale-[0.98] disabled:opacity-60"
             >
               <GoogleMark />
               Continue with Google
             </button>
+            <p className="mt-3 text-center text-sm text-gray-600 dark:text-gray-300">
+              New student?{' '}
+              <Link to="/register" className="font-semibold text-blue-800 dark:text-blue-300 hover:underline">Create an account</Link>
+            </p>
             <p className="mt-2 text-center text-xs text-gray-500 dark:text-gray-400">
-              Google works only if you already created an account.
+              <Link to="/terms" className="underline underline-offset-2">Terms of Use</Link>
+              {' · '}
+              <Link to="/terms#collect" className="underline underline-offset-2">Privacy Notice</Link>
             </p>
-
-            <p className="mt-4 text-center text-sm text-gray-500 dark:text-gray-400">
-              New here?{' '}
-              <Link to="/register" className="text-blue-800 dark:text-blue-300 hover:underline font-semibold">
-                Create an account
-              </Link>
-            </p>
-            <p className="mt-3 text-center text-xs leading-relaxed text-gray-500 dark:text-gray-400">
-              By signing in, you agree to the{' '}
-              <Link to="/terms" className="underline underline-offset-2 hover:text-blue-800 dark:hover:text-blue-300">Terms of Use</Link>
-              {' '}and{' '}
-              <Link to="/terms#collect" className="underline underline-offset-2 hover:text-blue-800 dark:hover:text-blue-300">Privacy Notice</Link>.
-            </p>
-
-            <div className="mt-6 pt-4 border-t border-gray-200 dark:border-slate-600">
-              <button
-                type="button"
-                onClick={() => switchPortal('staff')}
-                className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-blue-800 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors"
-              >
-                <ShieldCheck className="w-3.5 h-3.5" />
-                Staff / Registrar login
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={() => switchPortal('staff')}
+              className="mt-3 w-full inline-flex items-center justify-center gap-1.5 h-9 text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-blue-800 dark:hover:text-blue-300"
+            >
+              <ShieldCheck className="w-3.5 h-3.5" />
+              Staff / Registrar sign in
+            </button>
             </>
             )}
             </>
