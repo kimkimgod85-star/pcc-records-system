@@ -35,7 +35,7 @@ export function Footer() {
         ];
 
   return (
-    <footer className="mt-auto text-blue-100 bg-gradient-to-br from-[#071a45] via-[#0c2f78] to-[#1e4ed8]">
+    <footer className="pcc-footer mt-auto text-blue-100">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
           <div>
@@ -69,7 +69,7 @@ export function Footer() {
             <ul className="mt-3 grid grid-cols-1 gap-1">
               {quickLinks.map(link => (
                 <li key={link.href}>
-                  <Link to={link.href} className="inline-flex h-8 items-center text-sm text-blue-100 hover:text-white">
+                  <Link to={link.href} className="inline-flex h-8 items-center text-sm text-blue-100 transition-all duration-200 hover:text-white hover:translate-x-1">
                     {link.label}
                   </Link>
                 </li>

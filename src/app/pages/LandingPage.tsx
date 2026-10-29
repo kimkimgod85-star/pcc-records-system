@@ -282,13 +282,13 @@ export default function LandingPage() {
           <div className="mt-6 grid sm:grid-cols-2 gap-3">
             <Link
               to="/login"
-              className="inline-flex items-center justify-center gap-2 h-12 px-5 rounded-xl bg-blue-700 hover:bg-blue-800 text-white text-sm font-semibold"
+              className="inline-flex items-center justify-center gap-2 h-12 px-5 rounded-xl bg-blue-700 text-white text-sm font-semibold shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-blue-800 hover:shadow-lg active:translate-y-0 active:scale-[0.97]"
             >
               Login <ArrowRight className="w-4 h-4" />
             </Link>
             <Link
               to="/register"
-              className="inline-flex items-center justify-center gap-2 h-12 px-5 rounded-xl border border-gray-300 dark:border-slate-600 text-gray-900 dark:text-white text-sm font-semibold hover:bg-gray-50 dark:hover:bg-slate-800"
+              className="inline-flex items-center justify-center gap-2 h-12 px-5 rounded-xl border border-gray-300 dark:border-slate-600 text-gray-900 dark:text-white text-sm font-semibold transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-700 hover:bg-blue-700 hover:text-white hover:shadow-lg active:translate-y-0 active:scale-[0.97]"
             >
               Create account <ArrowRight className="w-4 h-4" />
             </Link>
