@@ -18,8 +18,12 @@ export default function AdminLayout() {
 
   useEffect(() => {
     const root = document.documentElement;
-    root.style.setProperty('--font-size', ADMIN_FONT_SIZE);
+    const wide = window.matchMedia('(min-width: 1024px)');
+    const apply = () => root.style.setProperty('--font-size', wide.matches ? ADMIN_FONT_SIZE : '16px');
+    apply();
+    wide.addEventListener('change', apply);
     return () => {
+      wide.removeEventListener('change', apply);
       root.style.removeProperty('--font-size');
     };
   }, []);

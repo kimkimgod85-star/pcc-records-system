@@ -146,11 +146,11 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="h-svh overflow-hidden grid lg:grid-cols-[minmax(0,1.1fr)_minmax(24rem,34rem)] bg-white dark:bg-slate-950">
-      <aside className="relative hidden lg:block">
+    <div className="min-h-dvh md:h-dvh md:overflow-hidden grid md:grid-cols-[minmax(0,1fr)_minmax(22rem,34rem)] bg-white dark:bg-slate-950">
+      <aside className="relative hidden md:block">
         <img src={PCC_BG_URL} alt="" className="absolute inset-0 h-full w-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-br from-[#071a45]/92 via-[#0c2f78]/82 to-[#1e4ed8]/72" />
-        <div className="relative h-full flex flex-col justify-between p-10 text-white">
+        <div className="relative h-full flex flex-col justify-between p-6 lg:p-10 text-white">
           <div className="flex items-center gap-3">
             <img src={PCC_LOGO_URL} alt="PCC logo" className="h-14 w-auto object-contain bg-white rounded-2xl p-1.5" />
             <div>
@@ -160,7 +160,7 @@ export default function RegisterPage() {
           </div>
           <div className="max-w-md">
             <p className="text-xs uppercase tracking-[0.22em] text-blue-100">Student portal</p>
-            <h1 className="mt-3 text-4xl font-semibold leading-tight" style={{ fontFamily: 'Poppins, sans-serif' }}>
+            <h1 className="mt-3 text-3xl lg:text-4xl font-semibold leading-tight" style={{ fontFamily: 'Poppins, sans-serif' }}>
               Create your PCC account.
             </h1>
             <p className="mt-3 text-sm text-blue-100 leading-relaxed">
@@ -171,14 +171,14 @@ export default function RegisterPage() {
         </div>
       </aside>
 
-      <div className="h-svh overflow-y-auto">
+      <div className="md:h-dvh md:overflow-y-auto">
         <div className="min-h-full flex flex-col justify-center px-5 sm:px-8 py-4">
           <div className="w-full max-w-md mx-auto">
             <div className="flex items-center justify-between mb-3">
               <Link to="/" className="inline-flex items-center gap-1.5 text-xs font-medium text-blue-800 dark:text-blue-300">
                 <ArrowLeft className="w-3.5 h-3.5" /> Home
               </Link>
-              <img src={PCC_LOGO_URL} alt="PCC logo" className="h-9 w-auto object-contain lg:hidden" />
+              <img src={PCC_LOGO_URL} alt="PCC logo" className="h-9 w-auto object-contain md:hidden" />
             </div>
             <h1 className="text-gray-900 dark:text-white" style={{ fontFamily: 'Poppins, sans-serif', fontSize: '1.65rem', fontWeight: 600 }}>
               Create account

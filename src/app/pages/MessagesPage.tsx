@@ -30,7 +30,7 @@ export default function MessagesPage() {
         </p>
       </div>
 
-      <div className="mx-auto h-[min(38rem,calc(100dvh-14rem))] rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm overflow-hidden">
+      <div className="mx-auto h-[calc(100dvh-16.5rem)] sm:h-[min(38rem,calc(100dvh-14rem))] min-h-[22rem] rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm overflow-hidden">
         {error && (
           <div className="h-full flex items-center justify-center px-6 text-center text-sm text-red-600 dark:text-red-400">{error}</div>
         )}

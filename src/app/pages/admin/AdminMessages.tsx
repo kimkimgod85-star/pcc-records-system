@@ -59,7 +59,7 @@ export default function AdminMessages() {
 
       {error && <p className="mb-3 text-center text-sm text-red-600 dark:text-red-400">{error}</p>}
 
-      <div className="mx-auto grid lg:grid-cols-5 gap-4 h-[min(40rem,calc(100dvh-12rem))] min-h-[24rem]">
+      <div className="mx-auto grid lg:grid-cols-5 gap-4 h-[calc(100dvh-14.5rem)] sm:h-[calc(100dvh-12rem)] lg:h-[min(40rem,calc(100dvh-8rem))] min-h-[20rem]">
         <div className={`${activeId ? 'hidden lg:flex' : 'flex'} lg:col-span-2 min-h-0 h-full flex-col bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm overflow-hidden`}>
           <div className="flex-shrink-0 px-3 pt-3 pb-2 border-b border-gray-100 dark:border-slate-700">
             <label className="relative block">

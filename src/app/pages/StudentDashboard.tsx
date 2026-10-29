@@ -391,8 +391,8 @@ export default function StudentDashboard() {
               </Link>
             ))}
           </div>
-          <div className="hidden sm:block">
-            <table className="w-full min-w-[640px]">
+          <div className="hidden sm:block overflow-x-auto">
+            <table className="w-full min-w-[36rem]">
               <thead className="sticky top-0 z-10 bg-white dark:bg-slate-800">
                 <tr className="text-xs text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-slate-700">
                   <th className="px-6 py-3 text-left font-medium">Request ID</th>

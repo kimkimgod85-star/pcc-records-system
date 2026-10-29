@@ -207,9 +207,9 @@ export function MessageThread({
             onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void send(); } }}
             rows={2}
             placeholder="Write a message"
-            className="flex-1 h-[4.5rem] px-3 py-2 rounded-xl border border-gray-200 dark:border-slate-600 bg-gray-50 dark:bg-slate-900 text-sm text-gray-900 dark:text-white resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1 min-w-0 h-12 sm:h-[4.5rem] px-3 py-2 rounded-xl border border-gray-200 dark:border-slate-600 bg-gray-50 dark:bg-slate-900 text-sm text-gray-900 dark:text-white resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
-          <button type="button" onClick={send} disabled={busy || !draft.trim()} aria-label="Send" className={btn('primary', 'md', '!h-[4.5rem] px-5')}>
+          <button type="button" onClick={send} disabled={busy || !draft.trim()} aria-label="Send" className={btn('primary', 'md', '!h-12 sm:!h-[4.5rem] px-4')}>
             {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
             Send
           </button>

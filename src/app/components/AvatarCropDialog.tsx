@@ -6,12 +6,12 @@ import { saveAvatar } from '../lib/avatar';
 
 const VIEW = 280;
 
-function layout(image: HTMLImageElement, zoom: number, ox: number, oy: number) {
-  const fit = Math.max(VIEW / image.naturalWidth, VIEW / image.naturalHeight) * zoom;
+function layout(image: HTMLImageElement, zoom: number, ox: number, oy: number, view = VIEW) {
+  const fit = Math.max(view / image.naturalWidth, view / image.naturalHeight) * zoom;
   const dw = image.naturalWidth * fit;
   const dh = image.naturalHeight * fit;
-  const maxX = Math.max(0, (dw - VIEW) / 2);
-  const maxY = Math.max(0, (dh - VIEW) / 2);
+  const maxX = Math.max(0, (dw - view) / 2);
+  const maxY = Math.max(0, (dh - view) / 2);
   return {
     dw,
     dh,
@@ -20,12 +20,12 @@ function layout(image: HTMLImageElement, zoom: number, ox: number, oy: number) {
   };
 }
 
-function exportSquare(image: HTMLImageElement, zoom: number, ox: number, oy: number) {
-  const placed = layout(image, zoom, ox, oy);
+function exportSquare(image: HTMLImageElement, zoom: number, ox: number, oy: number, view = VIEW) {
+  const placed = layout(image, zoom, ox, oy, view);
   const size = 512;
-  const scale = size / VIEW;
-  const left = (VIEW - placed.dw) / 2 + placed.ox;
-  const top = (VIEW - placed.dh) / 2 + placed.oy;
+  const scale = size / view;
+  const left = (view - placed.dw) / 2 + placed.ox;
+  const top = (view - placed.dh) / 2 + placed.oy;
   const canvas = document.createElement('canvas');
   canvas.width = size;
   canvas.height = size;
@@ -48,6 +48,8 @@ export function AvatarCropDialog({
   onClose: () => void;
   onSaved: (url: string) => void;
 }) {
+  const stageRef = useRef<HTMLDivElement>(null);
+  const [view, setView] = useState(VIEW);
   const fileRef = useRef<HTMLInputElement>(null);
   const imageRef = useRef<HTMLImageElement | null>(null);
   const pointers = useRef(new Map<number, { x: number; y: number }>());
@@ -74,6 +76,17 @@ export function AvatarCropDialog({
 
   useEffect(() => {
     if (!open) return;
+    const node = stageRef.current;
+    if (!node) return;
+    const measure = () => setView(Math.max(1, Math.round(node.clientWidth)));
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [open, src]);
+
+  useEffect(() => {
+    if (!open) return;
     const onKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape' && !busy) onClose();
     };
@@ -92,14 +105,14 @@ export function AvatarCropDialog({
       setOffset({ x: ox, y: oy });
       return;
     }
-    const next = layout(image, clampedZoom, ox, oy);
+    const next = layout(image, clampedZoom, ox, oy, view);
     setZoom(clampedZoom);
     setOffset({ x: next.ox, y: next.oy });
   };
 
   if (!open) return null;
 
-  const placed = imageRef.current ? layout(imageRef.current, zoom, offset.x, offset.y) : null;
+  const placed = imageRef.current ? layout(imageRef.current, zoom, offset.x, offset.y, view) : null;
 
   const choose = (file: File | undefined) => {
     if (!file) return;
@@ -124,7 +137,7 @@ export function AvatarCropDialog({
     setBusy(true);
     setError('');
     try {
-      const blob = await exportSquare(image, zoom, offset.x, offset.y);
+      const blob = await exportSquare(image, zoom, offset.x, offset.y, view);
       const url = await saveAvatar(userId, blob);
       onSaved(url);
       onClose();
@@ -153,7 +166,8 @@ export function AvatarCropDialog({
 
         <div className="px-5 pb-5 flex flex-col items-center">
           <div
-            className="relative w-[280px] h-[280px] max-w-full rounded-2xl bg-slate-900 overflow-hidden touch-none"
+            ref={stageRef}
+            className="relative w-full max-w-[280px] aspect-square rounded-2xl bg-slate-900 overflow-hidden touch-none"
             onPointerDown={event => {
               if (!src) return;
               event.currentTarget.setPointerCapture(event.pointerId);
@@ -230,12 +244,12 @@ export function AvatarCropDialog({
                 style={placed ? {
                   width: placed.dw,
                   height: placed.dh,
-                  left: (VIEW - placed.dw) / 2 + placed.ox,
-                  top: (VIEW - placed.dh) / 2 + placed.oy,
+                  left: (view - placed.dw) / 2 + placed.ox,
+                  top: (view - placed.dh) / 2 + placed.oy,
                 } : { opacity: 0 }}
               />
             )}
-            <div className="pointer-events-none absolute left-6 top-6 h-[232px] w-[232px] rounded-full border-2 border-white shadow-[0_0_0_999px_rgba(7,16,40,0.55)]" />
+            <div className="pointer-events-none absolute inset-[8%] rounded-full border-2 border-white shadow-[0_0_0_999px_rgba(7,16,40,0.55)]" />
             {!src && (
               <p className="absolute inset-0 flex items-center justify-center px-8 text-center text-sm text-white/80">
                 Choose a photo to start
