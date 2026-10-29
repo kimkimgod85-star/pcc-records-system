@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { Eye, EyeOff, AlertCircle, CheckCircle, ArrowLeft } from 'lucide-react';
-import { Header } from '../components/Header';
 import { EmailCodeVerify } from '../components/EmailCodeVerify';
 import { useAuth } from '../context/AuthContext';
 import { withBase } from '../lib/basePath';
@@ -21,7 +20,7 @@ function GoogleMark() {
 }
 
 const fieldClass =
-  'w-full px-3.5 py-2 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-700 focus:border-blue-700 text-sm';
+  'w-full h-10 px-3 bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-600 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-700 focus:border-blue-700 focus:bg-white text-sm';
 
 export default function RegisterPage() {
   const navigate = useNavigate();
@@ -139,33 +138,44 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-svh flex flex-col relative isolate">
-      <div
-        className="absolute inset-0 -z-10 bg-center bg-cover"
-        style={{ backgroundImage: `url(${PCC_BG_URL})` }}
-      />
-      <div className="absolute inset-0 -z-10 bg-white/85 dark:bg-slate-950/85 backdrop-blur-[2px]" />
-
-      <Header variant="landing" />
-
-      <div className="flex-1 flex items-center justify-center px-4 py-6 sm:py-8">
-        <div className="w-full max-w-md overflow-hidden rounded-2xl border border-gray-200 dark:border-slate-700 shadow-xl bg-white dark:bg-slate-800">
-          <div className="bg-blue-800 px-5 py-3.5 flex items-center gap-3">
-            <img src={PCC_LOGO_URL} alt="PCC logo" className="h-11 w-auto object-contain" />
+    <div className="h-svh overflow-hidden grid lg:grid-cols-[minmax(0,1.1fr)_minmax(24rem,34rem)] bg-white dark:bg-slate-950">
+      <aside className="relative hidden lg:block">
+        <img src={PCC_BG_URL} alt="" className="absolute inset-0 h-full w-full object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-br from-[#071a45]/92 via-[#0c2f78]/82 to-[#1e4ed8]/72" />
+        <div className="relative h-full flex flex-col justify-between p-10 text-white">
+          <div className="flex items-center gap-3">
+            <img src={PCC_LOGO_URL} alt="PCC logo" className="h-14 w-auto object-contain bg-white rounded-2xl p-1.5" />
             <div>
-              <p className="text-sm font-semibold text-white" style={{ fontFamily: 'Poppins, sans-serif' }}>Create account</p>
-              <p className="text-[12px] text-blue-100">PCC Records Request System</p>
+              <p className="text-sm font-semibold leading-tight" style={{ fontFamily: 'Poppins, sans-serif' }}>Pagadian Capitol Colleges</p>
+              <p className="text-xs text-blue-100 mt-0.5">Registrar’s Office</p>
             </div>
           </div>
+          <div className="max-w-md">
+            <p className="text-xs uppercase tracking-[0.22em] text-blue-100">Student portal</p>
+            <h1 className="mt-3 text-4xl font-semibold leading-tight" style={{ fontFamily: 'Poppins, sans-serif' }}>
+              Create your PCC account.
+            </h1>
+            <p className="mt-3 text-sm text-blue-100 leading-relaxed">
+              Register with your name and email. The office does not add student accounts by hand.
+            </p>
+          </div>
+          <p className="text-xs text-blue-100/80">Monday to Saturday, 8:00 AM – 4:00 PM</p>
+        </div>
+      </aside>
 
-          <div className="px-5 py-4">
-            <Link
-              to="/"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-800 dark:text-blue-300 hover:underline mb-3"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              Back Home Page
-            </Link>
+      <div className="h-svh overflow-y-auto">
+        <div className="min-h-full flex flex-col justify-center px-5 sm:px-8 py-4">
+          <div className="w-full max-w-md mx-auto">
+            <div className="flex items-center justify-between mb-3">
+              <Link to="/" className="inline-flex items-center gap-1.5 text-xs font-medium text-blue-800 dark:text-blue-300">
+                <ArrowLeft className="w-3.5 h-3.5" /> Home
+              </Link>
+              <img src={PCC_LOGO_URL} alt="PCC logo" className="h-9 w-auto object-contain lg:hidden" />
+            </div>
+            <h1 className="text-gray-900 dark:text-white" style={{ fontFamily: 'Poppins, sans-serif', fontSize: '1.65rem', fontWeight: 600 }}>
+              Create account
+            </h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 mb-3">Students and alumni of Pagadian Capitol Colleges.</p>
 
             {error && (
               <div className="mb-3 p-2.5 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg flex items-center gap-2">
@@ -175,28 +185,26 @@ export default function RegisterPage() {
             )}
 
             <form onSubmit={handleSubmit} className="space-y-2.5">
-              <div>
-                <label className="block text-xs font-medium text-gray-800 dark:text-gray-200 mb-1">I am a</label>
-                <div className="grid grid-cols-2 gap-2">
-                  {(['student', 'alumni'] as const).map(role => (
-                    <button
-                      key={role}
-                      type="button"
-                      onClick={() => setForm({ ...form, role })}
-                      className={`py-2 px-3 rounded-lg border text-sm font-semibold capitalize ${
-                        form.role === role
-                          ? 'bg-blue-800 border-blue-800 text-white'
-                          : 'bg-white dark:bg-slate-900 border-gray-300 dark:border-slate-600 text-gray-800 dark:text-gray-200'
-                      }`}
-                    >
-                      {role === 'student' ? 'Student' : 'Alumni'}
-                    </button>
-                  ))}
-                </div>
+              <div className="grid grid-cols-2 gap-2">
+                {(['student', 'alumni'] as const).map(role => (
+                  <button
+                    key={role}
+                    type="button"
+                    onClick={() => setForm({ ...form, role })}
+                    className={`h-10 rounded-xl border text-sm font-semibold transition-colors ${
+                      form.role === role
+                        ? 'bg-blue-800 border-blue-800 text-white'
+                        : 'bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-600 text-gray-800 dark:text-gray-200'
+                    }`}
+                  >
+                    {role === 'student' ? 'Student' : 'Alumni'}
+                  </button>
+                ))}
               </div>
 
+              <div className="grid sm:grid-cols-2 gap-2.5">
               <div>
-                <label className="block text-xs font-medium text-gray-800 dark:text-gray-200 mb-1">Full Name</label>
+                <label className="block text-xs font-medium text-gray-800 dark:text-gray-200 mb-1">Full name</label>
                 <input
                   type="text"
                   value={form.fullName}
@@ -208,16 +216,15 @@ export default function RegisterPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-gray-800 dark:text-gray-200 mb-1">
-                  Student ID <span className="text-gray-400 font-normal">(optional)</span>
-                </label>
+                <label className="block text-xs font-medium text-gray-800 dark:text-gray-200 mb-1">Student ID</label>
                 <input
                   type="text"
                   value={form.studentId}
                   onChange={e => setForm({ ...form, studentId: e.target.value })}
-                  placeholder="2021-0001"
+                  placeholder="Optional"
                   className={fieldClass}
                 />
+              </div>
               </div>
 
               <div>
@@ -232,6 +239,7 @@ export default function RegisterPage() {
                 />
               </div>
 
+              <div className="grid sm:grid-cols-2 gap-2.5">
               <div>
                 <label className="block text-xs font-medium text-gray-800 dark:text-gray-200 mb-1">Password</label>
                 <div className="relative">
@@ -265,6 +273,7 @@ export default function RegisterPage() {
                   </button>
                 </div>
               </div>
+              </div>
 
               <div>
                 <label className="flex items-start gap-3 cursor-pointer">
@@ -280,16 +289,11 @@ export default function RegisterPage() {
                     }}
                     className="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-400 text-blue-800 focus:ring-2 focus:ring-blue-700"
                   />
-                  <span className="text-sm leading-snug text-gray-700 dark:text-gray-300">
+                  <span className="text-xs leading-snug text-gray-700 dark:text-gray-300">
                     I agree to the{' '}
-                    <Link to="/terms" target="_blank" rel="noopener" className="text-blue-800 dark:text-blue-300 underline underline-offset-2">
-                      Terms of Use
-                    </Link>
+                    <Link to="/terms" target="_blank" rel="noopener" className="text-blue-800 dark:text-blue-300 underline underline-offset-2">Terms of Use</Link>
                     {' '}and{' '}
-                    <Link to="/terms#collect" target="_blank" rel="noopener" className="text-blue-800 dark:text-blue-300 underline underline-offset-2">
-                      Privacy Notice
-                    </Link>
-                    , and I consent to Pagadian Capitol Colleges processing my personal information for records requests under the Data Privacy Act of 2012 (Republic Act No. 10173).
+                    <Link to="/terms#collect" target="_blank" rel="noopener" className="text-blue-800 dark:text-blue-300 underline underline-offset-2">Privacy Notice</Link>.
                   </span>
                 </label>
                 {agreeNudge && !agreed && (
@@ -300,36 +304,29 @@ export default function RegisterPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-2.5 disabled:opacity-60 text-white rounded-lg font-semibold bg-blue-800 hover:bg-blue-900 transition-colors"
+                className="w-full h-11 disabled:opacity-60 text-white rounded-xl font-semibold bg-blue-800 hover:bg-blue-900 transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98]"
               >
                 {loading ? 'Creating account...' : 'Create account'}
               </button>
             </form>
 
-            <div className="flex items-center gap-3 my-3">
-              <div className="h-px flex-1 bg-gray-200 dark:bg-slate-600" />
-              <span className="text-[12px] uppercase tracking-wide text-gray-400">or</span>
-              <div className="h-px flex-1 bg-gray-200 dark:bg-slate-600" />
+            <div className="relative my-3">
+              <div className="absolute inset-x-0 top-1/2 border-t border-gray-200 dark:border-slate-700" aria-hidden />
+              <span className="relative mx-auto flex w-fit bg-white dark:bg-slate-950 px-3 text-[11px] uppercase tracking-wide text-gray-400">or</span>
             </div>
-
             <button
               type="button"
               disabled={loading}
               onClick={handleGoogle}
-              className="w-full flex items-center justify-center gap-3 py-2.5 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-gray-800 dark:text-gray-200 text-sm font-medium hover:bg-gray-50 dark:hover:bg-slate-800 disabled:opacity-60"
+              title="Choose Student or Alumni and enter your name first."
+              className="w-full h-11 flex items-center justify-center gap-2 rounded-xl border border-gray-200 dark:border-slate-600 text-sm font-medium text-gray-800 dark:text-gray-200 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm active:scale-[0.98] disabled:opacity-60"
             >
               <GoogleMark />
-              Create account with Google
+              Continue with Google
             </button>
-            <p className="mt-2 text-center text-xs text-gray-500 dark:text-gray-400">
-              Fill your name and Student / Alumni first. Google will not skip registration.
-            </p>
-
-            <p className="mt-3 text-center text-sm text-gray-500 dark:text-gray-400">
+            <p className="mt-3 text-center text-sm text-gray-600 dark:text-gray-300">
               Already registered?{' '}
-              <Link to="/login" className="text-blue-800 dark:text-blue-300 hover:underline font-semibold">
-                Sign in
-              </Link>
+              <Link to="/login" className="font-semibold text-blue-800 dark:text-blue-300 hover:underline">Sign in</Link>
             </p>
           </div>
         </div>
