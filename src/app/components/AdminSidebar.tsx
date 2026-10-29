@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
 import {
-  LayoutDashboard, FileText, Calendar,
+  LayoutDashboard, FileText, Calendar, MessageSquare,
   CreditCard, Users, BarChart3, Banknote, LogOut, Menu, X, Sun, Moon, ChevronRight, BookOpen
 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
@@ -9,6 +9,7 @@ import { useAuth } from '../context/AuthContext';
 import { withBase } from '../lib/basePath';
 import { AdminAlertSettings, SettingTile } from './AdminAlerts';
 import { useOverduePickups } from '../lib/overduePickups';
+import { useUnreadMessages } from '../lib/messages';
 
 const PCC_LOGO_URL = withBase('PCC%20LOGO.png');
 
@@ -21,16 +22,18 @@ export function AdminSidebar() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const { overdue } = useOverduePickups();
+  const unread = useUnreadMessages(true);
 
   const navItems = [
-    { label: 'Dashboard', icon: LayoutDashboard, href: '/admin', badge: 0 },
-    { label: 'Manage Requests', icon: FileText, href: '/admin/requests', badge: 0 },
-    { label: 'Scheduling', icon: Calendar, href: '/admin/scheduling', badge: overdue.length },
-    { label: 'Payments', icon: CreditCard, href: '/admin/payments', badge: 0 },
-    { label: 'Document Fees', icon: Banknote, href: '/admin/documents', badge: 0 },
-    { label: 'Users', icon: Users, href: '/admin/users', badge: 0 },
-    { label: 'Reports', icon: BarChart3, href: '/admin/reports', badge: 0 },
-    { label: 'Guide', icon: BookOpen, href: '/admin/welcome', badge: 0 },
+    { label: 'Dashboard', icon: LayoutDashboard, href: '/admin', badge: 0, noun: '' },
+    { label: 'Manage Requests', icon: FileText, href: '/admin/requests', badge: 0, noun: '' },
+    { label: 'Scheduling', icon: Calendar, href: '/admin/scheduling', badge: overdue.length, noun: 'overdue' },
+    { label: 'Messages', icon: MessageSquare, href: '/admin/messages', badge: unread, noun: 'unread' },
+    { label: 'Payments', icon: CreditCard, href: '/admin/payments', badge: 0, noun: '' },
+    { label: 'Document Fees', icon: Banknote, href: '/admin/documents', badge: 0, noun: '' },
+    { label: 'Users', icon: Users, href: '/admin/users', badge: 0, noun: '' },
+    { label: 'Reports', icon: BarChart3, href: '/admin/reports', badge: 0, noun: '' },
+    { label: 'Guide', icon: BookOpen, href: '/admin/welcome', badge: 0, noun: '' },
   ];
 
   const isActive = (href: string) =>
@@ -83,7 +86,7 @@ export function AdminSidebar() {
             {!collapsed && <span className="text-[0.95rem] font-medium">{item.label}</span>}
             {!collapsed && item.badge > 0 && (
               <span
-                title={`${item.badge} overdue pickup${item.badge === 1 ? '' : 's'}`}
+                title={`${item.badge} ${item.noun}`}
                 className="ml-auto min-w-[1.25rem] h-5 px-1.5 rounded-full bg-red-500 text-white text-[11px] font-bold flex items-center justify-center tabular-nums"
               >
                 {item.badge}

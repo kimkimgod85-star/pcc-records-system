@@ -1,7 +1,8 @@
 import { btn, ICON_BTN } from '../../lib/ui';
 import { useEffect, useState, type ReactNode } from 'react';
+import { Link } from 'react-router';
 import {
-  Search, UserX, UserCheck, Mail, X, ChevronRight, Loader2, AlertCircle,
+  Search, UserX, UserCheck, Mail, MessageSquare, X, ChevronRight, Loader2, AlertCircle,
   Users, GraduationCap, Award, Copy, Check, FileText, IdCard, CalendarDays,
   Pencil, Save, CheckCircle, Trash2,
 } from 'lucide-react';
@@ -559,10 +560,10 @@ export default function AdminUsers() {
 
               {!confirming && (
               <div className="grid grid-cols-2 md:grid-cols-1 gap-2">
-              <a href={`mailto:${selected.email}`} className={btn('primary')}>
-                <Mail className="w-4 h-4" />
-                Send email
-              </a>
+              <Link to={`/admin/messages?student=${selected.id}`} className={btn('primary')}>
+                <MessageSquare className="w-4 h-4" />
+                Message
+              </Link>
 
               {selected.status === 'active' ? (
                   <button

@@ -15,6 +15,7 @@ import SchedulingPage from './pages/SchedulingPage';
 import TrackingPage from './pages/TrackingPage';
 import PaymentPage from './pages/PaymentPage';
 import NotificationsPage from './pages/NotificationsPage';
+import MessagesPage from './pages/MessagesPage';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminRequests from './pages/admin/AdminRequests';
 import AdminScheduling from './pages/admin/AdminScheduling';
@@ -23,6 +24,7 @@ import AdminUsers from './pages/admin/AdminUsers';
 import AdminReports from './pages/admin/AdminReports';
 import AdminDocuments from './pages/admin/AdminDocuments';
 import AdminWelcomePage from './pages/admin/AdminWelcomePage';
+import AdminMessages from './pages/admin/AdminMessages';
 import { ROUTER_BASENAME } from './lib/basePath';
 
 export const router = createBrowserRouter([
@@ -50,6 +52,7 @@ export const router = createBrowserRouter([
           { path: 'track', Component: TrackingPage },
           { path: 'payment', Component: PaymentPage },
           { path: 'notifications', Component: NotificationsPage },
+          { path: 'messages', Component: MessagesPage },
         ],
       },
       {
@@ -64,6 +67,7 @@ export const router = createBrowserRouter([
           { path: 'users', Component: AdminUsers },
           { path: 'documents', Component: AdminDocuments },
           { path: 'reports', Component: AdminReports },
+          { path: 'messages', Component: AdminMessages },
         ],
       },
     ],

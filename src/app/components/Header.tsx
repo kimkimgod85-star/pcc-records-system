@@ -2,8 +2,9 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router';
 import {
   Menu, X, Sun, Moon, Bell, User, LogOut, ChevronDown, GraduationCap,
-  LayoutDashboard, FilePlus2, CalendarDays, Radar,
+  LayoutDashboard, FilePlus2, CalendarDays, Radar, MessageSquare,
 } from 'lucide-react';
+import { useUnreadMessages } from '../lib/messages';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import { useUnreadNotifications } from '../lib/useUnreadNotifications';
@@ -27,6 +28,7 @@ export function Header({ variant = 'app' }: HeaderProps) {
   const navRef = useRef<HTMLElement>(null);
   const [indicator, setIndicator] = useState<{ left: number; width: number } | null>(null);
   const unread = useUnreadNotifications(user?.id);
+  const unreadMessages = useUnreadMessages(Boolean(isAuthenticated && user?.role !== 'admin'));
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
@@ -64,6 +66,7 @@ export function Header({ variant = 'app' }: HeaderProps) {
         { label: 'Request Records', href: '/request', icon: FilePlus2 },
         { label: 'Schedule', href: '/schedule', icon: CalendarDays },
         { label: 'Track Request', href: '/track', icon: Radar },
+        { label: 'Messages', href: '/messages', icon: MessageSquare },
       ]
     : [];
 
@@ -144,6 +147,11 @@ export function Header({ variant = 'app' }: HeaderProps) {
                     }`}
                   />
                   {link.label}
+                  {link.href === '/messages' && unreadMessages > 0 && (
+                    <span className="min-w-[1.1rem] h-4 px-1 rounded-full bg-red-500 text-white text-[10px] font-bold inline-flex items-center justify-center">
+                      {unreadMessages}
+                    </span>
+                  )}
                   {!active && (
                     <span
                       aria-hidden
