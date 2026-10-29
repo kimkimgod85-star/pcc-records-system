@@ -51,7 +51,7 @@ export function AdminSidebar() {
         <img
           src={PCC_LOGO_URL}
           alt="PCC logo"
-          className={`${collapsed ? 'h-9' : 'h-10'} w-auto object-contain flex-shrink-0`}
+          className={`${collapsed ? 'h-11' : 'h-12'} w-auto object-contain flex-shrink-0`}
           loading="eager"
           decoding="async"
         />
@@ -147,7 +147,7 @@ export function AdminSidebar() {
         >
           <Menu className="w-5 h-5" />
         </button>
-        <img src={PCC_LOGO_URL} alt="PCC logo" className="h-8 w-auto object-contain" />
+        <img src={PCC_LOGO_URL} alt="PCC logo" className="h-10 w-auto object-contain" />
         <div className="min-w-0">
           <p className="text-sm font-semibold text-gray-900 dark:text-white leading-tight truncate" style={{ fontFamily: 'Poppins, sans-serif' }}>
             PCC Admin

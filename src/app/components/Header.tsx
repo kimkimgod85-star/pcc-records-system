@@ -106,12 +106,12 @@ export function Header({ variant = 'app' }: HeaderProps) {
             : 'bg-white/55 dark:bg-slate-900/60 shadow-sm border-gray-200/70 dark:border-slate-700/50 transition-all duration-300'
     }`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex items-center justify-between h-[4.5rem]">
           <Link to="/" className="flex items-center gap-2.5 min-w-0">
             <img
               src={PCC_LOGO_URL}
               alt="PCC logo"
-              className="h-10 sm:h-11 w-auto object-contain flex-shrink-0"
+              className="h-12 sm:h-14 w-auto object-contain flex-shrink-0"
               loading="eager"
               decoding="async"
             />

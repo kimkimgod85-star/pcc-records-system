@@ -151,7 +151,7 @@ export default function RegisterPage() {
       <div className="flex-1 flex items-center justify-center px-4 py-6 sm:py-8">
         <div className="w-full max-w-md overflow-hidden rounded-2xl border border-gray-200 dark:border-slate-700 shadow-xl bg-white dark:bg-slate-800">
           <div className="bg-blue-800 px-5 py-3.5 flex items-center gap-3">
-            <img src={PCC_LOGO_URL} alt="PCC logo" className="h-9 w-auto object-contain" />
+            <img src={PCC_LOGO_URL} alt="PCC logo" className="h-11 w-auto object-contain" />
             <div>
               <p className="text-sm font-semibold text-white" style={{ fontFamily: 'Poppins, sans-serif' }}>Create account</p>
               <p className="text-[12px] text-blue-100">PCC Records Request System</p>

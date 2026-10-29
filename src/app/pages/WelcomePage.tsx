@@ -105,7 +105,7 @@ export default function WelcomePage() {
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
       <BlueCover className="p-6 sm:p-8 mb-6">
         <div className="flex flex-col sm:flex-row sm:items-center gap-5">
-          <img src={withBase('PCC%20LOGO.png')} alt="PCC logo" className="h-16 w-auto object-contain drop-shadow" />
+          <img src={withBase('PCC%20LOGO.png')} alt="PCC logo" className="h-20 w-auto object-contain drop-shadow" />
           <div>
             <p className="text-blue-200 text-sm mb-1">Welcome to PCC Records,</p>
             <h1 className="text-white" style={{ fontFamily: 'Poppins, sans-serif', fontSize: '1.75rem', fontWeight: 600 }}>

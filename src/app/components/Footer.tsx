@@ -33,7 +33,7 @@ export function Footer() {
               <img
                 src={PCC_LOGO_URL}
                 alt="PCC logo"
-                className="h-14 sm:h-12 w-auto object-contain"
+                className="h-16 sm:h-14 w-auto object-contain"
                 loading="lazy"
                 decoding="async"
               />

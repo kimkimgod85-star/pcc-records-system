@@ -1,5 +1,6 @@
 import { btn, ICON_BTN } from '../../lib/ui';
 import { useEffect, useState, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { Link } from 'react-router';
 import {
   Search, UserX, UserCheck, Mail, MessageSquare, X, ChevronRight, Loader2, AlertCircle,
@@ -70,18 +71,15 @@ function AccountBadge({ status }: { status: ManagedUser['status'] }) {
   );
 }
 
-function Avatar({ name, url, size = 'md', inactive }: { name: string; url?: string; size?: 'md' | 'lg'; inactive?: boolean }) {
-  const box = size === 'lg' ? 'w-14 h-14 text-lg' : 'w-10 h-10 text-sm';
-  if (url) {
-    return (
-      <img
-        src={url}
-        alt=""
-        className={`${box} rounded-full object-cover flex-shrink-0 ${inactive ? 'grayscale opacity-70' : ''}`}
-      />
-    );
-  }
-  return (
+function Avatar({ name, url, size = 'md', inactive, onView }: { name: string; url?: string; size?: 'md' | 'lg'; inactive?: boolean; onView?: () => void }) {
+  const box = size === 'lg' ? 'w-16 h-16 text-lg' : 'w-10 h-10 text-sm';
+  const face = url ? (
+    <img
+      src={url}
+      alt=""
+      className={`${box} rounded-full object-cover flex-shrink-0 ${inactive ? 'grayscale opacity-70' : ''}`}
+    />
+  ) : (
     <div className={`${box} rounded-full flex items-center justify-center flex-shrink-0 font-semibold ${
       inactive
         ? 'bg-gray-100 text-gray-500 dark:bg-slate-700 dark:text-gray-400'
@@ -89,6 +87,17 @@ function Avatar({ name, url, size = 'md', inactive }: { name: string; url?: stri
     }`}>
       {initials(name)}
     </div>
+  );
+  if (!url || !onView) return face;
+  return (
+    <button
+      type="button"
+      onClick={event => { event.stopPropagation(); onView(); }}
+      aria-label={`View ${name}'s photo`}
+      className="rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+    >
+      {face}
+    </button>
   );
 }
 
@@ -101,6 +110,7 @@ export default function AdminUsers() {
   const [roleFilter, setRoleFilter] = useState<RoleFilter>('all');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [photo, setPhoto] = useState<ManagedUser | null>(null);
   const [confirming, setConfirming] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -119,6 +129,15 @@ export default function AdminUsers() {
     fetchManagedUsers().then(setUsers);
     return subscribeUsers(() => { fetchManagedUsers().then(setUsers); });
   }, []);
+
+  useEffect(() => {
+    if (!photo) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setPhoto(null);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [photo]);
 
   useEffect(() => {
     const refresh = () => { fetchRequests().then(setRequests); };
@@ -298,16 +317,18 @@ export default function AdminUsers() {
             {filtered.map(user => {
               const active = selectedId === user.id;
               return (
-                <button
+                <div
                   key={user.id}
-                  type="button"
+                  role="button"
+                  tabIndex={0}
                   onClick={() => select(user.id)}
+                  onKeyDown={event => { if (event.key === 'Enter') select(user.id); }}
                   className={`relative w-full h-[4.5rem] text-left px-4 flex items-center gap-3 transition-colors ${
                     active ? 'bg-blue-50 dark:bg-blue-900/20' : 'hover:bg-gray-50 dark:hover:bg-slate-700/40'
                   }`}
                 >
                   {active && <span className="absolute left-0 inset-y-2 w-1 rounded-r bg-blue-600" />}
-                  <Avatar name={user.name} url={user.avatarUrl} inactive={user.status === 'inactive'} />
+                  <Avatar name={user.name} url={user.avatarUrl} inactive={user.status === 'inactive'} onView={user.avatarUrl ? () => setPhoto(user) : undefined} />
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{user.name}</p>
                     <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
@@ -318,7 +339,7 @@ export default function AdminUsers() {
                     <AccountBadge status={user.status} />
                     <RoleTag role={user.role} />
                   </div>
-                </button>
+                </div>
               );
             })}
           </div>
@@ -350,7 +371,7 @@ export default function AdminUsers() {
                       >
                         <td className="px-5 py-3 h-16">
                           <div className="flex items-center gap-3 min-w-0 max-w-[22rem]">
-                            <Avatar name={user.name} url={user.avatarUrl} inactive={user.status === 'inactive'} />
+                            <Avatar name={user.name} url={user.avatarUrl} inactive={user.status === 'inactive'} onView={user.avatarUrl ? () => setPhoto(user) : undefined} />
                             <div className="min-w-0">
                               <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{user.name}</p>
                               <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user.email}</p>
@@ -390,7 +411,7 @@ export default function AdminUsers() {
         {selected && (
           <DetailModal open onClose={() => setSelectedId(null)} locked={savingEdit || saving || deletingBusy} label={`User ${selected.name}`}>
               <div className={`${MODAL_HEADER} items-center gap-4`}>
-                <Avatar name={selected.name} url={selected.avatarUrl} size="lg" inactive={selected.status === 'inactive'} />
+                <Avatar name={selected.name} url={selected.avatarUrl} size="lg" inactive={selected.status === 'inactive'} onView={selected.avatarUrl ? () => setPhoto(selected) : undefined} />
                 <div className="min-w-0 flex-1">
                   <h3 className="font-semibold text-gray-900 dark:text-white leading-snug" style={{ fontFamily: 'Poppins, sans-serif' }}>
                     {selected.name}
@@ -540,8 +561,8 @@ export default function AdminUsers() {
                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-1.5">No requests yet.</p>
                 </div>
               ) : (
-                <ul className="divide-y divide-gray-100 dark:divide-slate-700">
-                  {selectedRequests.slice(0, 8).map(req => (
+                <ul className="max-h-64 overflow-y-auto divide-y divide-gray-100 dark:divide-slate-700">
+                  {selectedRequests.map(req => (
                     <li key={req.id} className="px-5 h-14 flex items-center justify-between gap-3">
                       <div className="min-w-0">
                         <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{req.type}</p>
@@ -676,6 +697,25 @@ export default function AdminUsers() {
               </div>
           </DetailModal>
         )}
+      {photo?.avatarUrl && createPortal(
+        <div
+          className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-900/55 backdrop-blur-md p-6"
+          onClick={() => setPhoto(null)}
+        >
+          <div className="flex flex-col items-center gap-4" onClick={event => event.stopPropagation()}>
+            <img
+              src={photo.avatarUrl}
+              alt=""
+              className="w-64 h-64 sm:w-80 sm:h-80 rounded-full object-cover ring-4 ring-white shadow-2xl"
+            />
+            <p className="text-white text-center font-semibold" style={{ fontFamily: 'Poppins, sans-serif' }}>{photo.name}</p>
+            <button type="button" onClick={() => setPhoto(null)} className="text-sm font-medium text-white/80 hover:text-white">
+              Close
+            </button>
+          </div>
+        </div>,
+        document.body,
+      )}
     </div>
   );
 }

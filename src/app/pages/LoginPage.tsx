@@ -109,7 +109,7 @@ export default function LoginPage() {
             isStaff ? 'bg-blue-950' : 'bg-blue-800'
           }`}>
             <div>
-              <img src={PCC_LOGO_URL} alt="PCC logo" className="h-14 w-auto object-contain mb-5 drop-shadow" />
+              <img src={PCC_LOGO_URL} alt="PCC logo" className="h-16 w-auto object-contain mb-5 drop-shadow" />
               {isStaff ? (
                 <>
                   <p className="text-[12px] uppercase tracking-[0.18em] text-blue-200">Staff access</p>
@@ -154,7 +154,7 @@ export default function LoginPage() {
             )}
 
             <div className="md:hidden flex items-center gap-3 mb-4">
-              <img src={PCC_LOGO_URL} alt="PCC logo" className="h-10 w-auto object-contain" />
+              <img src={PCC_LOGO_URL} alt="PCC logo" className="h-12 w-auto object-contain" />
               <div>
                 <p className="text-sm font-semibold text-gray-900 dark:text-white" style={{ fontFamily: 'Poppins, sans-serif' }}>PCC Records</p>
                 <p className="text-xs text-gray-500">{isStaff ? 'Staff / Registrar' : 'Registrar’s Office'}</p>
