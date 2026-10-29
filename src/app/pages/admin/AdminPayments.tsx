@@ -9,7 +9,7 @@ import { fetchPayments, screenshotUrl, subscribePayments, updatePaymentStatus, t
 import { subscribeRequests, updateRequestStatus } from '../../lib/requests';
 import { canSetRequestStatus, REQUEST_STATUS_LABEL, type RequestStatus } from '../../lib/status';
 import { StatusBadge } from '../../components/StatusBadge';
-import { useRevealOnSmallScreen } from '../../lib/useRevealOnSmallScreen';
+import { DetailModal, MODAL_ASIDE, MODAL_BODY, MODAL_HEADER, MODAL_MAIN } from '../../components/DetailModal';
 import { CASHIER_PAYMENT_REJECT_REASONS, PAYMENT_REJECT_REASONS, RejectReasonDialog } from '../../components/RejectReasonDialog';
 
 type PayStatus = PaymentRecord['status'];
@@ -96,7 +96,6 @@ export default function AdminPayments() {
   const [autoProcess, setAutoProcess] = useState(readAutoProcess);
   const [advancing, setAdvancing] = useState(false);
   const [notice, setNotice] = useState('');
-  const detailRef = useRevealOnSmallScreen<HTMLDivElement>(selectedId ?? undefined);
 
   useEffect(() => {
     const refresh = () => { fetchPayments().then(setPayments); };
@@ -254,7 +253,7 @@ export default function AdminPayments() {
       </div>
 
       <div className="grid lg:grid-cols-5 gap-5 items-start">
-        <div className={`${selected ? 'lg:col-span-2 lg:h-[calc(100dvh-3rem)]' : 'lg:col-span-5 lg:max-h-[calc(100dvh-3rem)]'} bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm overflow-hidden lg:sticky lg:top-6 lg:flex lg:flex-col`}>
+        <div className="lg:col-span-5 lg:max-h-[calc(100dvh-3rem)] bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm overflow-hidden lg:flex lg:flex-col">
           <div className="flex-shrink-0 px-5 py-3 border-b border-gray-100 dark:border-slate-700">
             <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
               {filtered.length} payment{filtered.length !== 1 ? 's' : ''}
@@ -267,7 +266,7 @@ export default function AdminPayments() {
             <div className="py-12 text-center text-sm text-gray-500 dark:text-gray-400">No payments found.</div>
           )}
 
-          <div className={`${selected ? '' : 'sm:hidden'} divide-y divide-gray-100 dark:divide-slate-700`}>
+          <div className="sm:hidden divide-y divide-gray-100 dark:divide-slate-700">
             {filtered.map(pay => {
               const active = selectedId === pay.id;
               return (
@@ -297,7 +296,7 @@ export default function AdminPayments() {
             })}
           </div>
 
-          {filtered.length > 0 && !selected && (
+          {filtered.length > 0 && (
             <div className="hidden sm:block">
             <table className="w-full">
               <thead className="sticky top-0 z-10">
@@ -353,10 +352,12 @@ export default function AdminPayments() {
           </div>
         </div>
 
+      </div>
+
+        {/* Payment popup — proof and details on the left, decision on the right */}
         {selected && (
-          <div ref={detailRef} className="lg:col-span-3 lg:sticky lg:top-6 scroll-mt-16">
-            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm overflow-hidden lg:flex lg:flex-col lg:h-[calc(100dvh-3rem)]">
-              <div className="flex-shrink-0 flex items-start justify-between gap-2 px-4 pt-4 pb-3 border-b border-gray-100 dark:border-slate-700">
+          <DetailModal open onClose={() => setSelectedId(null)} locked={rejecting} label={`Payment for ${selected.reqId}`}>
+              <div className={MODAL_HEADER}>
                 <div className="min-w-0">
                   <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Amount paid</p>
                   <p className="text-xl font-semibold text-gray-900 dark:text-white tabular-nums leading-tight" style={{ fontFamily: 'Poppins, sans-serif' }}>
@@ -377,9 +378,9 @@ export default function AdminPayments() {
                 </button>
             </div>
 
-              <div className="flex flex-col lg:flex-1 lg:min-h-0 lg:flex-row">
+              <div className={MODAL_BODY}>
               {/* Decision — fixed right column with its own scroll */}
-              <div className="lg:w-[17rem] lg:flex-shrink-0 lg:min-h-0 lg:overflow-y-auto overscroll-contain px-4 py-4 border-t lg:border-t-0 lg:border-l border-gray-100 dark:border-slate-700 bg-slate-50/90 dark:bg-slate-900/40 order-2">
+              <div className={`${MODAL_ASIDE} order-2`}>
                 <p className="text-xs font-semibold text-gray-900 dark:text-white mb-0.5">Decision</p>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mb-2.5">
                   {selected.method === 'gcash'
@@ -493,7 +494,7 @@ export default function AdminPayments() {
               </div>
 
               {/* Proof + student details */}
-              <div className="lg:flex-1 lg:min-w-0 lg:min-h-0 lg:overflow-y-auto overscroll-contain px-4 py-4 space-y-3 order-1">
+              <div className={`${MODAL_MAIN} order-1`}>
                 <dl className="grid grid-cols-2 gap-x-3 gap-y-2.5">
                   <Field label="Student" value={selected.student} />
                   <Field label={selected.method === 'gcash' ? 'GCash ref' : 'REQ ID'} value={selected.refNo || selected.reqId || '—'} mono highlight />
@@ -512,7 +513,7 @@ export default function AdminPayments() {
                         rel="noreferrer"
                         className="group block rounded-xl overflow-hidden border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-900"
                       >
-                        <img src={selected.screenshotPath} alt="GCash proof" className="w-full max-h-52 object-contain" />
+                        <img src={selected.screenshotPath} alt="GCash proof" className="w-full max-h-72 object-contain" />
                         <span className="flex items-center justify-center gap-1 py-1.5 text-xs font-medium text-blue-600 dark:text-blue-400 border-t border-gray-200 dark:border-slate-700 group-hover:bg-blue-50 dark:group-hover:bg-blue-900/20">
                           <ExternalLink className="w-3 h-3" /> Open full size
                         </span>
@@ -563,10 +564,8 @@ export default function AdminPayments() {
             )}
               </div>
               </div>
-            </div>
-          </div>
+          </DetailModal>
         )}
-      </div>
 
       <RejectReasonDialog
         open={rejecting && Boolean(selected)}

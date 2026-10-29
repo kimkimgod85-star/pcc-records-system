@@ -17,7 +17,7 @@ import {
   type PaymentStatus,
   type RequestStatus,
 } from '../../lib/status';
-import { useRevealOnSmallScreen } from '../../lib/useRevealOnSmallScreen';
+import { DetailModal, MODAL_ASIDE, MODAL_BODY, MODAL_HEADER, MODAL_MAIN } from '../../components/DetailModal';
 import { StatusBadge } from '../../components/StatusBadge';
 import { RejectReasonDialog, REQUEST_REJECT_REASONS } from '../../components/RejectReasonDialog';
 import { RejectionNotice } from '../../components/RejectionNotice';
@@ -124,7 +124,6 @@ export default function AdminRequests() {
   const [saving, setSaving] = useState<RequestStatus | null>(null);
   const [error, setError] = useState('');
   const [rejecting, setRejecting] = useState(false);
-  const detailRef = useRevealOnSmallScreen<HTMLDivElement>(selectedId ?? undefined);
 
   useEffect(() => {
     const refresh = () => { fetchRequests().then(list => setRequests(list.map(toRow))); };
@@ -258,7 +257,7 @@ export default function AdminRequests() {
 
       <div className="grid lg:grid-cols-5 gap-5 items-start">
         {/* List */}
-        <div className={`${selectedReq ? 'lg:col-span-2 lg:h-[calc(100dvh-3rem)]' : 'lg:col-span-5 lg:max-h-[calc(100dvh-3rem)]'} bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm overflow-hidden lg:sticky lg:top-6 lg:flex lg:flex-col`}>
+        <div className="lg:col-span-5 lg:max-h-[calc(100dvh-3rem)] bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm overflow-hidden lg:flex lg:flex-col">
           <div className="flex-shrink-0 px-5 py-3 border-b border-gray-100 dark:border-slate-700">
             <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
               {filtered.length} request{filtered.length !== 1 ? 's' : ''}
@@ -273,7 +272,7 @@ export default function AdminRequests() {
             </div>
           )}
 
-          <div className={`${selectedReq ? '' : 'sm:hidden'} divide-y divide-gray-100 dark:divide-slate-700`}>
+          <div className="sm:hidden divide-y divide-gray-100 dark:divide-slate-700">
             {filtered.map(req => (
               <button
                 key={req.id}
@@ -302,7 +301,7 @@ export default function AdminRequests() {
             ))}
           </div>
 
-          {filtered.length > 0 && !selectedReq && (
+          {filtered.length > 0 && (
             <div className="hidden sm:block">
               <table className="w-full">
                 <thead className="sticky top-0 z-10">
@@ -356,17 +355,17 @@ export default function AdminRequests() {
           </div>
         </div>
 
-        {/* Right-side panel — details and status side by side, each with its own scroll */}
+      </div>
+
+        {/* Request details popup — details on the left, status actions on the right */}
         {selectedReq && (
-          <div ref={detailRef} className="lg:col-span-3 lg:sticky lg:top-6 scroll-mt-16">
-            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm overflow-hidden lg:flex lg:flex-col lg:h-[calc(100dvh-3rem)]">
-              {/* Header + close */}
-              <div className="flex-shrink-0 flex items-start justify-between gap-2 px-4 pt-4 pb-3 border-b border-gray-100 dark:border-slate-700">
+          <DetailModal open onClose={() => setSelectedId(null)} locked={rejecting} label={`Request ${selectedReq.id}`}>
+              <div className={MODAL_HEADER}>
                 <div className="min-w-0">
-                  <p className="text-sm font-semibold text-gray-900 dark:text-white leading-snug" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                  <p className="text-base font-semibold text-gray-900 dark:text-white leading-snug" style={{ fontFamily: 'Poppins, sans-serif' }}>
                     {selectedReq.type}
                   </p>
-                  <p className="text-[11px] font-mono text-blue-600 dark:text-blue-400 mt-0.5 break-all">{selectedReq.id}</p>
+                  <p className="text-xs font-mono text-blue-600 dark:text-blue-400 mt-0.5 break-all">{selectedReq.id}</p>
                   <div className="flex flex-wrap items-center gap-1.5 mt-2">
                     <StatusBadge status={selectedReq.status} label={STATUS_LABEL[selectedReq.status]} />
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-100">
@@ -384,9 +383,9 @@ export default function AdminRequests() {
                 </button>
               </div>
 
-              <div className="lg:flex-1 lg:min-h-0 lg:flex lg:flex-row">
+              <div className={MODAL_BODY}>
               {/* Student details + notes */}
-              <div className="lg:flex-1 lg:min-w-0 lg:min-h-0 lg:overflow-y-auto overscroll-contain px-4 py-4 space-y-3">
+              <div className={MODAL_MAIN}>
                 <p className="text-xs font-semibold text-gray-900 dark:text-white">Request details</p>
                 <dl className="grid grid-cols-2 gap-x-3 gap-y-2.5 text-sm">
                   <Field label="Student" value={selectedReq.student} />
@@ -441,7 +440,7 @@ export default function AdminRequests() {
               </div>
 
               {/* Status actions — payment-gated, Reject separated */}
-              <div className="lg:w-[17rem] lg:flex-shrink-0 lg:min-h-0 lg:overflow-y-auto overscroll-contain px-4 py-4 border-t lg:border-t-0 lg:border-l border-gray-100 dark:border-slate-700 bg-slate-50/90 dark:bg-slate-900/40 space-y-2.5">
+              <div className={`${MODAL_ASIDE} space-y-2.5`}>
                 <p className="text-xs font-semibold text-gray-900 dark:text-white">Update status</p>
 
                 {error && (
@@ -487,7 +486,7 @@ export default function AdminRequests() {
                   </>
                 )}
 
-                <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-5 lg:grid-cols-2">
+                <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-5 md:grid-cols-2">
                   {FLOW_ACTIONS.map(action => {
                     const current = selectedReq.status === action.status;
                     const gate = canSetRequestStatus(selectedReq.status, action.status, selectedReq.paymentStatus);
@@ -535,10 +534,8 @@ export default function AdminRequests() {
                 ) : null}
               </div>
               </div>
-            </div>
-          </div>
+          </DetailModal>
         )}
-      </div>
 
       <RejectReasonDialog
         open={rejecting && Boolean(selectedReq)}

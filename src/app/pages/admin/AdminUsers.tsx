@@ -8,7 +8,7 @@ import {
 import { fetchManagedUsers, setUserStatus, subscribeUsers, updateManagedUser, type ManagedUser } from '../../lib/profiles';
 import { fetchRequests, subscribeRequests, type StudentRequest } from '../../lib/requests';
 import { formatShortDate } from '../../lib/status';
-import { useRevealOnSmallScreen } from '../../lib/useRevealOnSmallScreen';
+import { DetailModal, MODAL_ASIDE, MODAL_BODY, MODAL_HEADER, MODAL_MAIN } from '../../components/DetailModal';
 import { StatusBadge } from '../../components/StatusBadge';
 
 type RoleFilter = 'all' | 'student' | 'alumni';
@@ -80,7 +80,6 @@ function Avatar({ name, size = 'md', inactive }: { name: string; size?: 'md' | '
   );
 }
 
-const PANEL_H = 'lg:h-[min(44rem,calc(100dvh-3rem))]';
 const LIST_MAX_H = 'lg:max-h-[min(44rem,calc(100dvh-3rem))]';
 
 export default function AdminUsers() {
@@ -100,7 +99,6 @@ export default function AdminUsers() {
   const [savingEdit, setSavingEdit] = useState(false);
   const [editError, setEditError] = useState('');
   const [saved, setSaved] = useState(false);
-  const detailRef = useRevealOnSmallScreen<HTMLDivElement>(selectedId ?? undefined);
 
   useEffect(() => {
     fetchManagedUsers().then(setUsers);
@@ -267,12 +265,12 @@ export default function AdminUsers() {
 
       <div className="grid lg:grid-cols-2 gap-5 items-start">
         {/* List — same height as the detail panel, scrolls on its own */}
-        <div className={`${selected ? `${PANEL_H} lg:sticky lg:top-6` : `lg:col-span-2 ${LIST_MAX_H}`} bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm overflow-hidden lg:flex lg:flex-col`}>
+        <div className={`lg:col-span-2 ${LIST_MAX_H} bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm overflow-hidden lg:flex lg:flex-col`}>
           <div className="flex-shrink-0 flex items-center justify-between gap-2 px-5 h-12 border-b border-gray-100 dark:border-slate-700">
             <span className="text-sm font-semibold text-gray-900 dark:text-white">
               {filtered.length} user{filtered.length !== 1 ? 's' : ''}
             </span>
-            {selected && <span className="text-xs text-gray-500 dark:text-gray-400">Tap a user to view</span>}
+            <span className="text-xs text-gray-500 dark:text-gray-400">Click a user to view</span>
           </div>
 
           <div className="lg:flex-1 lg:min-h-0 lg:overflow-y-auto overscroll-contain">
@@ -280,8 +278,8 @@ export default function AdminUsers() {
             <div className="py-12 text-center text-sm text-gray-500 dark:text-gray-400">No users match your search.</div>
           )}
 
-          {/* Compact rows: phones, and beside the detail panel */}
-          <div className={`${selected ? '' : 'sm:hidden'} divide-y divide-gray-100 dark:divide-slate-700`}>
+          {/* Phone: compact rows */}
+          <div className="sm:hidden divide-y divide-gray-100 dark:divide-slate-700">
             {filtered.map(user => {
               const active = selectedId === user.id;
               return (
@@ -311,7 +309,7 @@ export default function AdminUsers() {
           </div>
 
           {/* Tablet & desktop: table */}
-          {filtered.length > 0 && !selected && (
+          {filtered.length > 0 && (
             <div className="hidden sm:block">
               <table className="w-full">
                 <thead className="sticky top-0 z-10">
@@ -371,11 +369,12 @@ export default function AdminUsers() {
           </div>
         </div>
 
-        {/* Detail panel — one card, same height as the list */}
+      </div>
+
+        {/* User popup — profile and requests on the left, account actions on the right */}
         {selected && (
-          <div ref={detailRef} className="lg:sticky lg:top-6 scroll-mt-16">
-            <div className={`bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm overflow-hidden lg:flex lg:flex-col ${PANEL_H}`}>
-              <div className="flex-shrink-0 flex items-center gap-4 px-5 py-4 border-b border-gray-100 dark:border-slate-700">
+          <DetailModal open onClose={() => setSelectedId(null)} locked={savingEdit || saving} label={`User ${selected.name}`}>
+              <div className={`${MODAL_HEADER} items-center gap-4`}>
                 <Avatar name={selected.name} size="lg" inactive={selected.status === 'inactive'} />
                 <div className="min-w-0 flex-1">
                   <h3 className="font-semibold text-gray-900 dark:text-white leading-snug" style={{ fontFamily: 'Poppins, sans-serif' }}>
@@ -407,7 +406,8 @@ export default function AdminUsers() {
                 </div>
               </div>
 
-              <div className="lg:flex-1 lg:min-h-0 lg:overflow-y-auto overscroll-contain">
+              <div className={MODAL_BODY}>
+              <div className="md:flex-1 md:min-w-0 md:overflow-y-auto overscroll-contain">
               {saved && !editing && (
                 <div className="mx-5 mt-4 p-3 rounded-xl bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 flex items-center gap-2">
                   <CheckCircle className="w-4 h-4 flex-shrink-0 text-green-600 dark:text-green-400" />
@@ -416,7 +416,12 @@ export default function AdminUsers() {
               )}
 
               {editing ? (
-                <form onSubmit={e => { e.preventDefault(); saveEdit(selected); }} className="px-5 py-4 space-y-4">
+                <form onSubmit={e => { e.preventDefault(); saveEdit(selected); }} className="px-5 py-5 space-y-4">
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white">Edit details</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Fix the name, Student ID, or role. Changes show on the student’s account right away.</p>
+                  </div>
+                  <div className="grid sm:grid-cols-2 gap-4">
                   <div>
                     <label htmlFor="edit-name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Full name</label>
                     <input
@@ -439,6 +444,8 @@ export default function AdminUsers() {
                       className={`${inputClass} font-mono`}
                     />
                   </div>
+                  </div>
+                  <div className="grid sm:grid-cols-2 gap-4">
                   <div>
                     <span className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Role</span>
                     <Segmented
@@ -454,6 +461,7 @@ export default function AdminUsers() {
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">The email is the student’s login, so it can’t be changed here.</p>
                   </div>
+                  </div>
 
                   {editError && (
                     <div className="p-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 flex items-start gap-2">
@@ -462,7 +470,7 @@ export default function AdminUsers() {
                     </div>
                   )}
 
-                  <div className="grid grid-cols-2 gap-2 pt-1">
+                  <div className="flex justify-end gap-2 pt-3 border-t border-gray-100 dark:border-slate-700">
                     <button
                       type="button"
                       onClick={() => setEditing(false)}
@@ -534,8 +542,10 @@ export default function AdminUsers() {
               </div>
               </div>
 
-              {/* Actions — pinned to the bottom of the panel */}
-              <div className="flex-shrink-0 px-5 py-4 border-t border-gray-100 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-900/40 space-y-2.5">
+              {/* Account actions — right column */}
+              {!editing && (
+              <div className={`${MODAL_ASIDE} space-y-2.5`}>
+              <p className="text-xs font-semibold text-gray-900 dark:text-white">Account</p>
               {error && (
                 <div className="p-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 flex items-start gap-2">
                   <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0 text-red-500" />
@@ -544,7 +554,7 @@ export default function AdminUsers() {
               )}
 
               {!confirming && (
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 md:grid-cols-1 gap-2">
               <a href={`mailto:${selected.email}`} className={btn('primary')}>
                 <Mail className="w-4 h-4" />
                 Send email
@@ -601,10 +611,10 @@ export default function AdminUsers() {
                 ) : null
               )}
               </div>
-            </div>
-          </div>
+              )}
+              </div>
+          </DetailModal>
         )}
-      </div>
     </div>
   );
 }
