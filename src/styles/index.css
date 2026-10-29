@@ -26,3 +26,17 @@
 .safe-area-pt {
   padding-top: env(safe-area-inset-top);
 }
+
+@keyframes pcc-bubble {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(var(--bubble-x, 14px), var(--bubble-y, -16px), 0) scale(var(--bubble-scale, 1.08)); }
+}
+
+.pcc-bubble {
+  animation: pcc-bubble var(--bubble-time, 10s) ease-in-out infinite;
+  animation-delay: var(--bubble-delay, 0s);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pcc-bubble { animation: none; }
+}

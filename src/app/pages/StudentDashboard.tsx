@@ -89,7 +89,7 @@ export default function StudentDashboard() {
     if (!user) return;
     const refresh = () => {
       fetchRequests(user.id).then(setRawRequests);
-      fetchNotifications(user.id).then(items => setAlerts(items.slice(0, 3).map(item => ({
+      fetchNotifications(user.id).then(items => setAlerts(items.slice(0, 12).map(item => ({
         msg: item.message,
         time: item.createdAt,
       }))));
@@ -357,10 +357,10 @@ export default function StudentDashboard() {
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-6">
+      <div className="grid lg:grid-cols-3 gap-6 lg:items-stretch">
         {/* Requests Table */}
-        <div className="lg:col-span-2 bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm overflow-hidden">
-          <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-gray-100 dark:border-slate-700">
+        <div className="lg:col-span-2 bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm overflow-hidden flex flex-col h-80 lg:h-96">
+          <div className="flex-shrink-0 flex items-center justify-between px-5 sm:px-6 py-4 border-b border-gray-100 dark:border-slate-700">
             <h2 className="font-semibold text-gray-900 dark:text-white" style={{ fontFamily: 'Poppins, sans-serif' }}>
               My Requests
             </h2>
@@ -368,6 +368,7 @@ export default function StudentDashboard() {
               View All <ArrowRight className="w-3 h-3" />
             </Link>
           </div>
+          <div className="flex-1 min-h-0 overflow-y-auto">
           <div className="sm:hidden divide-y divide-gray-100 dark:divide-slate-700">
             {requests.length === 0 && (
               <p className="px-5 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
@@ -390,9 +391,9 @@ export default function StudentDashboard() {
               </Link>
             ))}
           </div>
-          <div className="hidden sm:block overflow-x-auto">
+          <div className="hidden sm:block">
             <table className="w-full min-w-[640px]">
-              <thead>
+              <thead className="sticky top-0 z-10 bg-white dark:bg-slate-800">
                 <tr className="text-xs text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-slate-700">
                   <th className="px-6 py-3 text-left font-medium">Request ID</th>
                   <th className="px-6 py-3 text-left font-medium">Document</th>
@@ -433,12 +434,12 @@ export default function StudentDashboard() {
               </tbody>
             </table>
           </div>
+          </div>
         </div>
 
         {/* Recent Alerts */}
-        <div>
-          <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-gray-100 dark:border-slate-700 shadow-sm">
-            <div className="flex items-center justify-between mb-3">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm flex flex-col h-80 lg:h-96 overflow-hidden">
+            <div className="flex-shrink-0 flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-slate-700">
               <h3 className="font-semibold text-gray-900 dark:text-white" style={{ fontFamily: 'Poppins, sans-serif' }}>
                 Recent Alerts
               </h3>
@@ -446,7 +447,7 @@ export default function StudentDashboard() {
                 See all
               </Link>
             </div>
-            <div className="space-y-3">
+            <div className="flex-1 min-h-0 overflow-y-auto px-5 py-4 space-y-3">
               {alerts.length === 0 && (
                 <p className="text-xs text-gray-500 dark:text-gray-400">No alerts yet.</p>
               )}
@@ -460,7 +461,6 @@ export default function StudentDashboard() {
                 </div>
               ))}
             </div>
-          </div>
         </div>
       </div>
     </div>

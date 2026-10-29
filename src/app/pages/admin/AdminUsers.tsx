@@ -70,9 +70,19 @@ function AccountBadge({ status }: { status: ManagedUser['status'] }) {
   );
 }
 
-function Avatar({ name, size = 'md', inactive }: { name: string; size?: 'md' | 'lg'; inactive?: boolean }) {
+function Avatar({ name, url, size = 'md', inactive }: { name: string; url?: string; size?: 'md' | 'lg'; inactive?: boolean }) {
+  const box = size === 'lg' ? 'w-14 h-14 text-lg' : 'w-10 h-10 text-sm';
+  if (url) {
+    return (
+      <img
+        src={url}
+        alt=""
+        className={`${box} rounded-full object-cover flex-shrink-0 ${inactive ? 'grayscale opacity-70' : ''}`}
+      />
+    );
+  }
   return (
-    <div className={`${size === 'lg' ? 'w-14 h-14 text-lg' : 'w-10 h-10 text-sm'} rounded-full flex items-center justify-center flex-shrink-0 font-semibold ${
+    <div className={`${box} rounded-full flex items-center justify-center flex-shrink-0 font-semibold ${
       inactive
         ? 'bg-gray-100 text-gray-500 dark:bg-slate-700 dark:text-gray-400'
         : 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'
@@ -297,7 +307,7 @@ export default function AdminUsers() {
                   }`}
                 >
                   {active && <span className="absolute left-0 inset-y-2 w-1 rounded-r bg-blue-600" />}
-                  <Avatar name={user.name} inactive={user.status === 'inactive'} />
+                  <Avatar name={user.name} url={user.avatarUrl} inactive={user.status === 'inactive'} />
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{user.name}</p>
                     <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
@@ -340,7 +350,7 @@ export default function AdminUsers() {
                       >
                         <td className="px-5 py-3 h-16">
                           <div className="flex items-center gap-3 min-w-0 max-w-[22rem]">
-                            <Avatar name={user.name} inactive={user.status === 'inactive'} />
+                            <Avatar name={user.name} url={user.avatarUrl} inactive={user.status === 'inactive'} />
                             <div className="min-w-0">
                               <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{user.name}</p>
                               <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user.email}</p>
@@ -380,7 +390,7 @@ export default function AdminUsers() {
         {selected && (
           <DetailModal open onClose={() => setSelectedId(null)} locked={savingEdit || saving || deletingBusy} label={`User ${selected.name}`}>
               <div className={`${MODAL_HEADER} items-center gap-4`}>
-                <Avatar name={selected.name} size="lg" inactive={selected.status === 'inactive'} />
+                <Avatar name={selected.name} url={selected.avatarUrl} size="lg" inactive={selected.status === 'inactive'} />
                 <div className="min-w-0 flex-1">
                   <h3 className="font-semibold text-gray-900 dark:text-white leading-snug" style={{ fontFamily: 'Poppins, sans-serif' }}>
                     {selected.name}

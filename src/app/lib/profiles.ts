@@ -11,6 +11,7 @@ export interface ManagedUser {
   status: 'active' | 'inactive';
   joined: string;
   requests: number;
+  avatarUrl?: string;
 }
 
 export async function fetchManagedUsers(): Promise<ManagedUser[]> {
@@ -36,6 +37,7 @@ export async function fetchManagedUsers(): Promise<ManagedUser[]> {
         status: item.status === 'inactive' ? 'inactive' : 'active',
         joined: formatShortDate(String(item.created_at || '')),
         requests: counts.get(item.id) || 0,
+        avatarUrl: item.avatar_url ? String(item.avatar_url) : undefined,
       }));
   } catch (error) {
     if (!tableMissing(error)) console.warn(error);

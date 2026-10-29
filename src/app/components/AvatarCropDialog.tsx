@@ -50,7 +50,10 @@ export function AvatarCropDialog({
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const imageRef = useRef<HTMLImageElement | null>(null);
-  const drag = useRef<{ x: number; y: number; ox: number; oy: number } | null>(null);
+  const pointers = useRef(new Map<number, { x: number; y: number }>());
+  const gesture = useRef<{ zoom: number; ox: number; oy: number; dist: number; midX: number; midY: number; x: number; y: number } | null>(null);
+  const zoomRef = useRef(1);
+  const offsetRef = useRef({ x: 0, y: 0 });
   const [src, setSrc] = useState('');
   const [zoom, setZoom] = useState(1);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
@@ -65,6 +68,8 @@ export function AvatarCropDialog({
     setError('');
     setBusy(false);
     imageRef.current = null;
+    pointers.current.clear();
+    gesture.current = null;
   }, [open]);
 
   useEffect(() => {
@@ -75,6 +80,22 @@ export function AvatarCropDialog({
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [open, busy, onClose]);
+
+  zoomRef.current = zoom;
+  offsetRef.current = offset;
+
+  const apply = (nextZoom: number, ox: number, oy: number) => {
+    const image = imageRef.current;
+    const clampedZoom = Math.min(3, Math.max(1, nextZoom));
+    if (!image) {
+      setZoom(clampedZoom);
+      setOffset({ x: ox, y: oy });
+      return;
+    }
+    const next = layout(image, clampedZoom, ox, oy);
+    setZoom(clampedZoom);
+    setOffset({ x: next.ox, y: next.oy });
+  };
 
   if (!open) return null;
 
@@ -126,7 +147,7 @@ export function AvatarCropDialog({
             Profile photo
           </h2>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Drag the photo so your face sits inside the circle.
+            Drag to center your face. Pinch with two fingers to zoom.
           </p>
         </div>
 
@@ -135,17 +156,69 @@ export function AvatarCropDialog({
             className="relative w-[280px] h-[280px] max-w-full rounded-2xl bg-slate-900 overflow-hidden touch-none"
             onPointerDown={event => {
               if (!src) return;
-              (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
-              drag.current = { x: event.clientX, y: event.clientY, ox: offset.x, oy: offset.y };
+              event.currentTarget.setPointerCapture(event.pointerId);
+              pointers.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
+              const points = [...pointers.current.values()];
+              if (points.length >= 2) {
+                gesture.current = {
+                  zoom: zoomRef.current,
+                  ox: offsetRef.current.x,
+                  oy: offsetRef.current.y,
+                  dist: Math.hypot(points[0].x - points[1].x, points[0].y - points[1].y) || 1,
+                  midX: (points[0].x + points[1].x) / 2,
+                  midY: (points[0].y + points[1].y) / 2,
+                  x: event.clientX,
+                  y: event.clientY,
+                };
+              } else {
+                gesture.current = {
+                  zoom: zoomRef.current,
+                  ox: offsetRef.current.x,
+                  oy: offsetRef.current.y,
+                  dist: 0,
+                  midX: event.clientX,
+                  midY: event.clientY,
+                  x: event.clientX,
+                  y: event.clientY,
+                };
+              }
             }}
             onPointerMove={event => {
-              const start = drag.current;
-              const image = imageRef.current;
-              if (!start || !image) return;
-              const next = layout(image, zoom, start.ox + event.clientX - start.x, start.oy + event.clientY - start.y);
-              setOffset({ x: next.ox, y: next.oy });
+              if (!pointers.current.has(event.pointerId) || !gesture.current) return;
+              pointers.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
+              const points = [...pointers.current.values()];
+              const start = gesture.current;
+              if (points.length >= 2) {
+                const dist = Math.hypot(points[0].x - points[1].x, points[0].y - points[1].y) || 1;
+                const midX = (points[0].x + points[1].x) / 2;
+                const midY = (points[0].y + points[1].y) / 2;
+                apply(start.zoom * (dist / start.dist), start.ox + midX - start.midX, start.oy + midY - start.midY);
+              } else {
+                apply(start.zoom, start.ox + event.clientX - start.x, start.oy + event.clientY - start.y);
+              }
             }}
-            onPointerUp={() => { drag.current = null; }}
+            onPointerUp={event => {
+              pointers.current.delete(event.pointerId);
+              const points = [...pointers.current.values()];
+              if (points.length === 1) {
+                gesture.current = {
+                  zoom: zoomRef.current,
+                  ox: offsetRef.current.x,
+                  oy: offsetRef.current.y,
+                  dist: 0,
+                  midX: points[0].x,
+                  midY: points[0].y,
+                  x: points[0].x,
+                  y: points[0].y,
+                };
+              } else if (points.length === 0) {
+                gesture.current = null;
+              }
+            }}
+            onPointerCancel={event => {
+              pointers.current.delete(event.pointerId);
+              gesture.current = null;
+            }}
           >
             {src && (
               <img
