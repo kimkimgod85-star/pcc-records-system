@@ -209,7 +209,7 @@ export default function RegisterPage() {
                   type="text"
                   value={form.fullName}
                   onChange={e => setForm({ ...form, fullName: e.target.value })}
-                  placeholder="Juan Dela Cruz"
+                  placeholder="Your full name"
                   required
                   className={fieldClass}
                 />
