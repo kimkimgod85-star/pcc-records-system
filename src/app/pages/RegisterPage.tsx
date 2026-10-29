@@ -266,36 +266,36 @@ export default function RegisterPage() {
                 </div>
               </div>
 
-              <label
-                className={`flex items-start gap-2.5 p-2.5 rounded-lg border cursor-pointer transition-colors ${
-                  agreeNudge && !agreed
-                    ? 'border-red-300 bg-red-50 dark:border-red-800 dark:bg-red-900/20'
-                    : agreed
-                    ? 'border-blue-200 bg-blue-50/60 dark:border-blue-800 dark:bg-blue-900/15'
-                    : 'border-gray-200 dark:border-slate-600'
-                }`}
-              >
-                <input
-                  type="checkbox"
-                  checked={agreed}
-                  onChange={e => {
-                    setAgreed(e.target.checked);
-                    if (e.target.checked) {
-                      setAgreeNudge(false);
-                      setError('');
-                    }
-                  }}
-                  className="mt-0.5 w-4 h-4 rounded border-gray-300 text-blue-800 focus:ring-blue-600 flex-shrink-0"
-                />
-                <span className="text-xs leading-relaxed text-gray-700 dark:text-gray-300">
-                  I have read and agree to the{' '}
-                  <Link to="/terms" target="_blank" rel="noopener" className="font-semibold text-blue-800 dark:text-blue-300 underline">
-                    Terms of Use &amp; Privacy Notice
-                  </Link>
-                  , and I allow PCC to collect and use my information for my records requests, as allowed by the Data Privacy Act
-                  of 2012 (RA 10173).
-                </span>
-              </label>
+              <div>
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={agreed}
+                    onChange={e => {
+                      setAgreed(e.target.checked);
+                      if (e.target.checked) {
+                        setAgreeNudge(false);
+                        setError('');
+                      }
+                    }}
+                    className="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-400 text-blue-800 focus:ring-2 focus:ring-blue-700"
+                  />
+                  <span className="text-sm leading-snug text-gray-700 dark:text-gray-300">
+                    I agree to the{' '}
+                    <Link to="/terms" target="_blank" rel="noopener" className="text-blue-800 dark:text-blue-300 underline underline-offset-2">
+                      Terms of Use
+                    </Link>
+                    {' '}and{' '}
+                    <Link to="/terms#collect" target="_blank" rel="noopener" className="text-blue-800 dark:text-blue-300 underline underline-offset-2">
+                      Privacy Notice
+                    </Link>
+                    , and I consent to Pagadian Capitol Colleges processing my personal information for records requests under the Data Privacy Act of 2012 (Republic Act No. 10173).
+                  </span>
+                </label>
+                {agreeNudge && !agreed && (
+                  <p className="mt-2 text-sm text-red-600 dark:text-red-400">Tick the box to agree before you create an account.</p>
+                )}
+              </div>
 
               <button
                 type="submit"

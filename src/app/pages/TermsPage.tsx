@@ -1,6 +1,6 @@
 import { useEffect, type ReactNode } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
-import { ArrowLeft, ShieldCheck } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { Header } from '../components/Header';
 import { Footer } from '../components/Footer';
 import { useAuth } from '../context/AuthContext';
@@ -25,6 +25,8 @@ const SECTIONS: { id: string; title: string; body: ReactNode }[] = [
     body: (
       <ul>
         <li><strong>Account details:</strong> full name, Student ID, email address, and whether you are a student or alumni.</li>
+        <li><strong>Profile photo:</strong> the picture you choose to upload, if you add one.</li>
+        <li><strong>Messages:</strong> the messages you send to the Registrar’s Office inside the system.</li>
         <li><strong>Request details:</strong> documents you request, purpose, number of copies, processing type, and notes.</li>
         <li><strong>Payment details:</strong> amount, payment method, GCash reference and screenshot when paying online, or Pay in Person confirmation with your Request ID (receipt verified at the Registrar).</li>
         <li><strong>Pickup details:</strong> the date and time you book to claim your documents.</li>
@@ -162,57 +164,59 @@ export default function TermsPage() {
     <div className="min-h-svh flex flex-col bg-gray-50 dark:bg-slate-950">
       <Header variant="landing" />
 
-      <main className="flex-1 w-full max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+      <main className="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
         <button
           type="button"
           onClick={() => (window.history.length > 1 ? navigate(-1) : navigate('/'))}
-          className="inline-flex items-center gap-1.5 text-sm font-semibold text-blue-800 dark:text-blue-300 hover:underline mb-5"
+          className="inline-flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white mb-6"
         >
           <ArrowLeft className="w-4 h-4" /> Back
         </button>
 
-        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm overflow-hidden">
-          <div className="bg-blue-800 px-5 sm:px-8 py-6 text-white">
-            <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-xl bg-white/15 flex items-center justify-center flex-shrink-0">
-                <ShieldCheck className="w-6 h-6" />
-              </div>
-              <div>
-                <h1 className="text-xl sm:text-2xl font-semibold" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                  Terms of Use &amp; Privacy Notice
-                </h1>
-                <p className="text-sm text-blue-100 mt-0.5">Last updated {TERMS_UPDATED}</p>
-              </div>
-            </div>
-          </div>
-
-          <nav aria-label="Sections" className="px-5 sm:px-8 py-4 border-b border-gray-100 dark:border-slate-700 flex flex-wrap gap-2">
-            {SECTIONS.map(section => (
-              <a
-                key={section.id}
-                href={`#${section.id}`}
-                className="px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700 hover:bg-blue-50 hover:text-blue-700 dark:bg-slate-700 dark:text-gray-200 dark:hover:bg-slate-600"
-              >
-                {section.title.replace(/^\d+\.\s*/, '')}
-              </a>
-            ))}
+        <div className="lg:grid lg:grid-cols-[15rem_1fr] lg:gap-10 items-start">
+          <nav aria-label="On this page" className="mb-6 lg:mb-0 lg:sticky lg:top-24">
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">On this page</p>
+            <ol className="space-y-1">
+              {SECTIONS.map(section => (
+                <li key={section.id}>
+                  <a
+                    href={`#${section.id}`}
+                    className="block rounded-lg px-2 py-1.5 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-slate-800 dark:hover:text-white"
+                  >
+                    {section.title}
+                  </a>
+                </li>
+              ))}
+            </ol>
           </nav>
 
-          <div className="px-5 sm:px-8 py-6 space-y-7 text-[15px] leading-relaxed text-gray-700 dark:text-gray-300 [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:space-y-1.5 [&_a]:text-blue-700 dark:[&_a]:text-blue-300 [&_a]:underline [&_strong]:text-gray-900 dark:[&_strong]:text-white">
-            {SECTIONS.map(section => (
-              <section key={section.id} id={section.id} className="scroll-mt-24">
-                <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                  {section.title}
-                </h2>
-                {section.body}
-              </section>
-            ))}
-          </div>
+          <article className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl px-5 sm:px-8 py-7 sm:py-9">
+            <p className="text-sm text-gray-500 dark:text-gray-400">Pagadian Capitol Colleges</p>
+            <h1 className="mt-1 text-2xl sm:text-3xl font-semibold text-gray-900 dark:text-white" style={{ fontFamily: 'Poppins, sans-serif' }}>
+              Terms of Use and Privacy Notice
+            </h1>
+            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">Effective {TERMS_UPDATED}</p>
+            <p className="mt-4 text-[15px] leading-relaxed text-gray-700 dark:text-gray-300">
+              This notice explains the rules for the school records system and how the Registrar’s Office handles your personal information under the Data Privacy Act of 2012 (Republic Act No. 10173).
+            </p>
+
+            <div className="mt-8 space-y-8 text-[15px] leading-7 text-gray-700 dark:text-gray-300 [&_ul]:mt-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:space-y-1.5 [&_a]:text-blue-800 dark:[&_a]:text-blue-300 [&_a]:underline [&_a]:underline-offset-2 [&_strong]:font-semibold [&_strong]:text-gray-900 dark:[&_strong]:text-white">
+              {SECTIONS.map(section => (
+                <section key={section.id} id={section.id} className="scroll-mt-24 border-t border-gray-100 dark:border-slate-800 pt-6">
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                    {section.title}
+                  </h2>
+                  {section.body}
+                </section>
+              ))}
+            </div>
+          </article>
         </div>
 
         {!isAuthenticated && (
-          <p className="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
-            Ready to start? <Link to="/register" className="font-semibold text-blue-800 dark:text-blue-300 hover:underline">Create an account</Link>
+          <p className="mt-8 text-sm text-gray-600 dark:text-gray-300">
+            <Link to="/register" className="font-semibold text-blue-800 dark:text-blue-300 underline underline-offset-2">Create an account</Link>
+            {' '}after you have read this notice.
           </p>
         )}
       </main>
