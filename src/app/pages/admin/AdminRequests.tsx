@@ -252,7 +252,7 @@ export default function AdminRequests() {
 
       <div className="grid lg:grid-cols-5 gap-5 items-start">
         {/* List */}
-        <div className={`${selectedReq ? 'lg:col-span-2' : 'lg:col-span-5'} bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm overflow-hidden lg:sticky lg:top-6 lg:flex lg:flex-col lg:max-h-[calc(100dvh-3rem)]`}>
+        <div className={`${selectedReq ? 'lg:col-span-2 lg:h-[calc(100dvh-3rem)]' : 'lg:col-span-5 lg:max-h-[calc(100dvh-3rem)]'} bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm overflow-hidden lg:sticky lg:top-6 lg:flex lg:flex-col`}>
           <div className="flex-shrink-0 px-5 py-3 border-b border-gray-100 dark:border-slate-700">
             <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
               {filtered.length} request{filtered.length !== 1 ? 's' : ''}
@@ -273,19 +273,20 @@ export default function AdminRequests() {
                 key={req.id}
                 type="button"
                 onClick={() => select(req.id)}
-                className={`w-full text-left px-4 py-4 transition-colors ${
-                  selectedId === req.id ? 'bg-blue-50 dark:bg-blue-900/20' : 'active:bg-gray-50 dark:active:bg-slate-700/50'
+                className={`relative w-full text-left px-4 py-3 transition-colors ${
+                  selectedId === req.id ? 'bg-blue-50 dark:bg-blue-900/20' : 'hover:bg-gray-50 dark:hover:bg-slate-700/40'
                 }`}
               >
+                {selectedId === req.id && <span className="absolute left-0 inset-y-2 w-1 rounded-r bg-blue-600" />}
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="text-sm font-semibold text-gray-900 dark:text-white leading-snug">{req.type}</p>
-                    <p className="text-sm text-gray-600 dark:text-gray-300 mt-0.5">{req.student}</p>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{req.type}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-300 mt-0.5 truncate">{req.student}</p>
                   </div>
                   <StatusBadge status={req.status} label={STATUS_LABEL[req.status]} />
                 </div>
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-xs">
-                  <span className="font-mono text-blue-600 dark:text-blue-400 break-all">{req.id}</span>
+                  <span className="font-mono text-blue-600 dark:text-blue-400 truncate">{req.id}</span>
                   <span className="inline-flex items-center gap-1 font-medium text-slate-700 dark:text-slate-200">
                     <Copy className="w-3 h-3" /> {req.copiesLabel}
                   </span>

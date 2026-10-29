@@ -80,6 +80,9 @@ function Avatar({ name, size = 'md', inactive }: { name: string; size?: 'md' | '
   );
 }
 
+const PANEL_H = 'lg:h-[min(44rem,calc(100dvh-3rem))]';
+const LIST_MAX_H = 'lg:max-h-[min(44rem,calc(100dvh-3rem))]';
+
 export default function AdminUsers() {
   const [users, setUsers] = useState<ManagedUser[]>([]);
   const [requests, setRequests] = useState<StudentRequest[]>([]);
@@ -262,59 +265,61 @@ export default function AdminUsers() {
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-5 gap-6 items-start">
-        {/* List */}
-        <div className={`${selected ? 'lg:col-span-3' : 'lg:col-span-5'} bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm overflow-hidden`}>
-          <div className="px-5 py-3 border-b border-gray-100 dark:border-slate-700">
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+      <div className="grid lg:grid-cols-2 gap-5 items-start">
+        {/* List — same height as the detail panel, scrolls on its own */}
+        <div className={`${selected ? `${PANEL_H} lg:sticky lg:top-6` : `lg:col-span-2 ${LIST_MAX_H}`} bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm overflow-hidden lg:flex lg:flex-col`}>
+          <div className="flex-shrink-0 flex items-center justify-between gap-2 px-5 h-12 border-b border-gray-100 dark:border-slate-700">
+            <span className="text-sm font-semibold text-gray-900 dark:text-white">
               {filtered.length} user{filtered.length !== 1 ? 's' : ''}
             </span>
+            {selected && <span className="text-xs text-gray-500 dark:text-gray-400">Tap a user to view</span>}
           </div>
 
+          <div className="lg:flex-1 lg:min-h-0 lg:overflow-y-auto overscroll-contain">
           {filtered.length === 0 && (
             <div className="py-12 text-center text-sm text-gray-500 dark:text-gray-400">No users match your search.</div>
           )}
 
-          {/* Phone: cards */}
-          <div className="sm:hidden divide-y divide-gray-100 dark:divide-slate-700">
-            {filtered.map(user => (
-              <button
-                key={user.id}
-                type="button"
-                onClick={() => select(user.id)}
-                className={`w-full text-left px-4 py-4 flex items-start gap-3 transition-colors ${
-                  selectedId === user.id ? 'bg-blue-50 dark:bg-blue-900/20' : 'active:bg-gray-50 dark:active:bg-slate-700/50'
-                }`}
-              >
-                <Avatar name={user.name} inactive={user.status === 'inactive'} />
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-start justify-between gap-2">
-                    <p className="text-sm font-semibold text-gray-900 dark:text-white leading-snug">{user.name}</p>
+          {/* Compact rows: phones, and beside the detail panel */}
+          <div className={`${selected ? '' : 'sm:hidden'} divide-y divide-gray-100 dark:divide-slate-700`}>
+            {filtered.map(user => {
+              const active = selectedId === user.id;
+              return (
+                <button
+                  key={user.id}
+                  type="button"
+                  onClick={() => select(user.id)}
+                  className={`relative w-full h-[4.5rem] text-left px-4 flex items-center gap-3 transition-colors ${
+                    active ? 'bg-blue-50 dark:bg-blue-900/20' : 'hover:bg-gray-50 dark:hover:bg-slate-700/40'
+                  }`}
+                >
+                  {active && <span className="absolute left-0 inset-y-2 w-1 rounded-r bg-blue-600" />}
+                  <Avatar name={user.name} inactive={user.status === 'inactive'} />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{user.name}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
+                      {user.studentId.trim() ? <span className="font-mono">{user.studentId}</span> : user.email}
+                    </p>
+                  </div>
+                  <div className="flex flex-col items-end gap-1 flex-shrink-0">
                     <AccountBadge status={user.status} />
-                  </div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 break-all mt-0.5">{user.email}</p>
-                  <div className="flex flex-wrap items-center gap-2 mt-2">
                     <RoleTag role={user.role} />
-                    {!user.studentId.trim() && <NoIdTag />}
-                    <span className="text-xs text-gray-500 dark:text-gray-400">
-                      {user.requests} request{user.requests === 1 ? '' : 's'}
-                    </span>
                   </div>
-                </div>
-              </button>
-            ))}
+                </button>
+              );
+            })}
           </div>
 
           {/* Tablet & desktop: table */}
-          {filtered.length > 0 && (
+          {filtered.length > 0 && !selected && (
             <div className="hidden sm:block overflow-x-auto">
               <table className="w-full">
                 <thead>
                   <tr className="text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 bg-gray-50/80 dark:bg-slate-900/40 border-b border-gray-100 dark:border-slate-700">
                     <th className="px-5 py-3">User</th>
-                    <th className={`px-5 py-3 ${selected ? 'hidden' : 'hidden md:table-cell'}`}>Student ID</th>
+                    <th className="px-5 py-3 hidden md:table-cell">Student ID</th>
                     <th className="px-5 py-3">Role</th>
-                    <th className={`px-5 py-3 text-center ${selected ? 'hidden' : 'hidden lg:table-cell'}`}>Requests</th>
+                    <th className="px-5 py-3 text-center hidden lg:table-cell">Requests</th>
                     <th className="px-5 py-3">Account</th>
                     <th className="w-8" />
                   </tr>
@@ -330,30 +335,30 @@ export default function AdminUsers() {
                           active ? 'bg-blue-50 dark:bg-blue-900/20' : 'hover:bg-gray-50 dark:hover:bg-slate-700/40'
                         }`}
                       >
-                        <td className="px-5 py-3.5">
-                          <div className="flex items-center gap-3 min-w-0">
+                        <td className="px-5 py-3 h-16">
+                          <div className="flex items-center gap-3 min-w-0 max-w-[22rem]">
                             <Avatar name={user.name} inactive={user.status === 'inactive'} />
                             <div className="min-w-0">
-                              <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug">{user.name}</p>
-                              <p className="text-xs text-gray-500 dark:text-gray-400 break-all">{user.email}</p>
+                              <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{user.name}</p>
+                              <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user.email}</p>
                             </div>
                           </div>
                         </td>
-                        <td className={`px-5 py-3.5 ${selected ? 'hidden' : 'hidden md:table-cell'}`}>
+                        <td className="px-5 py-3 hidden md:table-cell">
                           {user.studentId.trim()
                             ? <span className="text-sm font-mono text-gray-700 dark:text-gray-300">{user.studentId}</span>
                             : <NoIdTag />}
                         </td>
-                        <td className="px-5 py-3.5">
+                        <td className="px-5 py-3">
                           <RoleTag role={user.role} />
                         </td>
-                        <td className={`px-5 py-3.5 text-center ${selected ? 'hidden' : 'hidden lg:table-cell'}`}>
+                        <td className="px-5 py-3 text-center hidden lg:table-cell">
                           <span className="text-sm font-medium text-gray-700 dark:text-gray-300 tabular-nums">{user.requests}</span>
                         </td>
-                        <td className="px-5 py-3.5">
+                        <td className="px-5 py-3">
                           <AccountBadge status={user.status} />
                         </td>
-                        <td className="pr-4 py-3.5">
+                        <td className="pr-4 py-3">
                           <ChevronRight className={`w-4 h-4 ${active ? 'text-blue-500' : 'text-gray-300 dark:text-slate-600'}`} />
                         </td>
                       </tr>
@@ -363,14 +368,14 @@ export default function AdminUsers() {
               </table>
             </div>
           )}
+          </div>
         </div>
 
-        {/* Detail panel */}
+        {/* Detail panel — one card, same height as the list */}
         {selected && (
-          <div ref={detailRef} className="lg:col-span-2 lg:sticky lg:top-6 space-y-4 scroll-mt-16">
-            {/* Profile */}
-            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm overflow-hidden">
-              <div className="flex items-start gap-4 px-5 py-4 border-b border-gray-100 dark:border-slate-700">
+          <div ref={detailRef} className="lg:sticky lg:top-6 scroll-mt-16">
+            <div className={`bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm overflow-hidden lg:flex lg:flex-col ${PANEL_H}`}>
+              <div className="flex-shrink-0 flex items-center gap-4 px-5 py-4 border-b border-gray-100 dark:border-slate-700">
                 <Avatar name={selected.name} size="lg" inactive={selected.status === 'inactive'} />
                 <div className="min-w-0 flex-1">
                   <h3 className="font-semibold text-gray-900 dark:text-white leading-snug" style={{ fontFamily: 'Poppins, sans-serif' }}>
@@ -402,6 +407,7 @@ export default function AdminUsers() {
                 </div>
               </div>
 
+              <div className="lg:flex-1 lg:min-h-0 lg:overflow-y-auto overscroll-contain">
               {saved && !editing && (
                 <div className="mx-5 mt-4 p-3 rounded-xl bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 flex items-center gap-2">
                   <CheckCircle className="w-4 h-4 flex-shrink-0 text-green-600 dark:text-green-400" />
@@ -494,27 +500,26 @@ export default function AdminUsers() {
                 <InfoRow icon={CalendarDays} label="Joined">{selected.joined}</InfoRow>
               </dl>
               )}
-            </div>
 
-            {/* Requests */}
-            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm overflow-hidden">
-              <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-100 dark:border-slate-700">
-                <h3 className="font-semibold text-gray-900 dark:text-white" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                  Requests
-                </h3>
-                <span className="text-sm text-gray-500 dark:text-gray-400 tabular-nums">{selectedRequests.length}</span>
-              </div>
+              {/* Requests */}
+              <div className="border-t border-gray-100 dark:border-slate-700">
+                <div className="flex items-center justify-between px-5 h-11 bg-slate-50/80 dark:bg-slate-900/40 border-b border-gray-100 dark:border-slate-700">
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-300">Requests</h3>
+                  <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 text-gray-700 dark:text-gray-200 tabular-nums">
+                    {selectedRequests.length}
+                  </span>
+                </div>
               {selectedRequests.length === 0 ? (
                 <div className="px-5 py-6 text-center">
                   <FileText className="w-5 h-5 mx-auto text-gray-300 dark:text-slate-600" />
                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-1.5">No requests yet.</p>
                 </div>
               ) : (
-                <ul className="divide-y divide-gray-100 dark:divide-slate-700 max-h-72 overflow-y-auto">
+                <ul className="divide-y divide-gray-100 dark:divide-slate-700">
                   {selectedRequests.slice(0, 8).map(req => (
-                    <li key={req.id} className="px-5 py-3 flex items-start justify-between gap-3">
+                    <li key={req.id} className="px-5 h-14 flex items-center justify-between gap-3">
                       <div className="min-w-0">
-                        <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug">{req.type}</p>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{req.type}</p>
                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                           <span className="font-mono text-blue-600 dark:text-blue-400">{req.id}</span> · {formatShortDate(req.createdAt)}
                         </p>
@@ -524,14 +529,11 @@ export default function AdminUsers() {
                   ))}
                 </ul>
               )}
-            </div>
+              </div>
+              </div>
 
-            {/* Actions */}
-            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm p-5 space-y-3">
-              <h3 className="font-semibold text-gray-900 dark:text-white" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                Account actions
-              </h3>
-
+              {/* Actions — pinned to the bottom of the panel */}
+              <div className="flex-shrink-0 px-5 py-4 border-t border-gray-100 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-900/40 space-y-2.5">
               {error && (
                 <div className="p-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 flex items-start gap-2">
                   <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0 text-red-500" />
@@ -539,15 +541,37 @@ export default function AdminUsers() {
                 </div>
               )}
 
-              <a
-                href={`mailto:${selected.email}`}
-                className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition-colors"
-              >
+              {!confirming && (
+              <div className="grid grid-cols-2 gap-2">
+              <a href={`mailto:${selected.email}`} className={btn('primary')}>
                 <Mail className="w-4 h-4" />
                 Send email
               </a>
 
               {selected.status === 'active' ? (
+                  <button
+                    type="button"
+                    onClick={() => setConfirming(true)}
+                    className={btn('dangerOutline')}
+                  >
+                    <UserX className="w-4 h-4" />
+                    Deactivate
+                  </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => changeStatus(selected)}
+                  disabled={saving}
+                  className={btn('success')}
+                >
+                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserCheck className="w-4 h-4" />}
+                  Activate
+                </button>
+              )}
+              </div>
+              )}
+
+              {selected.status === 'active' && (
                 confirming ? (
                   <div className="p-3.5 rounded-xl border border-red-200 bg-red-50 dark:border-red-900/60 dark:bg-red-900/15">
                     <p className="text-sm font-medium text-red-800 dark:text-red-200">Deactivate {selected.name.split(' ')[0]}’s account?</p>
@@ -572,27 +596,9 @@ export default function AdminUsers() {
                       </button>
                     </div>
                   </div>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setConfirming(true)}
-                    className={btn('dangerOutline', 'md', 'w-full')}
-                  >
-                    <UserX className="w-4 h-4" />
-                    Deactivate account
-                  </button>
-                )
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => changeStatus(selected)}
-                  disabled={saving}
-                  className={btn('success', 'md', 'w-full')}
-                >
-                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserCheck className="w-4 h-4" />}
-                  Activate account
-                </button>
+                ) : null
               )}
+              </div>
             </div>
           </div>
         )}
