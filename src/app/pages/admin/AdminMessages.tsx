@@ -3,12 +3,9 @@ import { useSearchParams } from 'react-router';
 import { MessageSquare } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { MessageThread } from '../../components/MessageThread';
+import { ProfileAvatar } from '../../components/ProfileAvatar';
+import { formatMessageTime } from '../../lib/messageTime';
 import { fetchInbox, openStudentThread, subscribeMessages, type InboxThread } from '../../lib/messages';
-
-function when(iso: string | null) {
-  if (!iso) return '';
-  return new Date(iso).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
-}
 
 export default function AdminMessages() {
   const { user } = useAuth();
@@ -68,15 +65,18 @@ export default function AdminMessages() {
                 key={thread.id}
                 type="button"
                 onClick={() => open(thread)}
-                className={`w-full h-[4.25rem] text-left px-4 flex flex-col justify-center border-b border-gray-100 dark:border-slate-700 ${
+                className={`w-full h-[4.25rem] text-left px-4 flex items-center gap-3 border-b border-gray-100 dark:border-slate-700 ${
                   activeId === thread.id ? 'bg-blue-50 dark:bg-blue-900/20' : 'hover:bg-gray-50 dark:hover:bg-slate-700/40'
                 }`}
               >
-                <div className="flex items-baseline justify-between gap-2">
-                  <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{thread.studentName}</p>
-                  <span className="text-[11px] text-gray-400 whitespace-nowrap">{when(thread.lastAt)}</span>
+                <ProfileAvatar name={thread.studentName} url={thread.avatarUrl} className="w-9 h-9 text-sm" />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-baseline justify-between gap-2">
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{thread.studentName}</p>
+                    <span className="text-[11px] text-gray-400 whitespace-nowrap">{formatMessageTime(thread.lastAt)}</span>
+                  </div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">{thread.lastBody || 'No messages yet'}</p>
                 </div>
-                <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">{thread.lastBody || 'No messages yet'}</p>
               </button>
             ))}
           </div>
@@ -94,6 +94,7 @@ export default function AdminMessages() {
               meId={user.id}
               asAdmin
               peerName={active.studentName}
+              peerAvatar={active.avatarUrl}
               onDeleted={() => { setActiveId(null); load(); }}
             />
           ) : user && activeId && !active ? (

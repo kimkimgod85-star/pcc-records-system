@@ -9,6 +9,8 @@ import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import { useUnreadNotifications } from '../lib/useUnreadNotifications';
 import { withBase } from '../lib/basePath';
+import { ProfileAvatar } from './ProfileAvatar';
+import { AvatarCropDialog } from './AvatarCropDialog';
 
 const PCC_LOGO_URL = withBase('PCC%20LOGO.png');
 
@@ -18,11 +20,12 @@ interface HeaderProps {
 
 export function Header({ variant = 'app' }: HeaderProps) {
   const { theme, toggleTheme } = useTheme();
-  const { user, logout, isAuthenticated } = useAuth();
+  const { user, logout, isAuthenticated, setAvatar } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [photoOpen, setPhotoOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
   const navRef = useRef<HTMLElement>(null);
@@ -196,11 +199,7 @@ export function Header({ variant = 'app' }: HeaderProps) {
                     onClick={() => setProfileOpen(!profileOpen)}
                     className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-blue-50 dark:hover:bg-slate-800 transition-colors"
                   >
-                    <div className="w-7 h-7 bg-primary rounded-full flex items-center justify-center">
-                      <span className="text-xs font-medium text-white">
-                        {user?.name?.charAt(0).toUpperCase()}
-                      </span>
-                    </div>
+                    <ProfileAvatar name={user?.name || 'User'} url={user?.avatar} className="w-7 h-7 text-xs" />
                     <span className="hidden sm:block text-sm font-medium text-gray-800 dark:text-gray-200">{user?.name?.split(' ')[0]}</span>
                     <ChevronDown className="w-3 h-3 text-gray-500 dark:text-gray-400" />
                   </button>
@@ -213,12 +212,19 @@ export function Header({ variant = 'app' }: HeaderProps) {
                           {user?.role}
                         </span>
                       </div>
+                      <button
+                        type="button"
+                        onClick={() => { setProfileOpen(false); setPhotoOpen(true); }}
+                        className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700"
+                      >
+                        <User className="w-4 h-4" /> Change photo
+                      </button>
                       <Link
                         to="/dashboard"
                         onClick={() => setProfileOpen(false)}
                         className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700"
                       >
-                        <User className="w-4 h-4" /> My Dashboard
+                        <LayoutDashboard className="w-4 h-4" /> My Dashboard
                       </Link>
                       {user?.role === 'admin' && (
                         <Link
@@ -329,6 +335,14 @@ export function Header({ variant = 'app' }: HeaderProps) {
             </div>
           )}
         </div>
+      )}
+      {user && (
+        <AvatarCropDialog
+          open={photoOpen}
+          userId={user.id}
+          onClose={() => setPhotoOpen(false)}
+          onSaved={setAvatar}
+        />
       )}
     </header>
   );

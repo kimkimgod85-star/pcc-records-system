@@ -3,6 +3,7 @@ import { MessageSquare } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { MessageThread } from '../components/MessageThread';
 import { openStudentThread } from '../lib/messages';
+import { withBase } from '../lib/basePath';
 
 export default function MessagesPage() {
   const { user } = useAuth();
@@ -45,6 +46,8 @@ export default function MessagesPage() {
             meId={user.id}
             asAdmin={false}
             peerName="Registrar’s Office"
+            peerAvatar={withBase('PCC%20LOGO.png')}
+            peerFit="contain"
             onDeleted={() => { setConversationId(null); setGone(true); }}
           />
         )}

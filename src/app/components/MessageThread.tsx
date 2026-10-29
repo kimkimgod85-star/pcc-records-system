@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { Check, Loader2, Pencil, Send, Trash2, X } from 'lucide-react';
 import { btn } from '../lib/ui';
+import { formatMessageTime } from '../lib/messageTime';
+import { ProfileAvatar } from './ProfileAvatar';
 import {
   MESSAGE_LIMIT,
   deleteConversation,
@@ -13,25 +15,21 @@ import {
   type ChatMessage,
 } from '../lib/messages';
 
-function when(iso: string) {
-  const date = new Date(iso);
-  const sameDay = date.toDateString() === new Date().toDateString();
-  return date.toLocaleString('en-US', sameDay
-    ? { hour: 'numeric', minute: '2-digit' }
-    : { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
-}
-
 export function MessageThread({
   conversationId,
   meId,
   asAdmin,
   peerName,
+  peerAvatar,
+  peerFit = 'cover',
   onDeleted,
 }: {
   conversationId: string;
   meId: string;
   asAdmin: boolean;
   peerName: string;
+  peerAvatar?: string | null;
+  peerFit?: 'cover' | 'contain';
   onDeleted?: () => void;
 }) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -118,9 +116,12 @@ export function MessageThread({
   return (
     <div className="flex flex-col h-full min-h-0 bg-white dark:bg-slate-800">
       <div className="flex-shrink-0 flex items-center justify-between gap-3 px-4 h-14 border-b border-gray-100 dark:border-slate-700">
-        <div className="min-w-0">
-          <p className="text-sm font-semibold text-gray-900 dark:text-white truncate" style={{ fontFamily: 'Poppins, sans-serif' }}>{peerName}</p>
-          <p className="text-[11px] text-gray-500 dark:text-gray-400">{asAdmin ? 'Student' : 'Registrar’s Office'}</p>
+        <div className="flex items-center gap-3 min-w-0">
+          <ProfileAvatar name={peerName} url={peerAvatar} fit={peerFit} className="w-9 h-9 text-sm" />
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-gray-900 dark:text-white truncate" style={{ fontFamily: 'Poppins, sans-serif' }}>{peerName}</p>
+            <p className="text-[11px] text-gray-500 dark:text-gray-400">{asAdmin ? 'Student' : 'Registrar’s Office'}</p>
+          </div>
         </div>
         {!confirming ? (
           <button type="button" onClick={() => setConfirming(true)} className={btn('dangerOutline', 'sm')}>
@@ -174,7 +175,7 @@ export function MessageThread({
                   <p className="text-sm whitespace-pre-wrap break-words">{message.body}</p>
                 )}
                 <div className={`mt-1 flex items-center gap-2 text-[10px] ${mine ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400'}`}>
-                  <span>{when(message.createdAt)}{message.editedAt ? ' · edited' : ''}</span>
+                  <span>{formatMessageTime(message.createdAt)}{message.editedAt ? ' · edited' : ''}</span>
                   {mine && !editing && (
                     <span className="inline-flex gap-0.5 ml-auto">
                       <button

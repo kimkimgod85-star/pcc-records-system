@@ -22,6 +22,7 @@ export interface InboxThread {
   lastBody: string;
   lastAt: string | null;
   officeReadAt: string;
+  avatarUrl: string | null;
 }
 
 function explain(error: { message?: string; code?: string } | null, fallback: string) {
@@ -82,10 +83,17 @@ export async function fetchInbox(): Promise<InboxThread[]> {
     .order('updated_at', { ascending: false });
   if (error) throw new Error(explain(error, 'Could not load messages.'));
   const ids = (data || []).map(row => String(row.student_id));
-  const { data: profiles } = ids.length
-    ? await client.from('profiles').select('id, full_name, email').in('id', ids)
-    : { data: [] };
-  const names = new Map((profiles || []).map(profile => [String(profile.id), profile]));
+  let profiles: { id: string; full_name?: string | null; email?: string | null; avatar_url?: string | null }[] = [];
+  if (ids.length) {
+    const withPhoto = await client.from('profiles').select('id, full_name, email, avatar_url').in('id', ids);
+    if (withPhoto.error) {
+      const plain = await client.from('profiles').select('id, full_name, email').in('id', ids);
+      profiles = plain.data || [];
+    } else {
+      profiles = withPhoto.data || [];
+    }
+  }
+  const names = new Map(profiles.map(profile => [String(profile.id), profile]));
   return (data || []).map(row => {
     const profile = names.get(String(row.student_id));
     return {
@@ -96,6 +104,7 @@ export async function fetchInbox(): Promise<InboxThread[]> {
       lastBody: String(row.last_body || ''),
       lastAt: row.last_at ? String(row.last_at) : null,
       officeReadAt: String(row.office_read_at),
+      avatarUrl: profile?.avatar_url || null,
     };
   });
 }

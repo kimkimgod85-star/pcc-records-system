@@ -48,6 +48,7 @@ interface AuthContextType {
   resetPassword: (email: string) => Promise<{ success: boolean; error?: string }>;
   resetPasswordWithCode: (email: string, code: string, newPassword: string) => Promise<{ success: boolean; error?: string; user?: User }>;
   logout: () => Promise<void>;
+  setAvatar: (url: string) => void;
   isAuthenticated: boolean;
 }
 
@@ -64,6 +65,7 @@ const AuthContext = createContext<AuthContextType>({
   resetPassword: async () => ({ success: false }),
   resetPasswordWithCode: async () => ({ success: false }),
   logout: async () => {},
+  setAvatar: () => {},
   isAuthenticated: false,
 });
 
@@ -150,11 +152,21 @@ async function mapAuthUser(authUser: AuthUser): Promise<User> {
   const client = requireSupabase();
   const meta = authUser.user_metadata || {};
 
-  const { data, error } = await client
+  let { data, error } = await client
     .from('profiles')
-    .select('full_name, student_id, role, email, status')
+    .select('full_name, student_id, role, email, status, avatar_url')
     .eq('id', authUser.id)
     .maybeSingle();
+
+  if (error && /avatar_url|schema cache|column/i.test(error.message)) {
+    const fallback = await client
+      .from('profiles')
+      .select('full_name, student_id, role, email, status')
+      .eq('id', authUser.id)
+      .maybeSingle();
+    data = fallback.data;
+    error = fallback.error;
+  }
 
   if (error) throw error;
 
@@ -176,7 +188,7 @@ async function mapAuthUser(authUser: AuthUser): Promise<User> {
     name: data.full_name || meta.full_name || meta.name || (authUser.email || 'User').split('@')[0],
     studentId: data.student_id || undefined,
     role: mapRole(data.role),
-    avatar: meta.avatar_url || meta.picture || undefined,
+    avatar: (data as { avatar_url?: string | null }).avatar_url || meta.avatar_url || meta.picture || undefined,
   };
 }
 
@@ -602,6 +614,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const setAvatar = (url: string) => {
+    setUser(current => (current ? { ...current, avatar: url } : current));
+  };
+
   const logout = async () => {
     if (isSupabaseConfigured) {
       await requireSupabase().auth.signOut({ scope: 'local' });
@@ -615,7 +631,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, ready, login, register, verifyEmailCode, resendEmailCode, verifyLoginCode, resendLoginCode, loginWithGoogle, resetPassword, resetPasswordWithCode, logout, isAuthenticated: !!user }}>
+    <AuthContext.Provider value={{ user, ready, login, register, verifyEmailCode, resendEmailCode, verifyLoginCode, resendLoginCode, loginWithGoogle, resetPassword, resetPasswordWithCode, logout, setAvatar, isAuthenticated: !!user }}>
       {children}
     </AuthContext.Provider>
   );

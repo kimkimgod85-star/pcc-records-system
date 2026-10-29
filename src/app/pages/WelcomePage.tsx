@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { withBase } from '../lib/basePath';
+import { BlueCover } from '../components/BlueCover';
 
 const SKIP_KEY = 'pcc-skip-welcome';
 
@@ -102,10 +103,8 @@ export default function WelcomePage() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-      <div className="bg-gradient-to-r from-blue-600 to-blue-800 dark:from-blue-700 dark:to-blue-900 rounded-2xl p-6 sm:p-8 mb-6 text-white overflow-hidden relative">
-        <div className="absolute right-0 top-0 w-56 h-56 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/4" />
-        <div className="absolute right-10 bottom-0 w-28 h-28 bg-white/5 rounded-full translate-y-1/2" />
-        <div className="relative flex flex-col sm:flex-row sm:items-center gap-5">
+      <BlueCover className="p-6 sm:p-8 mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-5">
           <img src={withBase('PCC%20LOGO.png')} alt="PCC logo" className="h-16 w-auto object-contain drop-shadow" />
           <div>
             <p className="text-blue-200 text-sm mb-1">Welcome to PCC Records,</p>
@@ -117,7 +116,7 @@ export default function WelcomePage() {
             </p>
           </div>
         </div>
-      </div>
+      </BlueCover>
 
       <h2 className="font-semibold text-gray-900 dark:text-white mb-3" style={{ fontFamily: 'Poppins, sans-serif' }}>
         How it works

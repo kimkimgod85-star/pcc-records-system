@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import {
-  Bell, Clock, CheckCircle, Package, Loader,
+  Bell, Camera, Clock, CheckCircle, Package, Loader,
   ArrowRight, Plus, CreditCard, Wallet, AlertCircle, HelpCircle,
   type LucideIcon,
 } from 'lucide-react';
@@ -12,6 +12,9 @@ import { formatLongDate, paymentLabel } from '../lib/status';
 import { StatusBadge } from '../components/StatusBadge';
 import { DeviceNotificationBanner } from '../components/DeviceNotificationPrompt';
 import { InstallAppBanner } from '../components/InstallApp';
+import { BlueCover } from '../components/BlueCover';
+import { ProfileAvatar } from '../components/ProfileAvatar';
+import { AvatarCropDialog } from '../components/AvatarCropDialog';
 
 type PaymentStatus = 'unpaid' | 'pay_later' | 'paid' | 'verifying' | 'awaiting' | 'none';
 
@@ -76,7 +79,8 @@ const StatCard = ({ icon: Icon, label, hint, count, tone }: {
 );
 
 export default function StudentDashboard() {
-  const { user } = useAuth();
+  const { user, setAvatar } = useAuth();
+  const [photoOpen, setPhotoOpen] = useState(false);
   const [paymentTab, setPaymentTab] = useState<'to_pay' | 'paid' | 'all'>('to_pay');
   const [rawRequests, setRawRequests] = useState<StudentRequest[]>([]);
   const [alerts, setAlerts] = useState<{ msg: string; time: string }[]>([]);
@@ -136,19 +140,31 @@ export default function StudentDashboard() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-      {/* Welcome Banner */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-800 dark:from-blue-700 dark:to-blue-900 rounded-2xl p-5 sm:p-6 mb-6 text-white overflow-hidden relative">
-        <div className="absolute right-0 top-0 w-48 h-48 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/4" />
-        <div className="absolute right-8 bottom-0 w-24 h-24 bg-white/5 rounded-full translate-y-1/2" />
+      <BlueCover className="p-5 sm:p-6 mb-6">
+        <div className="flex items-center gap-4">
+          <button
+            type="button"
+            onClick={() => setPhotoOpen(true)}
+            className="relative rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+            aria-label="Change profile photo"
+          >
+            <ProfileAvatar name={user?.name || 'Student'} url={user?.avatar} className="w-20 h-20 text-2xl ring-4 ring-white/40" />
+            <span className="absolute -bottom-0.5 -right-0.5 w-7 h-7 rounded-full bg-white text-blue-700 flex items-center justify-center shadow">
+              <Camera className="w-3.5 h-3.5" />
+            </span>
+          </button>
+          <div className="min-w-0">
+            <p className="text-blue-100 text-sm mb-1">Good day,</p>
+            <h1 className="text-white mb-1 truncate" style={{ fontFamily: 'Poppins, sans-serif', fontSize: '1.5rem', fontWeight: 600 }}>
+              {user?.name}
+            </h1>
+            <p className="text-blue-100 text-sm">
+              Student ID: {user?.studentId || 'N/A'} •{' '}
+              <span className="capitalize">{user?.role}</span>
+            </p>
+          </div>
+        </div>
         <div className="relative">
-          <p className="text-blue-200 text-sm mb-1">Good day,</p>
-          <h1 className="text-white mb-1" style={{ fontFamily: 'Poppins, sans-serif', fontSize: '1.5rem', fontWeight: 600 }}>
-            {user?.name} 👋
-          </h1>
-          <p className="text-blue-100 text-sm">
-            Student ID: {user?.studentId || 'N/A'} •{' '}
-            <span className="capitalize">{user?.role}</span>
-          </p>
           <div className="mt-4 flex flex-wrap gap-2">
             <Link
               to="/request"
@@ -166,7 +182,15 @@ export default function StudentDashboard() {
             </Link>
           </div>
         </div>
-      </div>
+      </BlueCover>
+      {user && (
+        <AvatarCropDialog
+          open={photoOpen}
+          userId={user.id}
+          onClose={() => setPhotoOpen(false)}
+          onSaved={setAvatar}
+        />
+      )}
 
       {user && <DeviceNotificationBanner userId={user.id} />}
       <InstallAppBanner className="mb-6" />
