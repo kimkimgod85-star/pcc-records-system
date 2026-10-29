@@ -1,8 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router';
 import {
-  FileText, Calendar, Bell, Shield, Clock, CheckCircle,
-  ArrowRight, Upload, Search, BadgeCheck, MapPin, Mail, Phone, GraduationCap
+  FileText, Calendar, Bell, Shield, CheckCircle,
+  ArrowRight, Upload, Search, BadgeCheck, GraduationCap
 } from 'lucide-react';
 import { Header } from '../components/Header';
 import { Footer } from '../components/Footer';
@@ -271,60 +271,27 @@ export default function LandingPage() {
 
       <InstallAppSection />
 
-      {/* Contact Section */}
-      <section id="contact" className="py-16 sm:py-20 bg-primary dark:bg-blue-900">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-10 items-center">
-            <div>
-              <span className="text-blue-200 text-sm font-medium tracking-wide uppercase">Contact Information</span>
-              <h2 className="mt-2 text-white" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                Get in Touch with the Registrar
-              </h2>
-              <p className="mt-3 text-blue-100">
-                For inquiries about your documents or the system, contact the Registrar's Office directly.
-              </p>
-
-              <div className="mt-8 space-y-4">
-                {[
-                  { icon: MapPin, label: 'Rizal Avenue, Tuburan Dist. Pagadian City, Philippines, 7016' },
-                  { icon: Mail, label: 'registrar@pcci.ph.education' },
-                  { icon: Phone, label: '0918 727 2849' },
-                  { icon: Clock, label: 'Mon–Sat: 8:00 AM – 4:00 PM | Sun: Closed' },
-                ].map((item, i) => (
-                  <div key={i} className="flex items-start gap-3">
-                    <div className="w-9 h-9 bg-white/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                      <item.icon className="w-4 h-4 text-blue-200" />
-                    </div>
-                    <p className="text-blue-100 text-sm mt-1.5">{item.label}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 sm:p-7 shadow-xl">
-              <h3 className="text-gray-900 dark:text-white mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                Quick Start
-              </h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">
-                Already have an account? Login to request your documents. New student? Create an account to get started.
-              </p>
-              <div className="space-y-3">
-                <Link
-                  to="/login"
-                  className="flex items-center justify-between w-full px-5 py-3.5 bg-blue-700 hover:bg-white hover:text-blue-800 text-white rounded-xl border border-blue-700 hover:border-blue-800 transition-colors"
-                >
-                  <span className="text-sm sm:text-base font-semibold">Login to Your Account</span>
-                  <ArrowRight className="w-4 h-4 flex-shrink-0" />
-                </Link>
-                <Link
-                  to="/register"
-                  className="flex items-center justify-between w-full px-5 py-3.5 bg-white dark:bg-slate-800 hover:bg-blue-800 hover:text-white text-gray-900 dark:text-white rounded-xl border border-gray-300 dark:border-slate-600 hover:border-blue-800 transition-colors"
-                >
-                  <span className="text-sm sm:text-base font-semibold">Create New Account</span>
-                  <ArrowRight className="w-4 h-4 flex-shrink-0" />
-                </Link>
-              </div>
-            </div>
+      <section id="contact" className="py-14 sm:py-16 bg-white dark:bg-slate-900">
+        <div className="max-w-xl mx-auto px-4 sm:px-6 text-center">
+          <h2 className="text-gray-900 dark:text-white" style={{ fontFamily: 'Poppins, sans-serif' }}>
+            Start a request
+          </h2>
+          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+            Sign in if you already have an account. New students register first. Office details are in the footer.
+          </p>
+          <div className="mt-6 grid sm:grid-cols-2 gap-3">
+            <Link
+              to="/login"
+              className="inline-flex items-center justify-center gap-2 h-12 px-5 rounded-xl bg-blue-700 hover:bg-blue-800 text-white text-sm font-semibold"
+            >
+              Login <ArrowRight className="w-4 h-4" />
+            </Link>
+            <Link
+              to="/register"
+              className="inline-flex items-center justify-center gap-2 h-12 px-5 rounded-xl border border-gray-300 dark:border-slate-600 text-gray-900 dark:text-white text-sm font-semibold hover:bg-gray-50 dark:hover:bg-slate-800"
+            >
+              Create account <ArrowRight className="w-4 h-4" />
+            </Link>
           </div>
         </div>
       </section>
