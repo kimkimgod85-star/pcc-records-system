@@ -1,7 +1,7 @@
 import { btn, ICON_BTN } from '../../lib/ui';
 import { useEffect, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { Link } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
 import {
   Search, UserX, UserCheck, Mail, MessageSquare, X, ChevronRight, Loader2, AlertCircle,
   Users, GraduationCap, Award, Copy, Check, FileText, IdCard, CalendarDays,
@@ -104,6 +104,7 @@ function Avatar({ name, url, size = 'md', inactive, onView }: { name: string; ur
 const LIST_MAX_H = 'lg:max-h-[min(44rem,calc(100dvh-3rem))]';
 
 export default function AdminUsers() {
+  const [params, setParams] = useSearchParams();
   const [users, setUsers] = useState<ManagedUser[]>([]);
   const [requests, setRequests] = useState<StudentRequest[]>([]);
   const [search, setSearch] = useState('');
@@ -130,6 +131,13 @@ export default function AdminUsers() {
     fetchManagedUsers().then(setUsers);
     return subscribeUsers(() => { fetchManagedUsers().then(setUsers); });
   }, []);
+
+  useEffect(() => {
+    const focusId = params.get('id');
+    if (!focusId || !users.some(user => user.id === focusId)) return;
+    select(focusId);
+    setParams({}, { replace: true });
+  }, [params, users]);
 
   useEffect(() => {
     if (!photo) return;

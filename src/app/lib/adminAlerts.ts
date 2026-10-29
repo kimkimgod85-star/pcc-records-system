@@ -6,7 +6,7 @@ import { formatPickup } from './status';
 
 export interface AdminAlert {
   id: string;
-  kind: 'request' | 'payment' | 'booking';
+  kind: 'request' | 'payment' | 'booking' | 'account';
   title: string;
   detail: string;
   link: string;
@@ -26,7 +26,7 @@ function copies(quantity: unknown) {
   return `${n} ${n === 1 ? 'copy' : 'copies'}`;
 }
 
-/** Rings the office chime and lists a pop-up whenever a student submits a request, a payment, or books a pickup. */
+/** Rings the office chime when someone creates an account, or a student submits a request, a payment, or a pickup. */
 export function useAdminAlerts(enabled: boolean) {
   const [alerts, setAlerts] = useState<AdminAlert[]>([]);
 
@@ -56,6 +56,21 @@ export function useAdminAlerts(enabled: boolean) {
     const client = requireSupabase();
     const channel = client
       .channel(`pcc-admin-alerts-${Math.random().toString(36).slice(2)}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'profiles' }, payload => {
+        const row = payload.new as Record<string, unknown>;
+        if (row.role === 'admin') return;
+        const who = String(row.full_name || row.email || 'A new user');
+        const role = row.role === 'alumni' ? 'Alumni' : 'Student';
+        const schoolId = String(row.student_id || '').trim();
+        push({
+          id: `acct-${row.id}`,
+          kind: 'account',
+          title: 'New account',
+          detail: `${who} · ${role}${schoolId ? ` · School ID ${schoolId}` : ' · No School ID'}`,
+          link: `/admin/users?id=${row.id}`,
+          at: Date.now(),
+        });
+      })
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'document_requests' }, async payload => {
         const row = payload.new as Record<string, unknown>;
         const who = await studentName(row.user_id);

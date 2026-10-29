@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
-import { BellRing, CalendarCheck, CreditCard, FileText, Smartphone, Volume2, VolumeX, X } from 'lucide-react';
+import { BellRing, CalendarCheck, CreditCard, FileText, Smartphone, UserPlus, Volume2, VolumeX, X } from 'lucide-react';
 import type { AdminAlert } from '../lib/adminAlerts';
 import { isAlertSoundOn, onAlertSoundChange, playOfficeChime, setAlertSound } from '../lib/officeChime';
 import {
@@ -16,7 +16,8 @@ export function AdminAlertToasts({ alerts, onDismiss }: { alerts: AdminAlert[]; 
   return (
     <div className="fixed z-[60] top-16 lg:top-4 inset-x-3 sm:inset-x-auto sm:right-4 sm:w-96 space-y-2" aria-live="polite">
       {alerts.map(alert => {
-        const Icon = alert.kind === 'payment' ? CreditCard : alert.kind === 'booking' ? CalendarCheck : FileText;
+        const Icon = alert.kind === 'payment' ? CreditCard : alert.kind === 'booking' ? CalendarCheck : alert.kind === 'account' ? UserPlus : FileText;
+        const action = alert.kind === 'payment' ? 'Open Payments' : alert.kind === 'booking' ? 'Open Scheduling' : alert.kind === 'account' ? 'View account' : 'Open Manage Requests';
         return (
           <div
             key={alert.id}
@@ -31,6 +32,8 @@ export function AdminAlertToasts({ alerts, onDismiss }: { alerts: AdminAlert[]; 
                 ? 'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400'
                 : alert.kind === 'booking'
                 ? 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400'
+                : alert.kind === 'account'
+                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
                 : 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
             }`}>
               <Icon className="w-5 h-5" />
@@ -39,7 +42,7 @@ export function AdminAlertToasts({ alerts, onDismiss }: { alerts: AdminAlert[]; 
               <p className="text-sm font-semibold text-gray-900 dark:text-white">{alert.title}</p>
               <p className="text-[13px] text-gray-600 dark:text-gray-300 mt-0.5 leading-snug break-words">{alert.detail}</p>
               <p className="text-xs font-medium text-blue-600 dark:text-blue-400 mt-1.5">
-                {alert.kind === 'payment' ? 'Open Payments' : alert.kind === 'booking' ? 'Open Scheduling' : 'Open Manage Requests'}
+                {action}
               </p>
             </div>
             <button
