@@ -11,115 +11,104 @@ export function Footer() {
 
   const quickLinks = isAdmin
     ? [
-        { label: 'Admin Dashboard', href: '/admin' },
+        { label: 'Dashboard', href: '/admin' },
         { label: 'Manage Requests', href: '/admin/requests' },
+        { label: 'Messages', href: '/admin/messages' },
+        { label: 'Payments', href: '/admin/payments' },
         { label: 'Scheduling', href: '/admin/scheduling' },
-        { label: 'Reports', href: '/admin/reports' },
+        { label: 'Guide', href: '/admin/welcome' },
       ]
     : [
         { label: 'Dashboard', href: '/dashboard' },
         { label: 'Request Records', href: '/request' },
+        { label: 'Messages', href: '/messages' },
         { label: 'Track Request', href: '/track' },
         { label: 'Schedule Pickup', href: '/schedule' },
+        { label: 'How to Use', href: '/welcome' },
       ];
 
   return (
-    <footer className="bg-gray-900 dark:bg-slate-950 text-gray-300 mt-auto">
-      <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 py-10 sm:py-12">
-        <div className={`grid grid-cols-1 sm:grid-cols-2 gap-9 sm:gap-8 text-center sm:text-left ${isAuthenticated ? 'lg:grid-cols-4' : 'lg:grid-cols-3'}`}>
-          {/* Brand */}
-          <div className="lg:col-span-2 flex flex-col items-center sm:items-start">
-            <div className="flex flex-col sm:flex-row items-center gap-2.5 mb-4">
-              <img
-                src={PCC_LOGO_URL}
-                alt="PCC logo"
-                className="h-16 sm:h-14 w-auto object-contain"
-                loading="lazy"
-                decoding="async"
-              />
-              <div>
-                <p className="text-white font-semibold" style={{ fontFamily: 'Poppins, sans-serif' }}>
+    <footer className="mt-auto border-t border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-950">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className={`grid gap-4 items-stretch ${isAuthenticated ? 'lg:grid-cols-3' : 'lg:grid-cols-2'}`}>
+          <section className="h-full min-h-[16rem] rounded-2xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-5 flex flex-col">
+            <div className="flex items-center gap-3">
+              <img src={PCC_LOGO_URL} alt="PCC logo" className="h-12 w-auto object-contain flex-shrink-0" />
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-gray-900 dark:text-white leading-snug" style={{ fontFamily: 'Poppins, sans-serif' }}>
                   Pagadian Capitol Colleges
                 </p>
-                <p className="text-xs text-gray-400">Records Request & Scheduling System</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Registrar records and pickup</p>
               </div>
             </div>
-            <p className="text-sm text-gray-400 leading-relaxed max-w-xs">
-              Your trusted partner for seamless academic records management. Request documents online and schedule pickup with ease.
+            <p className="mt-4 text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
+              Request a school record, pay by GCash or in person, message the Registrar’s Office, and book a pickup date.
             </p>
-            <div className="flex gap-3 mt-4">
-              <a
-                href="https://www.facebook.com/profile.php?id=100063921040273"
-                target="_blank"
-                rel="noreferrer"
-                aria-label="PCC on Facebook"
-                className="w-9 h-9 bg-gray-800 hover:bg-gradient-to-r hover:from-primary hover:via-blue-600 hover:to-blue-800 rounded-lg flex items-center justify-center transition-colors"
-              >
+            <a
+              href="https://www.facebook.com/profile.php?id=100063921040273"
+              target="_blank"
+              rel="noreferrer"
+              aria-label="PCC on Facebook"
+              className="mt-auto pt-4 inline-flex items-center gap-2 text-sm font-medium text-blue-700 dark:text-blue-300"
+            >
+              <span className="w-8 h-8 rounded-full bg-blue-50 dark:bg-blue-900/40 inline-flex items-center justify-center">
                 <Facebook className="w-4 h-4" />
-              </a>
-            </div>
-          </div>
+              </span>
+              PCC on Facebook
+            </a>
+          </section>
 
           {isAuthenticated && (
-            <div>
-              <h4 className="text-white font-semibold mb-4" style={{ fontFamily: 'Poppins, sans-serif' }}>Quick Links</h4>
-              <ul className="space-y-2">
+            <section className="h-full min-h-[16rem] rounded-2xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-5 flex flex-col">
+              <h2 className="text-sm font-semibold text-gray-900 dark:text-white" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                Quick links
+              </h2>
+              <ul className="mt-3 grid grid-cols-1 gap-1">
                 {quickLinks.map(link => (
                   <li key={link.href}>
                     <Link
                       to={link.href}
-                      className="text-sm text-gray-400 hover:text-blue-400 transition-colors"
+                      className="flex items-center h-9 px-2 -mx-2 rounded-lg text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800 hover:text-blue-700 dark:hover:text-blue-300"
                     >
                       {link.label}
                     </Link>
                   </li>
                 ))}
               </ul>
-            </div>
+            </section>
           )}
 
-          {/* Contact */}
-          <div className="flex flex-col items-center sm:items-start">
-            <h4 className="text-white font-semibold mb-4" style={{ fontFamily: 'Poppins, sans-serif' }}>Contact Information</h4>
-            <ul className="space-y-3 flex flex-col items-center sm:items-start">
-              <li className="flex items-start gap-2.5">
-                <MapPin className="w-4 h-4 text-blue-300 flex-shrink-0 mt-0.5" />
-                <span className="text-sm text-gray-400 text-left">
-                  Rizal Avenue, Tuburan Dist.<br />Pagadian City, Philippines, 7016
-                </span>
+          <section className="h-full min-h-[16rem] rounded-2xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-5 flex flex-col">
+            <h2 className="text-sm font-semibold text-gray-900 dark:text-white" style={{ fontFamily: 'Poppins, sans-serif' }}>
+              Registrar’s Office
+            </h2>
+            <ul className="mt-3 space-y-3 text-sm text-gray-600 dark:text-gray-300">
+              <li className="flex items-start gap-2.5 min-h-10">
+                <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0 text-blue-600 dark:text-blue-400" />
+                <span>Rizal Avenue, Tuburan District, Pagadian City 7016</span>
               </li>
-              <li className="flex items-center gap-2.5">
-                <Mail className="w-4 h-4 text-blue-300 flex-shrink-0" />
-                <a href="mailto:registrar@pcci.ph.education" className="text-sm text-gray-400 hover:text-blue-400 transition-colors break-all">
+              <li className="flex items-center gap-2.5 min-h-10">
+                <Mail className="w-4 h-4 flex-shrink-0 text-blue-600 dark:text-blue-400" />
+                <a href="mailto:registrar@pcci.ph.education" className="hover:text-blue-700 dark:hover:text-blue-300 break-all">
                   registrar@pcci.ph.education
                 </a>
               </li>
-              <li className="flex items-center gap-2.5">
-                <Phone className="w-4 h-4 text-blue-300 flex-shrink-0" />
-                <a href="tel:+639187272849" className="text-sm text-gray-400 hover:text-blue-400 transition-colors">
-                  0918 727 2849
-                </a>
+              <li className="flex items-center gap-2.5 min-h-10">
+                <Phone className="w-4 h-4 flex-shrink-0 text-blue-600 dark:text-blue-400" />
+                <a href="tel:+639187272849" className="hover:text-blue-700 dark:hover:text-blue-300">0918 727 2849</a>
               </li>
             </ul>
-            <div className="mt-5 sm:mt-4 w-full max-w-xs p-3 bg-gray-800 rounded-lg">
-              <p className="text-xs text-gray-400 leading-relaxed">
-                <span className="text-blue-300 font-medium">Office Hours:</span><br />
-                Mon–Sat: 8:00 AM – 4:00 PM<br />
-                Sun: Closed
-              </p>
-            </div>
-          </div>
+            <p className="mt-auto pt-4 text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
+              <span className="font-semibold text-gray-900 dark:text-white">Office hours. </span>
+              Monday to Saturday, 8:00 AM – 4:00 PM. Closed on Sunday.
+            </p>
+          </section>
         </div>
 
-        <div className="border-t border-gray-800 mt-9 sm:mt-8 pt-6 flex flex-col sm:flex-row justify-between items-center gap-1.5 sm:gap-2 text-center sm:text-left">
-          <p className="text-xs text-gray-500">
-            © {new Date().getFullYear()} Pagadian Capitol Colleges. All rights reserved.
-          </p>
-          <p className="text-xs text-gray-500 max-w-[16rem] sm:max-w-none text-balance">
-            Web-Based School Records Request & Scheduling System
-          </p>
-          <Link to="/terms" className="text-xs text-gray-400 hover:text-blue-400 underline-offset-2 hover:underline">
-            Terms &amp; Privacy
+        <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs text-gray-500 dark:text-gray-400">
+          <p>© {new Date().getFullYear()} Pagadian Capitol Colleges</p>
+          <Link to="/terms" className="hover:text-blue-700 dark:hover:text-blue-300">
+            Terms and Privacy
           </Link>
         </div>
       </div>

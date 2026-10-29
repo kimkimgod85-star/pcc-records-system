@@ -22,7 +22,7 @@ const workflow = [
   {
     icon: FileText,
     title: 'Review new requests',
-    desc: 'Open Manage Requests. Check the student, document, and purpose, then Approve or Reject. Move approved requests to Processing, then Ready for Pickup.',
+    desc: 'Check the student, document, and purpose. Approve or reject. Move it to Processing only after payment is verified, then Ready for Pickup.',
     href: '/admin/requests',
     action: 'Manage Requests',
     color: 'text-blue-600 dark:text-blue-400',
@@ -31,7 +31,7 @@ const workflow = [
   {
     icon: CreditCard,
     title: 'Verify payments',
-    desc: 'Open Payments. For GCash, check the screenshot and reference number. For Pay in Person, verify in office when the student brings their Official Receipt and REQ ID, then Verify or Reject.',
+    desc: 'GCash: check the screenshot and reference number. Pay in person: wait for the student, then match the official receipt with the REQ ID.',
     href: '/admin/payments',
     action: 'Payments',
     color: 'text-orange-600 dark:text-orange-400',
@@ -40,7 +40,7 @@ const workflow = [
   {
     icon: Calendar,
     title: 'Manage pickup schedules',
-    desc: 'Open Scheduling to open or close pickup dates, set time slots, and limit how many students can claim per slot and per day. Students can only book what you open.',
+    desc: 'Open or close dates, set time slots, and set daily limits. If a pickup date passes, reschedule it and the student is notified.',
     href: '/admin/scheduling',
     action: 'Scheduling',
     color: 'text-green-600 dark:text-green-400',
@@ -49,7 +49,7 @@ const workflow = [
   {
     icon: Banknote,
     title: 'Update document fees',
-    desc: 'Open Document Fees to change prices, add or hide documents, and set each record as Minor or Major. Click Save changes, and students are notified automatically.',
+    desc: 'Change prices, add or hide documents, and mark each one Minor or Major. Save changes. Students are notified.',
     href: '/admin/documents',
     action: 'Document Fees',
     color: 'text-amber-600 dark:text-amber-400',
@@ -58,7 +58,7 @@ const workflow = [
   {
     icon: Users,
     title: 'Manage users',
-    desc: 'Open Users to look up students and alumni, see how many requests they made, and deactivate accounts that should no longer have access.',
+    desc: 'See each student’s photo and requests. Message them, or deactivate an account. Students register themselves.',
     href: '/admin/users',
     action: 'Users',
     color: 'text-purple-600 dark:text-purple-400',
@@ -67,7 +67,7 @@ const workflow = [
   {
     icon: BarChart3,
     title: 'Check reports',
-    desc: 'Open Reports for request counts, completed documents, and collected fees by semester or month. Set the class dates for the school year first.',
+    desc: 'See request counts, completed documents, and fees. Set the school-year dates here. Reset records only from this page.',
     href: '/admin/reports',
     action: 'Reports',
     color: 'text-teal-600 dark:text-teal-400',
@@ -76,11 +76,12 @@ const workflow = [
 ];
 
 const reminders = [
-  'Verify payment before moving a request to Processing.',
-  'Students get a notification every time you change a request or payment status.',
-  'For Pay in Person, status shows “Waiting for student to verify in person.” Confirm Official Receipt + REQ ID at the counter — no receipt photo is uploaded in the app.',
-  'Major documents are estimated at about 5 business days under normal operations, and may take longer when the office is busy.',
-  'Office hours shown to students: Monday – Saturday, 8:00 AM – 4:00 PM. Closed Sunday.',
+  { title: 'Payment first', text: 'Verify the payment before you move a request to Processing.' },
+  { title: 'Pay in person', text: 'The list says the student must verify in person. Match the official receipt and REQ ID. There is no receipt photo.' },
+  { title: 'Messages', text: 'All staff share one inbox. You can edit your own message, or delete the whole chat.' },
+  { title: 'Timing', text: 'Minor documents are about 1 business day. Major documents are about 5, longer if the office is busy.' },
+  { title: 'Missed pickup', text: 'If the booked date passes and the document is not ready, the student is notified. You can reschedule it.' },
+  { title: 'Office hours', text: 'Monday to Saturday, 8:00 AM – 4:00 PM. Closed on Sunday.' },
 ];
 
 const flow: { label: string; who: 'Student' | 'You' }[] = [
@@ -169,11 +170,11 @@ export default function AdminWelcomePage() {
       {/* Request flow */}
       <section className="mb-8">
         <SectionTitle step="1" title="How a request moves" subtitle="Every request follows these steps. The ones marked “You” are your job." />
-        <ol className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <ol className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 items-stretch">
           {flow.map((stage, i) => (
             <li
               key={stage.label}
-              className="relative bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm p-4 flex items-start gap-3"
+              className="h-full min-h-[6.25rem] bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm p-4 flex items-start gap-3"
             >
               <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold flex-shrink-0 ${
                 stage.who === 'You'
@@ -198,13 +199,13 @@ export default function AdminWelcomePage() {
       {/* Menus */}
       <section className="mb-8">
         <SectionTitle step="2" title="What each menu does" subtitle="Click a card to open that page." />
-        <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4 items-stretch">
           {workflow.map(item => (
             <Link
               key={item.title}
               to={item.href}
               onClick={saveChoice}
-              className="group bg-white dark:bg-slate-800 rounded-2xl p-5 border border-gray-100 dark:border-slate-700 shadow-sm flex flex-col transition-all hover:-translate-y-0.5 hover:shadow-md hover:border-blue-200 dark:hover:border-blue-800"
+              className="group h-full min-h-[14.5rem] bg-white dark:bg-slate-800 rounded-2xl p-5 border border-gray-100 dark:border-slate-700 shadow-sm flex flex-col hover:border-blue-200 dark:hover:border-blue-800"
             >
               <div className="flex items-center gap-3 mb-3">
                 <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${item.bg}`}>
@@ -227,11 +228,14 @@ export default function AdminWelcomePage() {
       {/* Reminders */}
       <section className="mb-8">
         <SectionTitle step="3" title="Reminders" subtitle="Keep these in mind while working." />
-        <div className="bg-amber-50 dark:bg-amber-900/15 rounded-2xl border border-amber-200 dark:border-amber-800/60 divide-y divide-amber-200/70 dark:divide-amber-800/40">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 items-stretch">
           {reminders.map(tip => (
-            <div key={tip} className="flex items-start gap-3 px-5 py-3.5">
-              <Lightbulb className="w-4 h-4 mt-0.5 flex-shrink-0 text-amber-600 dark:text-amber-400" />
-              <p className="text-sm text-amber-900 dark:text-amber-100 leading-relaxed">{tip}</p>
+            <div key={tip.title} className="h-full min-h-[8.5rem] rounded-2xl border border-gray-100 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 shadow-sm">
+              <div className="flex items-center gap-2">
+                <Lightbulb className="w-4 h-4 flex-shrink-0 text-blue-600 dark:text-blue-400" />
+                <p className="text-sm font-semibold text-gray-900 dark:text-white" style={{ fontFamily: 'Poppins, sans-serif' }}>{tip.title}</p>
+              </div>
+              <p className="mt-2 text-sm text-gray-600 dark:text-gray-300 leading-relaxed">{tip.text}</p>
             </div>
           ))}
         </div>

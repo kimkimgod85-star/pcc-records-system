@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import {
-  FileText, CreditCard, Calendar, TrendingUp, Bell, Package,
-  ArrowRight, Lightbulb, LayoutDashboard,
+  FileText, CreditCard, Calendar, TrendingUp, Package,
+  ArrowRight, LayoutDashboard, MessageSquare, Clock,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { withBase } from '../lib/basePath';
@@ -26,57 +26,54 @@ const steps = [
   {
     icon: FileText,
     title: 'Request a record',
-    desc: 'Open Request Record, select a minor or major document, then submit the form for Registrar review.',
+    desc: 'Choose a minor or major document and submit the form. The Registrar reviews it before you pay.',
     href: '/request',
     action: 'Request Record',
-    color: 'text-blue-600 dark:text-blue-400',
-    bg: 'bg-blue-100 dark:bg-blue-900/30',
   },
   {
     icon: CreditCard,
     title: 'Pay the fee',
-    desc: 'Pay through GCash and upload the screenshot, or choose Pay in Person: save your REQ ID, pay at the PCC New Building Cashier, then bring your receipt and REQ ID to the Registrar.',
+    desc: 'Pay by GCash and upload the screenshot, or pay in person. Save the REQ ID, pay at the cashier, then show the receipt and REQ ID.',
     href: '/payment',
     action: 'Payments',
-    color: 'text-orange-600 dark:text-orange-400',
-    bg: 'bg-orange-100 dark:bg-orange-900/30',
   },
   {
     icon: TrendingUp,
-    title: 'Track your request',
-    desc: 'Watch your request move from Pending to Approved to Ready for Pickup. The registrar verifies your payment first.',
+    title: 'Track the request',
+    desc: 'Follow Pending, Approved, Processing, and Ready for Pickup. Processing starts after payment is verified.',
     href: '/track',
     action: 'Track Request',
-    color: 'text-purple-600 dark:text-purple-400',
-    bg: 'bg-purple-100 dark:bg-purple-900/30',
   },
   {
     icon: Calendar,
-    title: 'Schedule your pickup',
-    desc: 'Once your document is ready, pick an available date and time slot to claim it at the Registrar’s Office.',
+    title: 'Book a pickup',
+    desc: 'When the document is ready, choose an open date and time at the Registrar’s Office.',
     href: '/schedule',
     action: 'Schedule Pickup',
-    color: 'text-green-600 dark:text-green-400',
-    bg: 'bg-green-100 dark:bg-green-900/30',
   },
   {
     icon: Package,
-    title: 'Claim your document',
-    desc: 'Claim your document at the Registrar’s Office on your scheduled date. Bring a valid ID and official receipt. Major documents also require completed school clearances.',
+    title: 'Claim it',
+    desc: 'Bring a valid ID on your date. Major documents also need completed school clearances.',
     href: '',
     action: '',
-    color: 'text-teal-600 dark:text-teal-400',
-    bg: 'bg-teal-100 dark:bg-teal-900/30',
+  },
+  {
+    icon: MessageSquare,
+    title: 'Message the office',
+    desc: 'Use Messages to write the Registrar’s Office. Staff share one inbox. You can edit or delete your own messages.',
+    href: '/messages',
+    action: 'Messages',
   },
 ];
 
-const tips = [
-  'Minor documents are prepared within one business day under normal office operations.',
-  'Major documents take about 5 business days under normal operations, and may take longer if the office is busy. Reserve pickup online and complete clearances before claiming.',
-  'Check Notifications for approval, payment verification, and ready-for-pickup updates.',
-  'For GCash, upload a clear screenshot with a readable reference number.',
-  'For Pay in Person, save your REQ ID to your phone, pay at the Cashier, then verify at the Registrar with your receipt and REQ ID.',
-  'Cashier and Registrar hours: Monday – Saturday, 8:00 AM – 4:00 PM. Closed on Sunday.',
+const notes = [
+  { title: 'Minor documents', text: 'About 1 business day when the office is not busy.' },
+  { title: 'Major documents', text: 'About 5 business days. It can take longer if the office is busy.' },
+  { title: 'Pay in person', text: 'No receipt photo. Show your REQ ID at the cashier, then the receipt and REQ ID at the Registrar.' },
+  { title: 'GCash', text: 'Upload a clear screenshot. The reference number must be readable.' },
+  { title: 'Profile photo', text: 'Add a circle photo from the dashboard. Pinch to zoom and center your face.' },
+  { title: 'Office hours', text: 'Monday to Saturday, 8:00 AM – 4:00 PM. Closed on Sunday.' },
 ];
 
 export default function WelcomePage() {
@@ -118,52 +115,50 @@ export default function WelcomePage() {
         </div>
       </BlueCover>
 
-      <h2 className="font-semibold text-gray-900 dark:text-white mb-3" style={{ fontFamily: 'Poppins, sans-serif' }}>
+      <h2 className="font-semibold text-gray-900 dark:text-white mb-1" style={{ fontFamily: 'Poppins, sans-serif' }}>
         How it works
       </h2>
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+      <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Six equal steps. Read one card, then open the page.</p>
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6 items-stretch">
         {steps.map((step, i) => (
           <div
             key={step.title}
-            className="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-gray-100 dark:border-slate-700 shadow-sm flex flex-col"
+            className="h-full min-h-[15.5rem] bg-white dark:bg-slate-800 rounded-2xl p-5 border border-gray-100 dark:border-slate-700 shadow-sm flex flex-col"
           >
-            <div className="flex items-center gap-3 mb-3">
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${step.bg}`}>
-                <step.icon className={`w-5 h-5 ${step.color}`} />
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 flex items-center justify-center flex-shrink-0">
+                <step.icon className="w-5 h-5" />
               </div>
-              <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Step {i + 1}</span>
+              <span className="text-xs font-semibold text-gray-400">Step {i + 1}</span>
             </div>
-            <h3 className="font-semibold text-gray-900 dark:text-white text-sm mb-1" style={{ fontFamily: 'Poppins, sans-serif' }}>
+            <h3 className="mt-4 font-semibold text-gray-900 dark:text-white text-base" style={{ fontFamily: 'Poppins, sans-serif' }}>
               {step.title}
             </h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed flex-1">{step.desc}</p>
-            {step.href && (
-              <Link
-                to={step.href}
-                className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline"
-              >
+            <p className="mt-2 text-sm text-gray-600 dark:text-gray-300 leading-relaxed flex-1">{step.desc}</p>
+            {step.href ? (
+              <Link to={step.href} className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-blue-700 dark:text-blue-300">
                 {step.action} <ArrowRight className="w-3.5 h-3.5" />
               </Link>
+            ) : (
+              <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-gray-400">
+                <Clock className="w-3.5 h-3.5" /> At the office
+              </span>
             )}
           </div>
         ))}
+      </div>
 
-        <div className="bg-amber-50 dark:bg-amber-900/20 rounded-2xl p-5 border border-amber-200 dark:border-amber-800">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-amber-100 dark:bg-amber-900/40">
-              <Lightbulb className="w-5 h-5 text-amber-600 dark:text-amber-400" />
-            </div>
-            <span className="text-xs font-semibold text-amber-700 dark:text-amber-300 uppercase tracking-wide">Tips</span>
+      <h2 className="font-semibold text-gray-900 dark:text-white mb-1" style={{ fontFamily: 'Poppins, sans-serif' }}>
+        Good to know
+      </h2>
+      <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Short notes so the rules are easy to scan.</p>
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6 items-stretch">
+        {notes.map(note => (
+          <div key={note.title} className="h-full min-h-[7.5rem] rounded-2xl border border-gray-100 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 shadow-sm">
+            <p className="text-sm font-semibold text-gray-900 dark:text-white" style={{ fontFamily: 'Poppins, sans-serif' }}>{note.title}</p>
+            <p className="mt-1.5 text-sm text-gray-600 dark:text-gray-300 leading-relaxed">{note.text}</p>
           </div>
-          <ul className="space-y-2">
-            {tips.map(tip => (
-              <li key={tip} className="flex items-start gap-2 text-sm text-amber-800 dark:text-amber-200 leading-relaxed">
-                <Bell className="w-3.5 h-3.5 mt-1 flex-shrink-0 text-amber-500" />
-                {tip}
-              </li>
-            ))}
-          </ul>
-        </div>
+        ))}
       </div>
 
       <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-gray-100 dark:border-slate-700 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">

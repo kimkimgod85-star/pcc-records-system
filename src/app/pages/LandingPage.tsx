@@ -15,37 +15,37 @@ const features = [
   {
     icon: FileText,
     title: 'Online Record Requests',
-    description: 'Submit requests for TOR, Certificate of Enrollment, Diplomas, and more — anytime, anywhere.',
+    description: 'Request a TOR, certificate, diploma, and other records from your phone or computer.',
     color: 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400',
   },
   {
     icon: Calendar,
     title: 'Smart Scheduling',
-    description: 'Pick your preferred pickup date and time slot from real-time availability.',
+    description: 'Book an open pickup date and time after the Registrar marks the document ready.',
     color: 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400',
   },
   {
     icon: Search,
     title: 'Real-Time Tracking',
-    description: 'Track your request status from submission to completion with live updates.',
+    description: 'See each step from Pending to Ready for Pickup without visiting the office first.',
     color: 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400',
   },
   {
     icon: Bell,
     title: 'Instant Notifications',
-    description: 'Get notified when your document is approved, ready for pickup, or requires action.',
+    description: 'Get a notice when a request is approved, a payment is checked, or a pickup date changes.',
     color: 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400',
   },
   {
     icon: Upload,
     title: 'Online Payments',
-    description: 'Pay via GCash or settle at the cashier window — flexible payment options.',
+    description: 'Pay by GCash with a screenshot, or pay in person with your REQ ID at the cashier.',
     color: 'bg-pink-100 dark:bg-pink-900/30 text-pink-600 dark:text-pink-400',
   },
   {
     icon: Shield,
     title: 'Secure & Reliable',
-    description: 'Your data is protected with secure authentication and encrypted connections.',
+    description: 'Sign in with your own account. Message the Registrar’s Office inside the app.',
     color: 'bg-cyan-100 dark:bg-cyan-900/30 text-cyan-600 dark:text-cyan-400',
   },
 ];
@@ -54,25 +54,25 @@ const steps = [
   {
     step: '01',
     title: 'Create an Account',
-    description: 'Register using your student ID and email address.',
+    description: 'Register with your name, student ID, and email. You cannot be added by the office.',
     icon: GraduationCap,
   },
   {
     step: '02',
     title: 'Submit a Request',
-    description: 'Choose the document type and fill out the request form.',
+    description: 'Choose the document, then wait for the Registrar to approve it.',
     icon: FileText,
   },
   {
     step: '03',
     title: 'Schedule Pickup',
-    description: 'Select a convenient date and time for document pickup.',
+    description: 'When it is ready, book an open date and time for pickup.',
     icon: Calendar,
   },
   {
     step: '04',
     title: 'Pay & Claim',
-    description: 'Complete payment and claim your document on the scheduled date.',
+    description: 'Pay by GCash or in person, then claim it on your booked date.',
     icon: CheckCircle,
   },
 ];
@@ -150,11 +150,11 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-stretch">
             {features.map((feature, i) => (
               <div
                 key={i}
-                className="group p-6 bg-gray-50 dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 hover:border-blue-200 dark:hover:border-blue-800 hover:shadow-md transition-all"
+                className="h-full min-h-[11.5rem] p-5 bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm flex flex-col"
               >
                 <div className={`w-11 h-11 rounded-xl flex items-center justify-center mb-4 ${feature.color}`}>
                   <feature.icon className="w-5 h-5" />
@@ -184,13 +184,13 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-stretch">
             {steps.map((step, i) => (
-              <div key={i} className="relative">
+              <div key={i} className="relative h-full">
                 {i < steps.length - 1 && (
                   <div className="hidden lg:block absolute top-8 left-full w-full h-0.5 bg-blue-200 dark:bg-blue-900 z-0" />
                 )}
-                <div className="relative z-10 text-center p-6 bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm">
+                <div className="relative z-10 h-full min-h-[14rem] text-center p-6 bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm flex flex-col">
                   <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center mx-auto mb-4">
                     <step.icon className="w-5 h-5 text-white" />
                   </div>
@@ -200,7 +200,7 @@ export default function LandingPage() {
                   <h3 className="text-gray-900 dark:text-white mb-2 text-base" style={{ fontFamily: 'Poppins, sans-serif' }}>
                     {step.title}
                   </h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                  <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
                     {step.description}
                   </p>
                 </div>
@@ -241,7 +241,7 @@ export default function LandingPage() {
                   { title: 'Certificate of Grades', icon: '📊' },
                   { title: 'Good Moral Certificate', icon: '⭐' },
                 ].map(doc => (
-                  <div key={doc.title} className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-emerald-100 dark:border-emerald-900/40 text-center">
+                  <div key={doc.title} className="h-full min-h-[6.5rem] p-3 bg-white dark:bg-slate-800 rounded-xl border border-emerald-100 dark:border-emerald-900/40 text-center flex flex-col items-center justify-center">
                     <div className="text-2xl mb-1.5">{doc.icon}</div>
                     <p className="text-xs font-medium text-gray-900 dark:text-white leading-snug">{doc.title}</p>
                   </div>
@@ -258,7 +258,7 @@ export default function LandingPage() {
                   { title: 'Transcript of Records', icon: '📋' },
                   { title: 'Diploma', icon: '🎓' },
                 ].map(doc => (
-                  <div key={doc.title} className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-indigo-100 dark:border-indigo-900/40 text-center">
+                  <div key={doc.title} className="h-full min-h-[6.5rem] p-3 bg-white dark:bg-slate-800 rounded-xl border border-indigo-100 dark:border-indigo-900/40 text-center flex flex-col items-center justify-center">
                     <div className="text-2xl mb-1.5">{doc.icon}</div>
                     <p className="text-xs font-medium text-gray-900 dark:text-white leading-snug">{doc.title}</p>
                   </div>
