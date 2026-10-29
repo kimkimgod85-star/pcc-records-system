@@ -15,6 +15,7 @@ import {
   type PickupBooking,
   type ScheduleSlot,
 } from '../../lib/scheduling';
+import { OverduePickupsCard } from '../../components/OverduePickupsCard';
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -191,6 +192,8 @@ export default function AdminScheduling() {
           {saved ? 'Saved & visible to students' : 'Save schedule'}
         </button>
       </div>
+
+      <OverduePickupsCard className="mb-5" />
 
       <div className="grid lg:grid-cols-5 gap-5 items-start">
         {/* Calendar */}

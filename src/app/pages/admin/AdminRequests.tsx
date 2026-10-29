@@ -6,6 +6,8 @@ import {
   StickyNote, CalendarClock, Copy, XCircle, CreditCard,
 } from 'lucide-react';
 import { fetchRequests, subscribeRequests, updateRequestStatus, type StudentRequest } from '../../lib/requests';
+import { useOverduePickups } from '../../lib/overduePickups';
+import { RescheduleDialog } from '../../components/RescheduleDialog';
 import {
   canRejectRequest,
   canSetRequestStatus,
@@ -124,6 +126,8 @@ export default function AdminRequests() {
   const [saving, setSaving] = useState<RequestStatus | null>(null);
   const [error, setError] = useState('');
   const [rejecting, setRejecting] = useState(false);
+  const [rescheduling, setRescheduling] = useState(false);
+  const { schedule, refresh: refreshOverdue } = useOverduePickups();
 
   useEffect(() => {
     const refresh = () => { fetchRequests().then(list => setRequests(list.map(toRow))); };
@@ -136,6 +140,7 @@ export default function AdminRequests() {
   }, [linkedId]);
 
   const selectedReq = requests.find(r => r.id === selectedId) ?? null;
+  const selectedBooking = selectedReq ? schedule?.bookings.find(b => b.requestUuid === selectedReq.uuid) ?? null : null;
 
   const query = search.trim().toLowerCase();
   const searched = requests.filter(r =>
@@ -359,7 +364,7 @@ export default function AdminRequests() {
 
         {/* Request details popup — details on the left, status actions on the right */}
         {selectedReq && (
-          <DetailModal open onClose={() => setSelectedId(null)} locked={rejecting} label={`Request ${selectedReq.id}`}>
+          <DetailModal open onClose={() => setSelectedId(null)} locked={rejecting || rescheduling} label={`Request ${selectedReq.id}`}>
               <div className={MODAL_HEADER}>
                 <div className="min-w-0">
                   <p className="text-base font-semibold text-gray-900 dark:text-white leading-snug" style={{ fontFamily: 'Poppins, sans-serif' }}>
@@ -519,6 +524,18 @@ export default function AdminRequests() {
                   })}
                 </div>
 
+                {selectedBooking && selectedReq.status !== 'completed' && selectedReq.status !== 'rejected' && (
+                  <button
+                    type="button"
+                    onClick={() => setRescheduling(true)}
+                    disabled={saving !== null}
+                    className={btn('secondary', 'md', 'w-full')}
+                  >
+                    <CalendarClock className="w-4 h-4" />
+                    Reschedule pickup
+                  </button>
+                )}
+
                 {showReject ? (
                   <button
                     type="button"
@@ -536,6 +553,17 @@ export default function AdminRequests() {
               </div>
           </DetailModal>
         )}
+
+      <RescheduleDialog
+        open={rescheduling && Boolean(selectedReq && selectedBooking)}
+        booking={selectedBooking}
+        requestCode={selectedReq?.id ?? ''}
+        requestType={selectedReq?.type ?? ''}
+        studentName={selectedReq?.student ?? ''}
+        schedule={schedule}
+        onClose={() => setRescheduling(false)}
+        onSaved={refreshOverdue}
+      />
 
       <RejectReasonDialog
         open={rejecting && Boolean(selectedReq)}

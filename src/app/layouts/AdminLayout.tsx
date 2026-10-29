@@ -5,6 +5,7 @@ import { AdminAlertToasts } from '../components/AdminAlerts';
 import { useAuth } from '../context/AuthContext';
 import { useAdminAlerts } from '../lib/adminAlerts';
 import { useDeviceNotificationListener } from '../lib/deviceNotifications';
+import { OverduePickupsProvider } from '../lib/overduePickups';
 
 const ADMIN_FONT_SIZE = '18px';
 
@@ -36,14 +37,16 @@ export default function AdminLayout() {
   }
 
   return (
-    <div className="admin-readable flex h-dvh bg-gray-50 dark:bg-slate-950 overflow-hidden">
-      <AdminSidebar />
-      <main className="flex-1 min-w-0 overflow-y-auto pt-14 lg:pt-0 safe-area-pb">
-        <div key={location.pathname} className="page-enter">
-          <Outlet />
-        </div>
-      </main>
-      <AdminAlertToasts alerts={alerts} onDismiss={dismiss} />
-    </div>
+    <OverduePickupsProvider enabled={isAdmin}>
+      <div className="admin-readable flex h-dvh bg-gray-50 dark:bg-slate-950 overflow-hidden">
+        <AdminSidebar />
+        <main className="flex-1 min-w-0 overflow-y-auto pt-14 lg:pt-0 safe-area-pb">
+          <div key={location.pathname} className="page-enter">
+            <Outlet />
+          </div>
+        </main>
+        <AdminAlertToasts alerts={alerts} onDismiss={dismiss} />
+      </div>
+    </OverduePickupsProvider>
   );
 }

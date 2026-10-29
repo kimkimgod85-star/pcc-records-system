@@ -11,6 +11,7 @@ import { formatShortDate, type RequestStatus } from '../../lib/status';
 import { StatusBadge } from '../../components/StatusBadge';
 import { DeviceNotificationCard } from '../../components/DeviceNotificationPrompt';
 import { InstallAppBanner } from '../../components/InstallApp';
+import { OverduePickupsCard } from '../../components/OverduePickupsCard';
 import { useAuth } from '../../context/AuthContext';
 import { useDeviceNotificationState } from '../../lib/deviceNotifications';
 
@@ -117,6 +118,7 @@ export default function AdminDashboard() {
         </div>
       )}
       <InstallAppBanner className="mb-6" />
+      <OverduePickupsCard className="mb-6" />
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">

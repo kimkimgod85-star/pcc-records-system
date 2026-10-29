@@ -8,6 +8,7 @@ import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import { withBase } from '../lib/basePath';
 import { AdminAlertSettings, SettingTile } from './AdminAlerts';
+import { useOverduePickups } from '../lib/overduePickups';
 
 const PCC_LOGO_URL = withBase('PCC%20LOGO.png');
 
@@ -19,15 +20,17 @@ export function AdminSidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  const { overdue } = useOverduePickups();
+
   const navItems = [
-    { label: 'Dashboard', icon: LayoutDashboard, href: '/admin' },
-    { label: 'Manage Requests', icon: FileText, href: '/admin/requests' },
-    { label: 'Scheduling', icon: Calendar, href: '/admin/scheduling' },
-    { label: 'Payments', icon: CreditCard, href: '/admin/payments' },
-    { label: 'Document Fees', icon: Banknote, href: '/admin/documents' },
-    { label: 'Users', icon: Users, href: '/admin/users' },
-    { label: 'Reports', icon: BarChart3, href: '/admin/reports' },
-    { label: 'Guide', icon: BookOpen, href: '/admin/welcome' },
+    { label: 'Dashboard', icon: LayoutDashboard, href: '/admin', badge: 0 },
+    { label: 'Manage Requests', icon: FileText, href: '/admin/requests', badge: 0 },
+    { label: 'Scheduling', icon: Calendar, href: '/admin/scheduling', badge: overdue.length },
+    { label: 'Payments', icon: CreditCard, href: '/admin/payments', badge: 0 },
+    { label: 'Document Fees', icon: Banknote, href: '/admin/documents', badge: 0 },
+    { label: 'Users', icon: Users, href: '/admin/users', badge: 0 },
+    { label: 'Reports', icon: BarChart3, href: '/admin/reports', badge: 0 },
+    { label: 'Guide', icon: BookOpen, href: '/admin/welcome', badge: 0 },
   ];
 
   const isActive = (href: string) =>
@@ -73,9 +76,20 @@ export function AdminSidebar() {
                 : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 hover:text-gray-900 dark:hover:text-white'
             } ${collapsed ? 'justify-center' : ''}`}
           >
-            <item.icon className="w-[18px] h-[18px] flex-shrink-0" />
+            <span className="relative flex-shrink-0">
+              <item.icon className="w-[18px] h-[18px]" />
+              {collapsed && item.badge > 0 && <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-red-500 ring-2 ring-white dark:ring-slate-900" />}
+            </span>
             {!collapsed && <span className="text-[0.95rem] font-medium">{item.label}</span>}
-            {!collapsed && isActive(item.href) && <ChevronRight className="w-3 h-3 ml-auto" />}
+            {!collapsed && item.badge > 0 && (
+              <span
+                title={`${item.badge} overdue pickup${item.badge === 1 ? '' : 's'}`}
+                className="ml-auto min-w-[1.25rem] h-5 px-1.5 rounded-full bg-red-500 text-white text-[11px] font-bold flex items-center justify-center tabular-nums"
+              >
+                {item.badge}
+              </span>
+            )}
+            {!collapsed && !(item.badge > 0) && isActive(item.href) && <ChevronRight className="w-3 h-3 ml-auto" />}
           </Link>
         ))}
       </nav>

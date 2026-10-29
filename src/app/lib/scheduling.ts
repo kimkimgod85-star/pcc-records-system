@@ -312,3 +312,37 @@ export async function upsertBooking(
   window.dispatchEvent(new Event(EVENT));
   return { state: await loadSchedule(), booking };
 }
+
+/** Admin moves a student's existing booking (e.g. the document was not ready on the booked date). */
+export async function adminRescheduleBooking(input: {
+  booking: PickupBooking;
+  requestCode: string;
+  requestType: string;
+  date: string;
+  time: string;
+  reason: string;
+}) {
+  if (isPastDate(input.date)) throw new Error('Pick today or a future date.');
+  const client = requireSupabase();
+
+  const { error } = await client
+    .from('pickup_bookings')
+    .update({ date: input.date, time: input.time })
+    .eq('id', input.booking.id);
+  if (error) throw error;
+
+  await client
+    .from('document_requests')
+    .update({ pickup_date: input.date, pickup_time: input.time, updated_at: new Date().toISOString() })
+    .eq('id', input.booking.requestUuid);
+
+  await addNotification({
+    userId: input.booking.userId,
+    type: 'schedule',
+    title: 'New pickup date',
+    message: `${input.requestType} (${input.requestCode}) · ${formatLongDate(input.date)} at ${input.time} · Registrar’s Office. Reason: ${input.reason} Bring a valid ID.`,
+    link: `/track?request=${encodeURIComponent(input.requestCode)}`,
+  });
+
+  window.dispatchEvent(new Event(EVENT));
+}
