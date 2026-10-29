@@ -253,19 +253,20 @@ export default function AdminPayments() {
       </div>
 
       <div className="grid lg:grid-cols-5 gap-5 items-start">
-        <div className={`${selected ? 'lg:col-span-3' : 'lg:col-span-5'} bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm overflow-hidden`}>
-          <div className="px-5 py-3 border-b border-gray-100 dark:border-slate-700">
+        <div className={`${selected ? 'lg:col-span-2' : 'lg:col-span-5'} bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm overflow-hidden lg:sticky lg:top-6 lg:flex lg:flex-col lg:max-h-[calc(100dvh-3rem)]`}>
+          <div className="flex-shrink-0 px-5 py-3 border-b border-gray-100 dark:border-slate-700">
             <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
               {filtered.length} payment{filtered.length !== 1 ? 's' : ''}
               {filter !== 'all' && <span className="text-gray-400"> · {STATUS[filter].label}</span>}
             </span>
           </div>
 
+          <div className="lg:flex-1 lg:min-h-0 lg:overflow-y-auto overscroll-contain">
           {filtered.length === 0 && (
             <div className="py-12 text-center text-sm text-gray-500 dark:text-gray-400">No payments found.</div>
           )}
 
-          <div className="sm:hidden divide-y divide-gray-100 dark:divide-slate-700">
+          <div className={`${selected ? '' : 'sm:hidden'} divide-y divide-gray-100 dark:divide-slate-700`}>
             {filtered.map(pay => (
               <button
                 key={pay.id}
@@ -291,27 +292,27 @@ export default function AdminPayments() {
             ))}
           </div>
 
-          {filtered.length > 0 && (
+          {filtered.length > 0 && !selected && (
             <div className="hidden sm:block overflow-x-auto">
-              <table className="w-full">
-                <thead>
+            <table className="w-full">
+              <thead>
                   <tr className="text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 bg-gray-50/80 dark:bg-slate-900/40 border-b border-gray-100 dark:border-slate-700">
                     <th className="px-5 py-3">Student</th>
-                    <th className={`px-5 py-3 ${selected ? 'hidden' : 'hidden md:table-cell'}`}>Method</th>
+                    <th className="px-5 py-3 hidden md:table-cell">Method</th>
                     <th className="px-5 py-3 text-right">Amount</th>
-                    <th className={`px-5 py-3 ${selected ? 'hidden' : 'hidden xl:table-cell'}`}>Date</th>
+                    <th className="px-5 py-3 hidden xl:table-cell">Date</th>
                     <th className="px-5 py-3">Status</th>
                     <th className="w-8" />
-                  </tr>
-                </thead>
+                </tr>
+              </thead>
                 <tbody className="divide-y divide-gray-100 dark:divide-slate-700">
                   {filtered.map(pay => {
                     const active = selectedId === pay.id;
                     return (
-                      <tr
-                        key={pay.id}
+                  <tr
+                    key={pay.id}
                         onClick={() => select(pay.id)}
-                        className={`cursor-pointer transition-colors ${
+                    className={`cursor-pointer transition-colors ${
                           active ? 'bg-blue-50 dark:bg-blue-900/20' : 'hover:bg-gray-50 dark:hover:bg-slate-700/40'
                         }`}
                       >
@@ -319,35 +320,36 @@ export default function AdminPayments() {
                           <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug">{pay.student}</p>
                           <p className="text-sm text-gray-600 dark:text-gray-400 leading-snug">{pay.document}</p>
                           <p className="text-xs font-mono text-blue-600 dark:text-blue-400 mt-0.5">{pay.reqId}</p>
-                        </td>
-                        <td className={`px-5 py-3.5 align-top ${selected ? 'hidden' : 'hidden md:table-cell'}`}>
+                    </td>
+                        <td className="px-5 py-3.5 align-top hidden md:table-cell">
                           <MethodTag method={pay.method} />
-                        </td>
+                    </td>
                         <td className="px-5 py-3.5 align-top text-right">
                           <span className="text-sm font-semibold text-gray-900 dark:text-white tabular-nums whitespace-nowrap">{pay.amount}</span>
-                        </td>
-                        <td className={`px-5 py-3.5 align-top ${selected ? 'hidden' : 'hidden xl:table-cell'}`}>
+                    </td>
+                        <td className="px-5 py-3.5 align-top hidden xl:table-cell">
                           <span className="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">{pay.date}</span>
-                        </td>
+                    </td>
                         <td className="px-5 py-3.5 align-top">
                           <PayBadge status={pay.status} />
-                        </td>
+                    </td>
                         <td className="pr-4 py-3.5 align-top">
                           <ChevronRight className={`w-4 h-4 ${active ? 'text-blue-500' : 'text-gray-300 dark:text-slate-600'}`} />
-                        </td>
-                      </tr>
+                    </td>
+                  </tr>
                     );
                   })}
-                </tbody>
-              </table>
+              </tbody>
+            </table>
             </div>
-          )}
+            )}
+          </div>
         </div>
 
         {selected && (
-          <div ref={detailRef} className="lg:col-span-2 lg:sticky lg:top-6 scroll-mt-16">
-            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm overflow-hidden">
-              <div className="flex items-start justify-between gap-2 px-4 pt-4 pb-3 border-b border-gray-100 dark:border-slate-700">
+          <div ref={detailRef} className="lg:col-span-3 lg:sticky lg:top-6 scroll-mt-16">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm overflow-hidden lg:flex lg:flex-col lg:h-[calc(100dvh-3rem)]">
+              <div className="flex-shrink-0 flex items-start justify-between gap-2 px-4 pt-4 pb-3 border-b border-gray-100 dark:border-slate-700">
                 <div className="min-w-0">
                   <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Amount paid</p>
                   <p className="text-xl font-semibold text-gray-900 dark:text-white tabular-nums leading-tight" style={{ fontFamily: 'Poppins, sans-serif' }}>
@@ -356,7 +358,7 @@ export default function AdminPayments() {
                   <div className="flex flex-wrap items-center gap-1.5 mt-2">
                     <PayBadge status={selected.status} />
                     <MethodTag method={selected.method} />
-                  </div>
+            </div>
                 </div>
                 <button
                   type="button"
@@ -366,10 +368,11 @@ export default function AdminPayments() {
                 >
                   <X className="w-4 h-4" />
                 </button>
-              </div>
+            </div>
 
-              {/* Decision on top */}
-              <div className="px-4 py-3 border-b border-gray-100 dark:border-slate-700 bg-slate-50/90 dark:bg-slate-900/40">
+              <div className="flex flex-col lg:flex-1 lg:min-h-0 lg:flex-row">
+              {/* Decision — fixed right column with its own scroll */}
+              <div className="lg:w-[17rem] lg:flex-shrink-0 lg:min-h-0 lg:overflow-y-auto overscroll-contain px-4 py-4 border-t lg:border-t-0 lg:border-l border-gray-100 dark:border-slate-700 bg-slate-50/90 dark:bg-slate-900/40 order-2">
                 <p className="text-xs font-semibold text-gray-900 dark:text-white mb-0.5">Decision</p>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mb-2.5">
                   {selected.method === 'gcash'
@@ -437,9 +440,61 @@ export default function AdminPayments() {
                     <p className="text-xs text-green-800 dark:text-green-200">{notice}</p>
                   </div>
                 )}
+
+                {selected.status === 'verified' && (() => {
+                  const next = NEXT_REQUEST_STEP[selected.requestStatus];
+                  return (
+                    <div className="mt-3 pt-3 border-t border-gray-200 dark:border-slate-700 space-y-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-xs font-semibold text-gray-900 dark:text-white truncate">Request {selected.reqId}</p>
+                        <StatusBadge status={selected.requestStatus} />
+                      </div>
+                      {next ? (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => advanceRequest(selected, next.status)}
+                            disabled={advancing || saving !== null}
+                            className="w-full inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-sm disabled:opacity-60"
+                          >
+                            {advancing ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
+                            {next.label}
+                          </button>
+                          <p className="text-[11px] text-gray-500 dark:text-gray-400">{next.hint}</p>
+                        </>
+                      ) : (
+                        <p className="text-xs text-gray-500 dark:text-gray-400">No further steps.</p>
+                      )}
+                      <Link to="/admin/requests" className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline">
+                        Open in Manage Requests <ExternalLink className="w-3 h-3" />
+                      </Link>
+                    </div>
+                  );
+                })()}
+
+                {selected.status !== 'pending' && (
+                  <button
+                    type="button"
+                    onClick={() => updateStatus(selected, 'pending')}
+                    disabled={saving !== null}
+                    className="mt-2 w-full inline-flex items-center justify-center gap-1.5 text-xs font-medium text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white disabled:opacity-60 py-1.5"
+                  >
+                    {saving === 'pending' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RotateCcw className="w-3.5 h-3.5" />}
+                    Move back to “To Verify”
+                  </button>
+                )}
               </div>
 
-              <div className="px-4 py-3 space-y-3">
+              {/* Proof + student details */}
+              <div className="lg:flex-1 lg:min-w-0 lg:min-h-0 lg:overflow-y-auto overscroll-contain px-4 py-4 space-y-3 order-1">
+                <dl className="grid grid-cols-2 gap-x-3 gap-y-2.5">
+                  <Field label="Student" value={selected.student} />
+                  <Field label={selected.method === 'gcash' ? 'GCash ref' : 'REQ ID'} value={selected.refNo || selected.reqId || '—'} mono highlight />
+                  <Field label="Document" value={selected.document} wide />
+                  <Field label="Request ID" value={selected.reqId} mono />
+                  <Field label="Date" value={selected.date} />
+                </dl>
+
                 {selected.method === 'gcash' ? (
                   <div>
                     <p className="text-[10px] font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1.5">GCash screenshot</p>
@@ -450,7 +505,7 @@ export default function AdminPayments() {
                         rel="noreferrer"
                         className="group block rounded-xl overflow-hidden border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-900"
                       >
-                        <img src={selected.screenshotPath} alt="GCash proof" className="w-full max-h-40 object-contain" />
+                        <img src={selected.screenshotPath} alt="GCash proof" className="w-full max-h-72 object-contain" />
                         <span className="flex items-center justify-center gap-1 py-1.5 text-xs font-medium text-blue-600 dark:text-blue-400 border-t border-gray-200 dark:border-slate-700 group-hover:bg-blue-50 dark:group-hover:bg-blue-900/20">
                           <ExternalLink className="w-3 h-3" /> Open full size
                         </span>
@@ -496,60 +551,10 @@ export default function AdminPayments() {
                             : 'No photo in app — verify when student brings OR + REQ ID.'}
                         </p>
                       </div>
-                    </div>
-                  </div>
-                )}
-
-                <dl className="grid grid-cols-2 gap-x-3 gap-y-2.5">
-                  <Field label={selected.method === 'gcash' ? 'GCash ref' : 'REQ ID'} value={selected.refNo || selected.reqId || '—'} mono highlight />
-                  <Field label="Date" value={selected.date} />
-                  <Field label="Student" value={selected.student} />
-                  <Field label="Request ID" value={selected.reqId} mono />
-                  <Field label="Document" value={selected.document} wide />
-                </dl>
-
-                {selected.status === 'verified' && (() => {
-                  const next = NEXT_REQUEST_STEP[selected.requestStatus];
-                  return (
-                    <div className="pt-2 border-t border-gray-100 dark:border-slate-700 space-y-2">
-                      <div className="flex items-center justify-between gap-2">
-                        <p className="text-xs font-semibold text-gray-900 dark:text-white truncate">Request {selected.reqId}</p>
-                        <StatusBadge status={selected.requestStatus} />
-                      </div>
-                      {next ? (
-                        <>
-                          <button
-                            type="button"
-                            onClick={() => advanceRequest(selected, next.status)}
-                            disabled={advancing || saving !== null}
-                            className="w-full inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-sm disabled:opacity-60"
-                          >
-                            {advancing ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
-                            {next.label}
-                          </button>
-                          <p className="text-[11px] text-gray-500 dark:text-gray-400">{next.hint}</p>
-                        </>
-                      ) : (
-                        <p className="text-xs text-gray-500 dark:text-gray-400">No further steps.</p>
-                      )}
-                      <Link to="/admin/requests" className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline">
-                        Open in Manage Requests <ExternalLink className="w-3 h-3" />
-                      </Link>
-                    </div>
-                  );
-                })()}
-
-                {selected.status !== 'pending' && (
-                  <button
-                    type="button"
-                    onClick={() => updateStatus(selected, 'pending')}
-                    disabled={saving !== null}
-                    className="w-full inline-flex items-center justify-center gap-1.5 text-xs font-medium text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white disabled:opacity-60 py-1.5"
-                  >
-                    {saving === 'pending' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RotateCcw className="w-3.5 h-3.5" />}
-                    Move back to “To Verify”
-                  </button>
-                )}
+                </div>
+              </div>
+            )}
+              </div>
               </div>
             </div>
           </div>

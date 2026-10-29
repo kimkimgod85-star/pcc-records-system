@@ -251,21 +251,22 @@ export default function AdminRequests() {
 
       <div className="grid lg:grid-cols-5 gap-5 items-start">
         {/* List */}
-        <div className={`${selectedReq ? 'lg:col-span-3' : 'lg:col-span-5'} bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm overflow-hidden`}>
-          <div className="px-5 py-3 border-b border-gray-100 dark:border-slate-700">
+        <div className={`${selectedReq ? 'lg:col-span-2' : 'lg:col-span-5'} bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm overflow-hidden lg:sticky lg:top-6 lg:flex lg:flex-col lg:max-h-[calc(100dvh-3rem)]`}>
+          <div className="flex-shrink-0 px-5 py-3 border-b border-gray-100 dark:border-slate-700">
             <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
               {filtered.length} request{filtered.length !== 1 ? 's' : ''}
               {statusFilter !== 'all' && <span className="text-gray-400"> · {STATUS_LABEL[statusFilter]}</span>}
             </span>
           </div>
 
+          <div className="lg:flex-1 lg:min-h-0 lg:overflow-y-auto overscroll-contain">
           {filtered.length === 0 && (
             <div className="py-12 text-center text-sm text-gray-500 dark:text-gray-400">
               No requests found matching your filters.
             </div>
           )}
 
-          <div className="sm:hidden divide-y divide-gray-100 dark:divide-slate-700">
+          <div className={`${selectedReq ? '' : 'sm:hidden'} divide-y divide-gray-100 dark:divide-slate-700`}>
             {filtered.map(req => (
               <button
                 key={req.id}
@@ -293,15 +294,15 @@ export default function AdminRequests() {
             ))}
           </div>
 
-          {filtered.length > 0 && (
+          {filtered.length > 0 && !selectedReq && (
             <div className="hidden sm:block overflow-x-auto">
               <table className="w-full">
                 <thead>
                   <tr className="text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 bg-gray-50/80 dark:bg-slate-900/40 border-b border-gray-100 dark:border-slate-700">
                     <th className="px-5 py-3">Request</th>
                     <th className="px-5 py-3">Student</th>
-                    <th className={`px-5 py-3 ${selectedReq ? 'hidden' : 'hidden md:table-cell'}`}>Copies</th>
-                    <th className={`px-5 py-3 ${selectedReq ? 'hidden' : 'hidden lg:table-cell'}`}>Payment</th>
+                    <th className="px-5 py-3 hidden md:table-cell">Copies</th>
+                    <th className="px-5 py-3 hidden lg:table-cell">Payment</th>
                     <th className="px-5 py-3">Status</th>
                     <th className="w-8" />
                   </tr>
@@ -325,10 +326,10 @@ export default function AdminRequests() {
                           <p className="text-sm text-gray-900 dark:text-white leading-snug">{req.student}</p>
                           <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{req.studentId}</p>
                         </td>
-                        <td className={`px-5 py-3.5 align-top ${selectedReq ? 'hidden' : 'hidden md:table-cell'}`}>
+                        <td className="px-5 py-3.5 align-top hidden md:table-cell">
                           <span className="text-sm font-semibold text-gray-900 dark:text-white tabular-nums">{req.copiesLabel}</span>
                         </td>
-                        <td className={`px-5 py-3.5 align-top ${selectedReq ? 'hidden' : 'hidden lg:table-cell'}`}>
+                        <td className="px-5 py-3.5 align-top hidden lg:table-cell">
                           <span className={`text-sm font-medium ${paymentTone(req.paymentStatus)}`}>{req.payment}</span>
                         </td>
                         <td className="px-5 py-3.5 align-top">
@@ -344,14 +345,15 @@ export default function AdminRequests() {
               </table>
             </div>
           )}
+          </div>
         </div>
 
-        {/* Right-side compact panel — one card, status on top */}
+        {/* Right-side panel — details and status side by side, each with its own scroll */}
         {selectedReq && (
-          <div ref={detailRef} className="lg:col-span-2 lg:sticky lg:top-6 scroll-mt-16">
-            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm overflow-hidden">
+          <div ref={detailRef} className="lg:col-span-3 lg:sticky lg:top-6 scroll-mt-16">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm overflow-hidden lg:flex lg:flex-col lg:h-[calc(100dvh-3rem)]">
               {/* Header + close */}
-              <div className="flex items-start justify-between gap-2 px-4 pt-4 pb-3 border-b border-gray-100 dark:border-slate-700">
+              <div className="flex-shrink-0 flex items-start justify-between gap-2 px-4 pt-4 pb-3 border-b border-gray-100 dark:border-slate-700">
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-gray-900 dark:text-white leading-snug" style={{ fontFamily: 'Poppins, sans-serif' }}>
                     {selectedReq.type}
@@ -374,8 +376,64 @@ export default function AdminRequests() {
                 </button>
               </div>
 
+              <div className="lg:flex-1 lg:min-h-0 lg:flex lg:flex-row">
+              {/* Student details + notes */}
+              <div className="lg:flex-1 lg:min-w-0 lg:min-h-0 lg:overflow-y-auto overscroll-contain px-4 py-4 space-y-3">
+                <p className="text-xs font-semibold text-gray-900 dark:text-white">Request details</p>
+                <dl className="grid grid-cols-2 gap-x-3 gap-y-2.5 text-sm">
+                  <Field label="Student" value={selectedReq.student} />
+                  <Field label="Student ID" value={selectedReq.studentId} mono />
+                </dl>
+
+                <div className={`p-2.5 rounded-lg border flex items-start gap-2 ${
+                  selectedReq.notes
+                    ? 'bg-amber-50 border-amber-200 dark:bg-amber-900/15 dark:border-amber-800/60'
+                    : 'bg-gray-50 border-gray-200 dark:bg-slate-900/40 dark:border-slate-700'
+                }`}>
+                  <StickyNote className={`w-4 h-4 mt-0.5 flex-shrink-0 ${selectedReq.notes ? 'text-amber-600 dark:text-amber-400' : 'text-gray-400'}`} />
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Student notes</p>
+                    <p className={`text-sm mt-0.5 leading-relaxed break-words whitespace-pre-wrap ${
+                      selectedReq.notes ? 'text-amber-950 dark:text-amber-100' : 'text-gray-500 dark:text-gray-400'
+                    }`}>
+                      {selectedReq.notes || 'No notes from the student.'}
+                    </p>
+                  </div>
+                </div>
+
+                <dl className="grid grid-cols-2 gap-x-3 gap-y-2.5 text-sm">
+                  <Field label="Copies" value={selectedReq.copiesLabel} highlight />
+                  <Field label="Payment" value={selectedReq.payment} tone={paymentTone(selectedReq.paymentStatus)} />
+                  <Field label="Submitted" value={selectedReq.submitted} />
+                  <Field label="Purpose" value={selectedReq.purpose} wide />
+                </dl>
+
+                <div className={`p-2.5 rounded-lg border flex items-start gap-2 ${
+                  selectedReq.pickup
+                    ? 'bg-cyan-50 border-cyan-200 dark:bg-cyan-900/15 dark:border-cyan-800/60'
+                    : 'bg-gray-50 border-gray-200 dark:bg-slate-900/40 dark:border-slate-700'
+                }`}>
+                  <CalendarClock className={`w-4 h-4 mt-0.5 flex-shrink-0 ${selectedReq.pickup ? 'text-cyan-700 dark:text-cyan-400' : 'text-gray-400'}`} />
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Pickup</p>
+                    <p className={`text-xs font-semibold mt-0.5 ${selectedReq.pickup ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'}`}>
+                      {selectedReq.pickupLong || 'Not booked yet'}
+                    </p>
+                  </div>
+                </div>
+
+                {selectedReq.status === 'rejected' && (
+                  <RejectionNotice
+                    compact
+                    title="Rejected · sent to student"
+                    text={selectedReq.rejectionReason}
+                    fallback="No reason recorded."
+                  />
+                )}
+              </div>
+
               {/* Status actions — payment-gated, Reject separated */}
-              <div className="px-4 py-3 border-b border-gray-100 dark:border-slate-700 bg-slate-50/90 dark:bg-slate-900/40 space-y-2.5">
+              <div className="lg:w-[17rem] lg:flex-shrink-0 lg:min-h-0 lg:overflow-y-auto overscroll-contain px-4 py-4 border-t lg:border-t-0 lg:border-l border-gray-100 dark:border-slate-700 bg-slate-50/90 dark:bg-slate-900/40 space-y-2.5">
                 <p className="text-xs font-semibold text-gray-900 dark:text-white">Update status</p>
 
                 {error && (
@@ -421,7 +479,7 @@ export default function AdminRequests() {
                   </>
                 )}
 
-                <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-5">
+                <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-5 lg:grid-cols-2">
                   {FLOW_ACTIONS.map(action => {
                     const current = selectedReq.status === action.status;
                     const gate = canSetRequestStatus(selectedReq.status, action.status, selectedReq.paymentStatus);
@@ -468,47 +526,6 @@ export default function AdminRequests() {
                   <p className="text-[11px] text-center text-red-600 dark:text-red-400 font-medium">This request was rejected.</p>
                 ) : null}
               </div>
-
-              {/* Compact details — same card */}
-              <div className="px-4 py-3 space-y-3">
-                <dl className="grid grid-cols-2 gap-x-3 gap-y-2.5 text-sm">
-                  <Field label="Student" value={selectedReq.student} />
-                  <Field label="Student ID" value={selectedReq.studentId} mono />
-                  <Field label="Copies" value={selectedReq.copiesLabel} highlight />
-                  <Field label="Payment" value={selectedReq.payment} tone={paymentTone(selectedReq.paymentStatus)} />
-                  <Field label="Submitted" value={selectedReq.submitted} />
-                  <Field label="Purpose" value={selectedReq.purpose} wide />
-                </dl>
-
-                <div className={`p-2.5 rounded-lg border flex items-start gap-2 ${
-                  selectedReq.pickup
-                    ? 'bg-cyan-50 border-cyan-200 dark:bg-cyan-900/15 dark:border-cyan-800/60'
-                    : 'bg-gray-50 border-gray-200 dark:bg-slate-900/40 dark:border-slate-700'
-                }`}>
-                  <CalendarClock className={`w-4 h-4 mt-0.5 flex-shrink-0 ${selectedReq.pickup ? 'text-cyan-700 dark:text-cyan-400' : 'text-gray-400'}`} />
-                  <div className="min-w-0">
-                    <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Pickup</p>
-                    <p className={`text-xs font-semibold mt-0.5 ${selectedReq.pickup ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'}`}>
-                      {selectedReq.pickupLong || 'Not booked yet'}
-                    </p>
-                  </div>
-                </div>
-
-                {selectedReq.status === 'rejected' && (
-                  <RejectionNotice
-                    compact
-                    title="Rejected · sent to student"
-                    text={selectedReq.rejectionReason}
-                    fallback="No reason recorded."
-                  />
-                )}
-
-                {selectedReq.notes && (
-                  <div className="p-2.5 rounded-lg bg-amber-50 dark:bg-amber-900/15 border border-amber-200 dark:border-amber-800/60 flex items-start gap-2">
-                    <StickyNote className="w-3.5 h-3.5 mt-0.5 flex-shrink-0 text-amber-600 dark:text-amber-400" />
-                    <p className="text-xs text-amber-900 dark:text-amber-100 leading-relaxed break-words">{selectedReq.notes}</p>
-                  </div>
-                )}
               </div>
             </div>
           </div>
