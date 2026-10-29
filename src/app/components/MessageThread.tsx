@@ -138,21 +138,24 @@ export function MessageThread({
         )}
       </div>
 
-      <div ref={scroller} className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 py-4 space-y-2">
+      <div ref={scroller} className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 py-4 space-y-3 bg-gray-50/70 dark:bg-slate-900/40">
         {messages.length === 0 && (
-          <p className="py-10 text-center text-sm text-gray-500 dark:text-gray-400">
-            No messages yet. Say hello to {asAdmin ? peerName : 'the Registrar’s Office'}.
-          </p>
+          <div className="h-full min-h-[12rem] flex flex-col items-center justify-center text-center px-6">
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-200">No messages yet</p>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              Say hello to {asAdmin ? peerName : 'the Registrar’s Office'}.
+            </p>
+          </div>
         )}
         {messages.map(message => {
           const mine = message.senderId === meId;
           const editing = editingId === message.id;
           return (
             <div key={message.id} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-[80%] rounded-2xl px-3.5 py-2 ${
+              <div className={`max-w-[78%] rounded-2xl px-3.5 py-2.5 shadow-sm ${
                 mine
                   ? 'bg-blue-600 text-white rounded-br-md'
-                  : 'bg-gray-100 text-gray-900 dark:bg-slate-700 dark:text-white rounded-bl-md'
+                  : 'bg-white text-gray-900 border border-gray-100 dark:bg-slate-700 dark:text-white dark:border-slate-600 rounded-bl-md'
               }`}>
                 {editing ? (
                   <div className="space-y-2">
@@ -194,23 +197,23 @@ export function MessageThread({
         })}
       </div>
 
-      <div className="flex-shrink-0 border-t border-gray-100 dark:border-slate-700 px-4 py-3">
-        {error && <p className="text-xs text-red-600 dark:text-red-400 mb-2">{error}</p>}
-        <div className="flex items-end gap-2">
+      <div className="flex-shrink-0 border-t border-gray-100 dark:border-slate-700 px-4 py-3 bg-white dark:bg-slate-800">
+        {error && <p className="text-xs text-center text-red-600 dark:text-red-400 mb-2">{error}</p>}
+        <div className="flex items-stretch gap-2">
           <textarea
             value={draft}
             onChange={e => setDraft(e.target.value.slice(0, MESSAGE_LIMIT))}
             onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void send(); } }}
             rows={2}
             placeholder="Write a message"
-            className="flex-1 px-3 py-2 rounded-xl border border-gray-200 dark:border-slate-600 bg-gray-50 dark:bg-slate-900 text-sm text-gray-900 dark:text-white resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1 h-[4.5rem] px-3 py-2 rounded-xl border border-gray-200 dark:border-slate-600 bg-gray-50 dark:bg-slate-900 text-sm text-gray-900 dark:text-white resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
-          <button type="button" onClick={send} disabled={busy || !draft.trim()} aria-label="Send" className={btn('primary')}>
+          <button type="button" onClick={send} disabled={busy || !draft.trim()} aria-label="Send" className={btn('primary', 'md', '!h-[4.5rem] px-5')}>
             {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
             Send
           </button>
         </div>
-        <p className="mt-1 text-[11px] text-gray-400 text-right tabular-nums">{draft.length}/{MESSAGE_LIMIT}</p>
+        <p className="mt-1.5 text-[11px] text-gray-400 text-center tabular-nums">{draft.length}/{MESSAGE_LIMIT}</p>
       </div>
     </div>
   );

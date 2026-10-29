@@ -19,8 +19,8 @@ export default function MessagesPage() {
   }, [user?.id, gone]);
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8">
-      <div className="mb-4">
+    <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+      <div className="text-center mb-5">
         <h1 className="text-gray-900 dark:text-white" style={{ fontFamily: 'Poppins, sans-serif', fontSize: '1.5rem', fontWeight: 600 }}>
           Messages
         </h1>
@@ -29,7 +29,7 @@ export default function MessagesPage() {
         </p>
       </div>
 
-      <div className="max-w-3xl h-[calc(100dvh-11rem)] rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm overflow-hidden">
+      <div className="mx-auto h-[min(38rem,calc(100dvh-14rem))] rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm overflow-hidden">
         {error && (
           <div className="h-full flex items-center justify-center px-6 text-center text-sm text-red-600 dark:text-red-400">{error}</div>
         )}

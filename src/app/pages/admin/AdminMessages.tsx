@@ -42,8 +42,8 @@ export default function AdminMessages() {
   };
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8">
-      <div className="mb-4">
+    <div className="max-w-5xl mx-auto p-4 sm:p-6 lg:p-8">
+      <div className="text-center mb-5">
         <h1 className="text-gray-900 dark:text-white" style={{ fontFamily: 'Poppins, sans-serif', fontSize: '1.5rem', fontWeight: 600 }}>
           Messages
         </h1>
@@ -52,9 +52,9 @@ export default function AdminMessages() {
         </p>
       </div>
 
-      {error && <p className="mb-3 text-sm text-red-600 dark:text-red-400">{error}</p>}
+      {error && <p className="mb-3 text-center text-sm text-red-600 dark:text-red-400">{error}</p>}
 
-      <div className="grid lg:grid-cols-5 gap-4 h-[calc(100dvh-10rem)]">
+      <div className="mx-auto grid lg:grid-cols-5 gap-4 h-[min(40rem,calc(100dvh-12rem))]">
         <div className={`${activeId ? 'hidden lg:flex' : 'flex'} lg:col-span-2 flex-col bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm overflow-hidden`}>
           <div className="px-4 h-12 flex items-center border-b border-gray-100 dark:border-slate-700 text-sm font-semibold text-gray-900 dark:text-white">
             {threads.length} conversation{threads.length === 1 ? '' : 's'}
@@ -68,7 +68,7 @@ export default function AdminMessages() {
                 key={thread.id}
                 type="button"
                 onClick={() => open(thread)}
-                className={`w-full text-left px-4 py-3 border-b border-gray-100 dark:border-slate-700 ${
+                className={`w-full h-[4.25rem] text-left px-4 flex flex-col justify-center border-b border-gray-100 dark:border-slate-700 ${
                   activeId === thread.id ? 'bg-blue-50 dark:bg-blue-900/20' : 'hover:bg-gray-50 dark:hover:bg-slate-700/40'
                 }`}
               >
