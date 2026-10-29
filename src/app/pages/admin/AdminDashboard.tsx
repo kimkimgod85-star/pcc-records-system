@@ -252,11 +252,11 @@ export default function AdminDashboard() {
             <table className="hidden sm:table w-full table-fixed">
               <thead className="sticky top-0 z-10">
                 <tr className="text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-slate-900 border-b border-gray-100 dark:border-slate-700">
-                  <th className="px-5 py-3 w-[28%]">Student</th>
-                  <th className="px-5 py-3">Document</th>
-                  <th className="px-5 py-3 w-40 hidden lg:table-cell">Request ID</th>
-                  <th className="px-5 py-3 w-32">Status</th>
-                  <th className="px-5 py-3 w-28 hidden md:table-cell">Date</th>
+                  <th className="pl-5 pr-3 py-3 w-[26%]">Student</th>
+                  <th className="px-3 py-3">Document</th>
+                  <th className="px-3 py-3 w-40 hidden lg:table-cell">Request ID</th>
+                  <th className="px-3 py-3 w-44">Status</th>
+                  <th className="px-3 py-3 w-32 hidden md:table-cell text-right">Date</th>
                   <th className="w-10" />
                 </tr>
               </thead>
@@ -267,25 +267,25 @@ export default function AdminDashboard() {
                     onClick={() => navigate(requestLink(req.id))}
                     className="h-14 cursor-pointer hover:bg-blue-50/50 dark:hover:bg-slate-700/40 transition-colors"
                   >
-                    <td className="px-5">
+                    <td className="pl-5 pr-3">
                       <div className="flex items-center gap-2.5 min-w-0">
                         <Initial name={req.name} />
-                        <span className="text-sm font-medium text-gray-900 dark:text-white truncate">{req.name}</span>
+                        <span className="text-sm font-medium text-gray-900 dark:text-white truncate" title={req.name}>{req.name}</span>
                       </div>
                     </td>
-                    <td className="px-5">
-                      <p className="text-sm text-gray-700 dark:text-gray-300 truncate">{req.type}</p>
+                    <td className="px-3">
+                      <p className="text-sm text-gray-700 dark:text-gray-300 truncate" title={req.type}>{req.type}</p>
                     </td>
-                    <td className="px-5 hidden lg:table-cell">
+                    <td className="px-3 hidden lg:table-cell">
                       <span className="block text-xs font-mono text-blue-600 dark:text-blue-400 truncate">{req.id}</span>
                     </td>
-                    <td className="px-5">
+                    <td className="px-3">
                       <StatusBadge status={req.status} />
                     </td>
-                    <td className="px-5 hidden md:table-cell">
-                      <span className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">{req.date}</span>
+                    <td className="px-3 hidden md:table-cell text-right">
+                      <span className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap tabular-nums">{req.date}</span>
                     </td>
-                    <td className="pr-4">
+                    <td className="pr-4 pl-1">
                       <ChevronRight className="w-4 h-4 text-gray-300 dark:text-slate-600" />
                     </td>
                   </tr>
