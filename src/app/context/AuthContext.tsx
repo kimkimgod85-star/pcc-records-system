@@ -423,6 +423,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const register = async (input: RegisterInput) => {
     if (!isSupabaseConfigured) return missingConfig();
+    if (input.role === 'student' && !input.studentId?.trim()) {
+      return { success: false, error: 'Students must enter a School ID. The Registrar uses it to verify the account.' };
+    }
     const client = requireSupabase();
     const { data, error } = await client.auth.signUp({
       email: input.email.trim(),

@@ -112,6 +112,7 @@ export default function AdminUsers() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [photo, setPhoto] = useState<ManagedUser | null>(null);
   const [confirming, setConfirming] = useState(false);
+  const [wrongId, setWrongId] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
@@ -167,6 +168,7 @@ export default function AdminUsers() {
   const select = (id: string) => {
     setSelectedId(id);
     setConfirming(false);
+    setWrongId(false);
     setError('');
     setCopied(false);
     setEditing(false);
@@ -190,6 +192,10 @@ export default function AdminUsers() {
     const studentId = draft.studentId.trim();
     if (name.length < 2) {
       setEditError('Please enter the full name.');
+      return;
+    }
+    if (draft.role === 'student' && !studentId) {
+      setEditError('A student account needs a School ID.');
       return;
     }
     if (studentId && users.some(u => u.id !== user.id && u.studentId.toLowerCase() === studentId.toLowerCase())) {
@@ -219,6 +225,7 @@ export default function AdminUsers() {
       await setUserStatus(user.id, next);
       setUsers(prev => prev.map(u => u.id === user.id ? { ...u, status: next } : u));
       setConfirming(false);
+      setWrongId(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not update this account. Please try again.');
     } finally {
@@ -589,17 +596,28 @@ export default function AdminUsers() {
                 </div>
               )}
 
-              {!confirming && (
+              {!confirming && !wrongId && (
               <div className="grid grid-cols-2 md:grid-cols-1 gap-2">
               <Link to={`/admin/messages?student=${selected.id}`} className={btn('primary')}>
                 <MessageSquare className="w-4 h-4" />
                 Message
               </Link>
 
+              {selected.status === 'active' && selected.role === 'student' && (
+                  <button
+                    type="button"
+                    onClick={() => { setWrongId(true); setConfirming(false); }}
+                    className={btn('dangerOutline')}
+                  >
+                    <IdCard className="w-4 h-4" />
+                    Wrong School ID
+                  </button>
+              )}
+
               {selected.status === 'active' ? (
                   <button
                     type="button"
-                    onClick={() => setConfirming(true)}
+                    onClick={() => { setConfirming(true); setWrongId(false); }}
                     className={btn('dangerOutline')}
                   >
                     <UserX className="w-4 h-4" />
@@ -617,6 +635,21 @@ export default function AdminUsers() {
                 </button>
               )}
               </div>
+              )}
+
+              {wrongId && selected.status === 'active' && (
+                <div className="p-3.5 rounded-xl border border-red-200 bg-red-50 dark:border-red-900/60 dark:bg-red-900/15">
+                  <p className="text-sm font-medium text-red-800 dark:text-red-200">School ID does not match?</p>
+                  <p className="text-sm text-red-700/90 dark:text-red-300/90 mt-0.5">
+                    {selected.studentId.trim() ? selected.studentId : 'No School ID'} will be treated as wrong. This account is deactivated right away.
+                  </p>
+                  <div className="grid grid-cols-2 gap-2 mt-3">
+                    <button type="button" onClick={() => setWrongId(false)} disabled={saving} className={btn('secondary', 'sm')}>Cancel</button>
+                    <button type="button" onClick={() => changeStatus(selected)} disabled={saving} className={btn('danger', 'sm')}>
+                      {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Deactivate'}
+                    </button>
+                  </div>
+                </div>
               )}
 
               {selected.status === 'active' && (

@@ -63,6 +63,10 @@ export default function RegisterPage() {
       setError('Password must be at least 6 characters.');
       return;
     }
+    if (form.role === 'student' && !form.studentId.trim()) {
+      setError('Students must enter a School ID. The Registrar uses it to verify the account.');
+      return;
+    }
 
     setLoading(true);
     const result = await register({
@@ -92,6 +96,10 @@ export default function RegisterPage() {
     if (!requireAgreement()) return;
     if (!form.fullName.trim()) {
       setError('Enter your full name first, then continue with Google.');
+      return;
+    }
+    if (form.role === 'student' && !form.studentId.trim()) {
+      setError('Enter your School ID first. Students cannot register without it.');
       return;
     }
     setLoading(true);
@@ -216,12 +224,15 @@ export default function RegisterPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-gray-800 dark:text-gray-200 mb-1">Student ID</label>
+                <label className="block text-xs font-medium text-gray-800 dark:text-gray-200 mb-1">
+                  School ID{form.role === 'alumni' ? ' (optional)' : ''}
+                </label>
                 <input
                   type="text"
                   value={form.studentId}
                   onChange={e => setForm({ ...form, studentId: e.target.value })}
-                  placeholder="Optional"
+                  placeholder={form.role === 'student' ? 'Required' : 'Optional'}
+                  required={form.role === 'student'}
                   className={fieldClass}
                 />
               </div>
