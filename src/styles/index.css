@@ -38,18 +38,16 @@
 }
 
 @keyframes pcc-footer {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+  0%, 100% { opacity: 0; }
+  50% { opacity: 1; }
 }
 
-.pcc-footer {
-  background-image: linear-gradient(120deg, #050d24, #071a45, #0c2f78, #1e4ed8, #0c2f78, #071a45, #050d24);
-  background-size: 280% 280%;
-  animation: pcc-footer 16s ease-in-out infinite;
+.pcc-footer-shift {
+  background-image: linear-gradient(160deg, #0b245c, #123a8a);
+  animation: pcc-footer 12s ease-in-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .pcc-bubble { animation: none; }
-  .pcc-footer { animation: none; }
+  .pcc-footer-shift { animation: none; }
 }

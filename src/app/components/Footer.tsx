@@ -35,8 +35,9 @@ export function Footer() {
         ];
 
   return (
-    <footer className="pcc-footer mt-auto text-blue-100">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <footer className="relative mt-auto overflow-hidden text-blue-100 bg-[#07111f]">
+      <div className="pcc-footer-shift pointer-events-none absolute inset-0" aria-hidden />
+      <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
           <div>
             <div className="flex items-center gap-3">
