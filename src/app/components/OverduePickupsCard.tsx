@@ -24,7 +24,7 @@ export function OverduePickupsCard({ className = '' }: { className?: string }) {
             Overdue pickups · {overdue.length}
           </p>
           <p className="text-xs text-red-800/80 dark:text-red-200/80">
-            Pickup date passed but the document is not ready yet. Students were notified automatically — set a new date.
+            A pickup date passed, including one you already moved. Students were notified. Set another date.
           </p>
         </div>
       </div>
@@ -46,7 +46,7 @@ export function OverduePickupsCard({ className = '' }: { className?: string }) {
             <span className="hidden sm:block"><StatusBadge status={item.request.status} /></span>
             <button type="button" onClick={() => setActive(item)} className={btn('primary', 'sm')}>
               <CalendarClock className="w-4 h-4" />
-              Reschedule
+              Reschedule again
             </button>
           </li>
         ))}

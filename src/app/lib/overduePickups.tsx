@@ -5,8 +5,8 @@ import { fetchRequests, subscribeRequests, trackLink, type StudentRequest } from
 import { loadSchedule, subscribeSchedule, todayISO, type PickupBooking, type ScheduleState } from './scheduling';
 import { formatLongDate, type RequestStatus } from './status';
 
-/** Statuses where the document is still not ready for the student. */
-const NOT_READY: RequestStatus[] = ['pending', 'approved', 'processing'];
+/** Statuses where the student still has not claimed the document. */
+const OPEN_PICKUP: RequestStatus[] = ['pending', 'approved', 'processing', 'ready'];
 
 export const RESCHEDULE_REASONS = [
   'The Registrar’s Office was busy with many requests',
@@ -35,7 +35,7 @@ export function findOverduePickups(requests: StudentRequest[], bookings: PickupB
     .filter(b => b.date && b.date < today)
     .map(booking => ({ booking, request: byUuid.get(booking.requestUuid) }))
     .filter((item): item is { booking: PickupBooking; request: StudentRequest } =>
-      Boolean(item.request && NOT_READY.includes(item.request.status)))
+      Boolean(item.request && OPEN_PICKUP.includes(item.request.status)))
     .map(item => ({ ...item, daysLate: daysBetween(item.booking.date, today) }))
     .sort((a, b) => a.booking.date.localeCompare(b.booking.date));
 }
@@ -56,11 +56,15 @@ async function notifyStudents(list: OverduePickup[]) {
   for (const item of list) {
     const link = delayLink(item);
     if (sent.has(link)) continue;
+    const missed = formatLongDate(item.booking.date);
+    const why = item.request.status === 'ready'
+      ? `Sorry, the Registrar’s Office was busy on your pickup date (${missed}), so please do not come yet.`
+      : `Sorry, your document was not ready on your pickup date (${missed}) because the Registrar’s Office was busy.`;
     await addNotification({
       userId: item.booking.userId,
       type: 'schedule',
       title: 'Pickup date moved',
-      message: `${item.request.type} (${item.request.id}) · Sorry, your document was not ready on your pickup date (${formatLongDate(item.booking.date)}) because the Registrar’s Office was busy. Please do not go to the office yet — the Registrar will set a new pickup date and notify you.`,
+      message: `${item.request.type} (${item.request.id}) · ${why} The Registrar will set another pickup date and notify you.`,
       link,
     });
   }

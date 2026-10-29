@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { fetchRequests, subscribeRequests, updateRequestStatus, type StudentRequest } from '../../lib/requests';
 import { useOverduePickups } from '../../lib/overduePickups';
+import { todayISO } from '../../lib/scheduling';
 import { RescheduleDialog } from '../../components/RescheduleDialog';
 import {
   canRejectRequest,
@@ -529,10 +530,10 @@ export default function AdminRequests() {
                     type="button"
                     onClick={() => setRescheduling(true)}
                     disabled={saving !== null}
-                    className={btn('secondary', 'md', 'w-full')}
+                    className={btn(selectedBooking.date < todayISO() ? 'primary' : 'secondary', 'md', 'w-full')}
                   >
                     <CalendarClock className="w-4 h-4" />
-                    Reschedule pickup
+                    {selectedBooking.date < todayISO() ? 'Reschedule again' : 'Reschedule pickup'}
                   </button>
                 )}
 
