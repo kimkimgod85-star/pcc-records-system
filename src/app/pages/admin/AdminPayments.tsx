@@ -254,7 +254,7 @@ export default function AdminPayments() {
       </div>
 
       <div className="grid lg:grid-cols-5 gap-5 items-start">
-        <div className={`${selected ? 'lg:col-span-2' : 'lg:col-span-5'} bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm overflow-hidden lg:sticky lg:top-6 lg:flex lg:flex-col lg:max-h-[calc(100dvh-3rem)]`}>
+        <div className={`${selected ? 'lg:col-span-2 lg:h-[calc(100dvh-3rem)]' : 'lg:col-span-5 lg:max-h-[calc(100dvh-3rem)]'} bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm overflow-hidden lg:sticky lg:top-6 lg:flex lg:flex-col`}>
           <div className="flex-shrink-0 px-5 py-3 border-b border-gray-100 dark:border-slate-700">
             <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
               {filtered.length} payment{filtered.length !== 1 ? 's' : ''}
@@ -268,36 +268,40 @@ export default function AdminPayments() {
           )}
 
           <div className={`${selected ? '' : 'sm:hidden'} divide-y divide-gray-100 dark:divide-slate-700`}>
-            {filtered.map(pay => (
-              <button
-                key={pay.id}
-                type="button"
-                onClick={() => select(pay.id)}
-                className={`w-full text-left px-4 py-4 transition-colors ${
-                  selectedId === pay.id ? 'bg-blue-50 dark:bg-blue-900/20' : 'active:bg-gray-50 dark:active:bg-slate-700/50'
-                }`}
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold text-gray-900 dark:text-white leading-snug">{pay.student}</p>
-                    <p className="text-sm text-gray-600 dark:text-gray-300 mt-0.5">{pay.document}</p>
+            {filtered.map(pay => {
+              const active = selectedId === pay.id;
+              return (
+                <button
+                  key={pay.id}
+                  type="button"
+                  onClick={() => select(pay.id)}
+                  className={`relative w-full h-[4.75rem] text-left px-4 flex items-center gap-3 transition-colors ${
+                    active ? 'bg-blue-50 dark:bg-blue-900/20' : 'hover:bg-gray-50 dark:hover:bg-slate-700/40'
+                  }`}
+                >
+                  {active && <span className="absolute left-0 inset-y-2 w-1 rounded-r bg-blue-600" />}
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{pay.student}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">{pay.document}</p>
+                    <p className="text-[11px] font-mono text-blue-600 dark:text-blue-400 truncate mt-0.5">{pay.reqId}</p>
                   </div>
-                  <PayBadge status={pay.status} />
-                </div>
-                <div className="flex items-center justify-between gap-3 mt-2.5">
-                  <MethodTag method={pay.method} />
-                  <span className="text-base font-semibold text-gray-900 dark:text-white tabular-nums">{pay.amount}</span>
-                </div>
-                <p className="text-xs font-mono text-blue-600 dark:text-blue-400 mt-1.5 break-all">{pay.reqId}</p>
-              </button>
-            ))}
+                  <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                    <span className="text-sm font-semibold text-gray-900 dark:text-white tabular-nums">{pay.amount}</span>
+                    <div className="flex items-center gap-1">
+                      <MethodTag method={pay.method} />
+                      <PayBadge status={pay.status} />
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
           </div>
 
           {filtered.length > 0 && !selected && (
-            <div className="hidden sm:block overflow-x-auto">
+            <div className="hidden sm:block">
             <table className="w-full">
-              <thead>
-                  <tr className="text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 bg-gray-50/80 dark:bg-slate-900/40 border-b border-gray-100 dark:border-slate-700">
+              <thead className="sticky top-0 z-10">
+                  <tr className="text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-slate-900 border-b border-gray-100 dark:border-slate-700">
                     <th className="px-5 py-3">Student</th>
                     <th className="px-5 py-3 hidden md:table-cell">Method</th>
                     <th className="px-5 py-3 text-right">Amount</th>
@@ -317,24 +321,26 @@ export default function AdminPayments() {
                           active ? 'bg-blue-50 dark:bg-blue-900/20' : 'hover:bg-gray-50 dark:hover:bg-slate-700/40'
                         }`}
                       >
-                        <td className="px-5 py-3.5 align-top">
-                          <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug">{pay.student}</p>
-                          <p className="text-sm text-gray-600 dark:text-gray-400 leading-snug">{pay.document}</p>
-                          <p className="text-xs font-mono text-blue-600 dark:text-blue-400 mt-0.5">{pay.reqId}</p>
+                        <td className="px-5 py-3 h-[4.5rem] align-middle">
+                          <div className="max-w-[24rem] min-w-0">
+                            <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{pay.student}</p>
+                            <p className="text-xs text-gray-600 dark:text-gray-400 truncate">{pay.document}</p>
+                            <p className="text-[11px] font-mono text-blue-600 dark:text-blue-400 truncate">{pay.reqId}</p>
+                          </div>
                     </td>
-                        <td className="px-5 py-3.5 align-top hidden md:table-cell">
+                        <td className="px-5 py-3 align-middle hidden md:table-cell">
                           <MethodTag method={pay.method} />
                     </td>
-                        <td className="px-5 py-3.5 align-top text-right">
+                        <td className="px-5 py-3 align-middle text-right">
                           <span className="text-sm font-semibold text-gray-900 dark:text-white tabular-nums whitespace-nowrap">{pay.amount}</span>
                     </td>
-                        <td className="px-5 py-3.5 align-top hidden xl:table-cell">
+                        <td className="px-5 py-3 align-middle hidden xl:table-cell">
                           <span className="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">{pay.date}</span>
                     </td>
-                        <td className="px-5 py-3.5 align-top">
+                        <td className="px-5 py-3 align-middle">
                           <PayBadge status={pay.status} />
                     </td>
-                        <td className="pr-4 py-3.5 align-top">
+                        <td className="pr-4 py-3 align-middle">
                           <ChevronRight className={`w-4 h-4 ${active ? 'text-blue-500' : 'text-gray-300 dark:text-slate-600'}`} />
                     </td>
                   </tr>
@@ -506,7 +512,7 @@ export default function AdminPayments() {
                         rel="noreferrer"
                         className="group block rounded-xl overflow-hidden border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-900"
                       >
-                        <img src={selected.screenshotPath} alt="GCash proof" className="w-full max-h-72 object-contain" />
+                        <img src={selected.screenshotPath} alt="GCash proof" className="w-full max-h-52 object-contain" />
                         <span className="flex items-center justify-center gap-1 py-1.5 text-xs font-medium text-blue-600 dark:text-blue-400 border-t border-gray-200 dark:border-slate-700 group-hover:bg-blue-50 dark:group-hover:bg-blue-900/20">
                           <ExternalLink className="w-3 h-3" /> Open full size
                         </span>

@@ -1,6 +1,6 @@
 import { btn, ICON_BTN } from '../../lib/ui';
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
 import {
   Search, CheckCircle, X, ChevronRight, ArrowRight, AlertCircle, Loader2,
   StickyNote, CalendarClock, Copy, XCircle, CreditCard,
@@ -118,7 +118,9 @@ export default function AdminRequests() {
   const [requests, setRequests] = useState<AdminRequestRow[]>([]);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | RequestStatus>('all');
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [searchParams] = useSearchParams();
+  const linkedId = searchParams.get('id');
+  const [selectedId, setSelectedId] = useState<string | null>(linkedId);
   const [saving, setSaving] = useState<RequestStatus | null>(null);
   const [error, setError] = useState('');
   const [rejecting, setRejecting] = useState(false);
@@ -129,6 +131,10 @@ export default function AdminRequests() {
     refresh();
     return subscribeRequests(refresh);
   }, []);
+
+  useEffect(() => {
+    if (linkedId) setSelectedId(linkedId);
+  }, [linkedId]);
 
   const selectedReq = requests.find(r => r.id === selectedId) ?? null;
 
@@ -297,10 +303,10 @@ export default function AdminRequests() {
           </div>
 
           {filtered.length > 0 && !selectedReq && (
-            <div className="hidden sm:block overflow-x-auto">
+            <div className="hidden sm:block">
               <table className="w-full">
-                <thead>
-                  <tr className="text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 bg-gray-50/80 dark:bg-slate-900/40 border-b border-gray-100 dark:border-slate-700">
+                <thead className="sticky top-0 z-10">
+                  <tr className="text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-slate-900 border-b border-gray-100 dark:border-slate-700">
                     <th className="px-5 py-3">Request</th>
                     <th className="px-5 py-3">Student</th>
                     <th className="px-5 py-3 hidden md:table-cell">Copies</th>

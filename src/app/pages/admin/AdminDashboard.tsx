@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { Users, Clock, Calendar, CreditCard } from 'lucide-react';
-import { Link } from 'react-router';
+import { Users, Clock, Calendar, CreditCard, ChevronRight } from 'lucide-react';
+import { Link, useNavigate } from 'react-router';
+import { btn } from '../../lib/ui';
 import { fetchRequests, subscribeRequests } from '../../lib/requests';
 import { fetchPayments, subscribePayments } from '../../lib/payments';
 import { fetchManagedUsers, subscribeUsers } from '../../lib/profiles';
@@ -37,7 +38,16 @@ const StatCard = ({ icon: Icon, label, value, sub, color, bg }: {
   </div>
 );
 
+const requestLink = (id: string) => `/admin/requests?id=${encodeURIComponent(id)}`;
+
+const Initial = ({ name }: { name: string }) => (
+  <span className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-sm font-semibold flex items-center justify-center flex-shrink-0">
+    {name.charAt(0).toUpperCase() || '?'}
+  </span>
+);
+
 export default function AdminDashboard() {
+  const navigate = useNavigate();
   const [totalRequests, setTotalRequests] = useState(0);
   const [pending, setPending] = useState(0);
   const [completed, setCompleted] = useState(0);
@@ -76,7 +86,7 @@ export default function AdminDashboard() {
       const typeMap = new Map<string, number>();
       requests.forEach(item => typeMap.set(item.type, (typeMap.get(item.type) || 0) + 1));
       setDocTypes(Array.from(typeMap.entries()).map(([name, value], i) => ({ name, value, color: PIE_COLORS[i % PIE_COLORS.length] })));
-      setRecent(requests.slice(0, 8).map(item => ({
+      setRecent(requests.slice(0, 20).map(item => ({
         id: item.id,
         name: item.studentName,
         type: item.type,
@@ -202,76 +212,88 @@ export default function AdminDashboard() {
 
       {/* Recent Requests */}
       <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm overflow-hidden">
-        <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-gray-100 dark:border-slate-700">
-          <h2 className="font-semibold text-gray-900 dark:text-white" style={{ fontFamily: 'Poppins, sans-serif' }}>
-            Recent Requests
-          </h2>
-          <Link to="/admin/requests" className="text-sm text-blue-600 dark:text-blue-400 hover:underline">
-            View All
+        <div className="flex items-center justify-between gap-3 px-5 h-14 border-b border-gray-100 dark:border-slate-700">
+          <div className="flex items-center gap-2">
+            <h2 className="font-semibold text-gray-900 dark:text-white" style={{ fontFamily: 'Poppins, sans-serif' }}>
+              Recent Requests
+            </h2>
+            <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-200 tabular-nums">
+              {recent.length}
+            </span>
+          </div>
+          <Link to="/admin/requests" className={btn('secondary', 'sm')}>
+            View all
           </Link>
         </div>
-        <div className="sm:hidden divide-y divide-gray-100 dark:divide-slate-700">
-          {recent.length === 0 && (
-            <p className="px-5 py-8 text-center text-sm text-gray-500 dark:text-gray-400">No requests yet.</p>
-          )}
-          {recent.map(req => (
-            <Link key={req.id} to="/admin/requests" className="block px-5 py-4 active:bg-gray-50 dark:active:bg-slate-700/50">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-2 min-w-0">
-                  <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center flex-shrink-0">
-                    <span className="text-sm text-blue-600 dark:text-blue-400 font-semibold">{req.name.charAt(0)}</span>
-                  </div>
-                  <p className="text-sm font-semibold text-gray-900 dark:text-white leading-snug">{req.name}</p>
-                </div>
-                <StatusBadge status={req.status} />
-              </div>
-              <p className="text-sm text-gray-700 dark:text-gray-300 mt-2">{req.type}</p>
-              <div className="flex items-center justify-between gap-3 mt-1 text-xs">
-                <span className="font-mono text-blue-600 dark:text-blue-400 break-all">{req.id}</span>
-                <span className="text-gray-500 dark:text-gray-400 whitespace-nowrap">{req.date}</span>
-              </div>
-            </Link>
-          ))}
-        </div>
-        <div className="hidden sm:block overflow-x-auto">
-          <table className="w-full min-w-[640px]">
-            <thead>
-              <tr className="text-xs text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-slate-700">
-                <th className="px-6 py-3 text-left font-medium">Request ID</th>
-                <th className="px-6 py-3 text-left font-medium">Student</th>
-                <th className="px-6 py-3 text-left font-medium hidden sm:table-cell">Document</th>
-                <th className="px-6 py-3 text-left font-medium">Status</th>
-                <th className="px-6 py-3 text-left font-medium hidden md:table-cell">Date</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50 dark:divide-slate-700">
+
+        {recent.length === 0 ? (
+          <p className="px-5 py-10 text-center text-sm text-gray-500 dark:text-gray-400">No requests yet.</p>
+        ) : (
+          <div className="max-h-[26rem] overflow-y-auto overscroll-contain">
+            {/* Phone: compact rows */}
+            <div className="sm:hidden divide-y divide-gray-100 dark:divide-slate-700">
               {recent.map(req => (
-                <tr key={req.id} className="hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors">
-                  <td className="px-6 py-3.5">
-                    <span className="text-xs font-mono text-blue-600 dark:text-blue-400">{req.id}</span>
-                  </td>
-                  <td className="px-6 py-3.5">
-                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center flex-shrink-0">
-                        <span className="text-xs text-blue-600 dark:text-blue-400 font-medium">{req.name.charAt(0)}</span>
-                      </div>
-                      <span className="text-sm text-gray-700 dark:text-gray-300">{req.name}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-3.5 hidden sm:table-cell">
-                    <span className="text-sm text-gray-600 dark:text-gray-400">{req.type}</span>
-                  </td>
-                  <td className="px-6 py-3.5">
-                    <StatusBadge status={req.status} />
-                  </td>
-                  <td className="px-6 py-3.5 hidden md:table-cell">
-                    <span className="text-xs text-gray-500 dark:text-gray-400">{req.date}</span>
-                  </td>
-                </tr>
+                <Link
+                  key={req.id}
+                  to={requestLink(req.id)}
+                  className="h-[4.5rem] px-4 flex items-center gap-3 active:bg-gray-50 dark:active:bg-slate-700/50"
+                >
+                  <Initial name={req.name} />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{req.name}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">{req.type} · {req.date}</p>
+                  </div>
+                  <StatusBadge status={req.status} />
+                </Link>
               ))}
-            </tbody>
-          </table>
-        </div>
+            </div>
+
+            {/* Tablet & desktop: table */}
+            <table className="hidden sm:table w-full table-fixed">
+              <thead className="sticky top-0 z-10">
+                <tr className="text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-slate-900 border-b border-gray-100 dark:border-slate-700">
+                  <th className="px-5 py-3 w-[28%]">Student</th>
+                  <th className="px-5 py-3">Document</th>
+                  <th className="px-5 py-3 w-40 hidden lg:table-cell">Request ID</th>
+                  <th className="px-5 py-3 w-32">Status</th>
+                  <th className="px-5 py-3 w-28 hidden md:table-cell">Date</th>
+                  <th className="w-10" />
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 dark:divide-slate-700">
+                {recent.map(req => (
+                  <tr
+                    key={req.id}
+                    onClick={() => navigate(requestLink(req.id))}
+                    className="h-14 cursor-pointer hover:bg-blue-50/50 dark:hover:bg-slate-700/40 transition-colors"
+                  >
+                    <td className="px-5">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <Initial name={req.name} />
+                        <span className="text-sm font-medium text-gray-900 dark:text-white truncate">{req.name}</span>
+                      </div>
+                    </td>
+                    <td className="px-5">
+                      <p className="text-sm text-gray-700 dark:text-gray-300 truncate">{req.type}</p>
+                    </td>
+                    <td className="px-5 hidden lg:table-cell">
+                      <span className="block text-xs font-mono text-blue-600 dark:text-blue-400 truncate">{req.id}</span>
+                    </td>
+                    <td className="px-5">
+                      <StatusBadge status={req.status} />
+                    </td>
+                    <td className="px-5 hidden md:table-cell">
+                      <span className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">{req.date}</span>
+                    </td>
+                    <td className="pr-4">
+                      <ChevronRight className="w-4 h-4 text-gray-300 dark:text-slate-600" />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );

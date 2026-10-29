@@ -312,10 +312,10 @@ export default function AdminUsers() {
 
           {/* Tablet & desktop: table */}
           {filtered.length > 0 && !selected && (
-            <div className="hidden sm:block overflow-x-auto">
+            <div className="hidden sm:block">
               <table className="w-full">
-                <thead>
-                  <tr className="text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 bg-gray-50/80 dark:bg-slate-900/40 border-b border-gray-100 dark:border-slate-700">
+                <thead className="sticky top-0 z-10">
+                  <tr className="text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-slate-900 border-b border-gray-100 dark:border-slate-700">
                     <th className="px-5 py-3">User</th>
                     <th className="px-5 py-3 hidden md:table-cell">Student ID</th>
                     <th className="px-5 py-3">Role</th>
@@ -482,17 +482,19 @@ export default function AdminUsers() {
                   </div>
                 </form>
               ) : (
-              <dl className="divide-y divide-gray-100 dark:divide-slate-700">
-                <InfoRow icon={Mail} label="Email">
-                  <span className="break-all">{selected.email}</span>
-                  <button
-                    type="button"
-                    onClick={() => copyEmail(selected.email)}
-                    className="ml-2 inline-flex items-center gap-1 text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline align-middle"
-                  >
-                    {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                    {copied ? 'Copied' : 'Copy'}
-                  </button>
+              <dl className="grid grid-cols-2 gap-px bg-gray-100 dark:bg-slate-700">
+                <InfoRow icon={Mail} label="Email" wide>
+                  <span className="flex items-center gap-2 min-w-0">
+                    <span className="truncate" title={selected.email}>{selected.email}</span>
+                    <button
+                      type="button"
+                      onClick={() => copyEmail(selected.email)}
+                      className="flex-shrink-0 inline-flex items-center gap-1 text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline"
+                    >
+                      {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                      {copied ? 'Copied' : 'Copy'}
+                    </button>
+                  </span>
                 </InfoRow>
                 <InfoRow icon={IdCard} label="Student ID">
                   <span className="font-mono">{selected.studentId || '—'}</span>
@@ -659,9 +661,9 @@ function Segmented<T extends string>({ options, value, onChange }: {
   );
 }
 
-function InfoRow({ icon: Icon, label, children }: { icon: typeof Mail; label: string; children: ReactNode }) {
+function InfoRow({ icon: Icon, label, wide, children }: { icon: typeof Mail; label: string; wide?: boolean; children: ReactNode }) {
   return (
-    <div className="flex items-start gap-3 px-5 py-3">
+    <div className={`flex items-start gap-3 px-5 py-3 min-w-0 bg-white dark:bg-slate-800 ${wide ? 'col-span-2' : ''}`}>
       <Icon className="w-4 h-4 mt-0.5 flex-shrink-0 text-gray-400" />
       <div className="min-w-0 flex-1">
         <dt className="text-xs font-medium text-gray-500 dark:text-gray-400">{label}</dt>
