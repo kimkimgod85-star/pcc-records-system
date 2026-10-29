@@ -1,3 +1,4 @@
+import { btn, ICON_BTN } from '../../lib/ui';
 import { useEffect, useState, type ReactNode } from 'react';
 import {
   Search, UserX, UserCheck, Mail, X, ChevronRight, Loader2, AlertCircle,
@@ -385,7 +386,7 @@ export default function AdminUsers() {
                     <button
                       type="button"
                       onClick={startEdit}
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-sm font-medium text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20"
+                      className={btn('ghost', 'sm')}
                     >
                       <Pencil className="w-3.5 h-3.5" /> Edit
                     </button>
@@ -394,7 +395,7 @@ export default function AdminUsers() {
                     type="button"
                     onClick={() => setSelectedId(null)}
                     aria-label="Close details"
-                    className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:text-gray-200 dark:hover:bg-slate-700"
+                    className={ICON_BTN}
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -460,14 +461,14 @@ export default function AdminUsers() {
                       type="button"
                       onClick={() => setEditing(false)}
                       disabled={savingEdit}
-                      className="px-4 py-2.5 rounded-xl text-sm font-medium bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 dark:bg-slate-800 dark:text-gray-200 dark:border-slate-600 dark:hover:bg-slate-700 disabled:opacity-60"
+                      className={btn('secondary')}
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
                       disabled={savingEdit}
-                      className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-sm disabled:opacity-60"
+                      className={btn('primary')}
                     >
                       {savingEdit ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                       Save changes
@@ -556,7 +557,7 @@ export default function AdminUsers() {
                         type="button"
                         onClick={() => setConfirming(false)}
                         disabled={saving}
-                        className="px-3 py-2 rounded-lg text-sm font-medium bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 dark:bg-slate-800 dark:text-gray-200 dark:border-slate-600 disabled:opacity-60"
+                        className={btn('secondary', 'sm')}
                       >
                         Cancel
                       </button>
@@ -564,7 +565,7 @@ export default function AdminUsers() {
                         type="button"
                         onClick={() => changeStatus(selected)}
                         disabled={saving}
-                        className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold bg-red-600 hover:bg-red-700 text-white disabled:opacity-60"
+                        className={btn('danger', 'sm')}
                       >
                         {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserX className="w-4 h-4" />}
                         Deactivate
@@ -575,7 +576,7 @@ export default function AdminUsers() {
                   <button
                     type="button"
                     onClick={() => setConfirming(true)}
-                    className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold border border-red-200 text-red-700 hover:bg-red-50 dark:border-red-900/60 dark:text-red-300 dark:hover:bg-red-900/20 transition-colors"
+                    className={btn('dangerOutline', 'md', 'w-full')}
                   >
                     <UserX className="w-4 h-4" />
                     Deactivate account
@@ -586,7 +587,7 @@ export default function AdminUsers() {
                   type="button"
                   onClick={() => changeStatus(selected)}
                   disabled={saving}
-                  className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold bg-green-600 hover:bg-green-700 text-white shadow-sm transition-colors disabled:opacity-60"
+                  className={btn('success', 'md', 'w-full')}
                 >
                   {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserCheck className="w-4 h-4" />}
                   Activate account

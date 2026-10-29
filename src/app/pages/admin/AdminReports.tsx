@@ -1,3 +1,4 @@
+import { btn } from '../../lib/ui';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -375,7 +376,7 @@ export default function AdminReports() {
                 <button
                   type="button"
                   onClick={saveDates}
-                  className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold transition-colors"
+                  className={btn('primary')}
                 >
                   Save class dates
                 </button>
@@ -597,7 +598,7 @@ export default function AdminReports() {
               type="button"
               onClick={download}
               disabled={exporting}
-              className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition-colors disabled:opacity-60 flex-shrink-0"
+              className={btn('primary', 'lg', 'flex-shrink-0')}
             >
               {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : exportDone ? <Check className="w-4 h-4" /> : <Download className="w-4 h-4" />}
               {exporting ? 'Preparing file…' : exportDone ? 'Downloaded' : `Download ${FORMATS.find(f => f.value === format)?.label}`}

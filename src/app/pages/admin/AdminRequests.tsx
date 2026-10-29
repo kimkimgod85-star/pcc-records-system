@@ -1,3 +1,4 @@
+import { btn, ICON_BTN } from '../../lib/ui';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import {
@@ -370,7 +371,7 @@ export default function AdminRequests() {
                   type="button"
                   onClick={() => setSelectedId(null)}
                   aria-label="Close details"
-                  className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:text-gray-200 dark:hover:bg-slate-700"
+                  className={ICON_BTN}
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -468,7 +469,7 @@ export default function AdminRequests() {
                       onClick={() => updateStatus(selectedReq, nextDef.status)}
                       disabled={saving !== null || !nextReady}
                       title={!nextReady ? (nextGate?.reason || 'Not available yet') : undefined}
-                      className="w-full inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-sm disabled:opacity-45 disabled:cursor-not-allowed"
+                      className={btn('primary', 'md', 'w-full')}
                     >
                       {saving === nextDef.status ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
                       {nextDef.label}
@@ -517,7 +518,7 @@ export default function AdminRequests() {
                     type="button"
                     onClick={() => chooseStatus(selectedReq, 'rejected')}
                     disabled={saving !== null}
-                    className="w-full inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-sm font-semibold border border-red-200 text-red-700 bg-white hover:bg-red-50 dark:bg-slate-800 dark:border-red-900/60 dark:text-red-300 dark:hover:bg-red-900/20 disabled:opacity-50"
+                    className={btn('dangerOutline', 'md', 'w-full')}
                   >
                     {saving === 'rejected' ? <Loader2 className="w-4 h-4 animate-spin" /> : <XCircle className="w-4 h-4" />}
                     Reject request

@@ -1,3 +1,4 @@
+import { btn, ICON_BTN } from '../../lib/ui';
 import { useEffect, useState } from 'react';
 import {
   Search, CheckCircle, XCircle, X, Smartphone, MapPin, ChevronRight, Loader2,
@@ -364,7 +365,7 @@ export default function AdminPayments() {
                   type="button"
                   onClick={() => setSelectedId(null)}
                   aria-label="Close details"
-                  className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:text-gray-200 dark:hover:bg-slate-700"
+                  className={ICON_BTN}
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -394,11 +395,11 @@ export default function AdminPayments() {
                     type="button"
                     onClick={() => updateStatus(selected, 'verified')}
                     disabled={selected.status === 'verified' || saving !== null}
-                    className={`inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
+                    className={
                       selected.status === 'verified'
-                        ? 'bg-green-50 text-green-700 ring-1 ring-inset ring-green-200 dark:bg-green-900/20 dark:text-green-300 dark:ring-green-800 cursor-default'
-                        : 'bg-green-600 hover:bg-green-700 text-white shadow-sm disabled:opacity-60'
-                    }`}
+                        ? 'inline-flex items-center justify-center gap-2 h-10 px-4 rounded-xl text-sm font-semibold bg-green-50 text-green-700 ring-1 ring-inset ring-green-200 dark:bg-green-900/20 dark:text-green-300 dark:ring-green-800 cursor-default'
+                        : btn('success')
+                    }
                   >
                     {saving === 'verified' ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
                     {selected.status === 'verified'
@@ -409,11 +410,11 @@ export default function AdminPayments() {
                     type="button"
                     onClick={() => { setError(''); setRejecting(true); }}
                     disabled={selected.status === 'rejected' || saving !== null}
-                    className={`inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
+                    className={
                       selected.status === 'rejected'
-                        ? 'bg-red-50 text-red-700 ring-1 ring-inset ring-red-200 dark:bg-red-900/20 dark:text-red-300 dark:ring-red-800 cursor-default'
-                        : 'border border-red-200 bg-white text-red-700 hover:bg-red-50 dark:bg-slate-800 dark:border-red-900/60 dark:text-red-300 dark:hover:bg-red-900/20 disabled:opacity-60'
-                    }`}
+                        ? 'inline-flex items-center justify-center gap-2 h-10 px-4 rounded-xl text-sm font-semibold bg-red-50 text-red-700 ring-1 ring-inset ring-red-200 dark:bg-red-900/20 dark:text-red-300 dark:ring-red-800 cursor-default'
+                        : btn('dangerOutline')
+                    }
                   >
                     {saving === 'rejected' ? <Loader2 className="w-4 h-4 animate-spin" /> : <XCircle className="w-4 h-4" />}
                     {selected.status === 'rejected' ? 'Rejected' : 'Reject'}
@@ -455,7 +456,7 @@ export default function AdminPayments() {
                             type="button"
                             onClick={() => advanceRequest(selected, next.status)}
                             disabled={advancing || saving !== null}
-                            className="w-full inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-sm disabled:opacity-60"
+                            className={btn('primary', 'md', 'w-full')}
                           >
                             {advancing ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
                             {next.label}

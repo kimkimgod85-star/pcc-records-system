@@ -1,3 +1,4 @@
+import { btn, ICON_BTN_DANGER } from '../../lib/ui';
 import { useEffect, useState } from 'react';
 import { ChevronLeft, ChevronRight, Plus, Trash2, Clock, CheckCircle, CalendarDays, AlertCircle, Users } from 'lucide-react';
 import {
@@ -184,9 +185,7 @@ export default function AdminScheduling() {
         </div>
         <button
           onClick={persistFlash}
-          className={`inline-flex items-center justify-center gap-2 h-10 px-4 text-white rounded-xl text-sm font-semibold shadow-sm transition-colors ${
-            saved ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'
-          }`}
+          className={btn(saved ? 'success' : 'primary')}
         >
           <CheckCircle className="w-4 h-4" />
           {saved ? 'Saved & visible to students' : 'Save schedule'}
@@ -373,7 +372,7 @@ export default function AdminScheduling() {
                 )}
                 <button
                   onClick={addSlot}
-                  className="mt-3 w-full h-10 inline-flex items-center justify-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold shadow-sm transition-colors"
+                  className={btn('primary', 'md', 'mt-3 w-full')}
                 >
                   <Plus className="w-4 h-4" /> Add slot
                 </button>
@@ -421,7 +420,7 @@ export default function AdminScheduling() {
                           <button
                             onClick={() => removeSlot(slot.id)}
                             aria-label={`Remove ${slot.time}`}
-                            className="w-9 h-9 inline-flex items-center justify-center rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors flex-shrink-0"
+                            className={`${ICON_BTN_DANGER} flex-shrink-0`}
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>

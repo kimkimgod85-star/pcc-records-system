@@ -1,3 +1,4 @@
+import { btn } from '../../lib/ui';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import {
@@ -249,7 +250,7 @@ export default function AdminWelcomePage() {
         <button
           type="button"
           onClick={goToDashboard}
-          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white transition-colors"
+          className={btn('primary', 'lg')}
         >
           <LayoutDashboard className="w-4 h-4" />
           Go to Dashboard

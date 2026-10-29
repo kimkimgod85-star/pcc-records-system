@@ -1,3 +1,4 @@
+import { btn, ICON_BTN_DANGER } from '../../lib/ui';
 import { useEffect, useRef, useState } from 'react';
 import { Plus, Trash2, CheckCircle, Banknote, Save, RotateCcw, Bell, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import {
@@ -333,7 +334,7 @@ export default function AdminDocuments() {
                     onClick={() => removeDocument(doc.code)}
                     disabled={draft.documents.length <= 1}
                     aria-label={`Remove ${doc.name}`}
-                    className="p-2 text-gray-400 hover:text-red-500 disabled:opacity-30"
+                    className={ICON_BTN_DANGER}
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -385,7 +386,7 @@ export default function AdminDocuments() {
           <button
             type="button"
             onClick={addDocument}
-            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold"
+            className={btn('primary')}
           >
             <Plus className="w-4 h-4" />
             Add
@@ -435,7 +436,7 @@ export default function AdminDocuments() {
                   type="button"
                   onClick={discard}
                   disabled={saving}
-                  className="flex-1 md:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-slate-600 disabled:opacity-50"
+                  className={btn('secondary', 'md', 'flex-1 md:flex-none')}
                 >
                   <RotateCcw className="w-4 h-4" />
                   Discard
@@ -444,7 +445,7 @@ export default function AdminDocuments() {
                   type="button"
                   onClick={save}
                   disabled={saving}
-                  className="flex-1 md:flex-none inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-60"
+                  className={btn('primary', 'md', 'flex-1 md:flex-none')}
                 >
                   {saving ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Save className="w-4 h-4" />}
                   {saving ? 'Saving…' : 'Save changes'}
