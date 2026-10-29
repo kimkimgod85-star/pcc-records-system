@@ -3,9 +3,9 @@ import { useEffect, useState, type ReactNode } from 'react';
 import {
   Search, UserX, UserCheck, Mail, X, ChevronRight, Loader2, AlertCircle,
   Users, GraduationCap, Award, Copy, Check, FileText, IdCard, CalendarDays,
-  Pencil, Save, CheckCircle, UserPlus, Trash2,
+  Pencil, Save, CheckCircle, Trash2,
 } from 'lucide-react';
-import { createStudentAccount, deleteStudentAccount } from '../../lib/adminTools';
+import { deleteStudentAccount } from '../../lib/adminTools';
 import { fetchManagedUsers, setUserStatus, subscribeUsers, updateManagedUser, type ManagedUser } from '../../lib/profiles';
 import { fetchRequests, subscribeRequests, type StudentRequest } from '../../lib/requests';
 import { formatShortDate } from '../../lib/status';
@@ -100,11 +100,6 @@ export default function AdminUsers() {
   const [savingEdit, setSavingEdit] = useState(false);
   const [editError, setEditError] = useState('');
   const [saved, setSaved] = useState(false);
-  const [adding, setAdding] = useState(false);
-  const [addForm, setAddForm] = useState({ name: '', email: '', studentId: '', role: 'student' as 'student' | 'alumni', password: '' });
-  const [addingBusy, setAddingBusy] = useState(false);
-  const [addError, setAddError] = useState('');
-  const [addNotice, setAddNotice] = useState('');
   const [deleting, setDeleting] = useState(false);
   const [deleteName, setDeleteName] = useState('');
   const [deletingBusy, setDeletingBusy] = useState(false);
@@ -213,23 +208,13 @@ export default function AdminUsers() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
-      <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-gray-900 dark:text-white" style={{ fontFamily: 'Poppins, sans-serif', fontSize: '1.5rem', fontWeight: 600 }}>
-            User Management
-          </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            Look up students and alumni, add an account, or remove one.
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={() => { setAddError(''); setAddNotice(''); setAdding(true); }}
-          className={btn('primary')}
-        >
-          <UserPlus className="w-4 h-4" />
-          Add student
-        </button>
+      <div className="mb-6">
+        <h1 className="text-gray-900 dark:text-white" style={{ fontFamily: 'Poppins, sans-serif', fontSize: '1.5rem', fontWeight: 600 }}>
+          User Management
+        </h1>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+          Look up students and alumni who registered on the site, and turn accounts on or off.
+        </p>
       </div>
 
       {/* Summary */}
@@ -680,86 +665,6 @@ export default function AdminUsers() {
               </div>
           </DetailModal>
         )}
-
-      <DetailModal open={adding} onClose={() => { if (!addingBusy) setAdding(false); }} locked={addingBusy} size="md" label="Add student">
-        <form
-          onSubmit={async e => {
-            e.preventDefault();
-            setAddError('');
-            setAddNotice('');
-            if (addForm.name.trim().length < 2) { setAddError('Enter the full name.'); return; }
-            if (!addForm.email.includes('@')) { setAddError('Enter a valid email.'); return; }
-            if (addForm.password.length < 6) { setAddError('Password must be at least 6 characters.'); return; }
-            setAddingBusy(true);
-            try {
-              const result = await createStudentAccount({
-                fullName: addForm.name,
-                email: addForm.email,
-                studentId: addForm.studentId,
-                role: addForm.role,
-                password: addForm.password,
-              });
-              setAddNotice(result.needsEmailConfirm
-                ? `${addForm.email} must confirm the email before signing in. The starting password is the one you typed.`
-                : `${addForm.name} can sign in now with ${addForm.email} and the password you typed.`);
-              setAddForm({ name: '', email: '', studentId: '', role: 'student', password: '' });
-              window.setTimeout(() => fetchManagedUsers().then(setUsers), 800);
-            } catch (err) {
-              setAddError(err instanceof Error ? err.message : 'Could not create the account.');
-            } finally {
-              setAddingBusy(false);
-            }
-          }}
-          className="flex flex-col min-h-0"
-        >
-          <div className={MODAL_HEADER}>
-            <div>
-              <p className="text-base font-semibold text-gray-900 dark:text-white" style={{ fontFamily: 'Poppins, sans-serif' }}>Add a student</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">They sign in with this email and the starting password.</p>
-            </div>
-            <button type="button" onClick={() => setAdding(false)} disabled={addingBusy} aria-label="Close" className={ICON_BTN}><X className="w-4 h-4" /></button>
-          </div>
-          <div className="px-5 py-4 space-y-3 overflow-y-auto">
-            <div className="grid sm:grid-cols-2 gap-3">
-              <label className="block text-sm">
-                <span className="font-medium text-gray-700 dark:text-gray-300">Full name</span>
-                <input value={addForm.name} onChange={e => setAddForm(f => ({ ...f, name: e.target.value }))} className={`${inputClass} mt-1`} required />
-              </label>
-              <label className="block text-sm">
-                <span className="font-medium text-gray-700 dark:text-gray-300">Student ID</span>
-                <input value={addForm.studentId} onChange={e => setAddForm(f => ({ ...f, studentId: e.target.value }))} placeholder="e.g. 2021-00123" className={`${inputClass} mt-1 font-mono`} />
-              </label>
-            </div>
-            <label className="block text-sm">
-              <span className="font-medium text-gray-700 dark:text-gray-300">Email</span>
-              <input type="email" value={addForm.email} onChange={e => setAddForm(f => ({ ...f, email: e.target.value }))} className={`${inputClass} mt-1`} required />
-            </label>
-            <div className="grid sm:grid-cols-2 gap-3">
-              <div>
-                <span className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Role</span>
-                <Segmented
-                  options={[{ value: 'student', label: 'Student' }, { value: 'alumni', label: 'Alumni' }]}
-                  value={addForm.role}
-                  onChange={role => setAddForm(f => ({ ...f, role }))}
-                />
-              </div>
-              <label className="block text-sm">
-                <span className="font-medium text-gray-700 dark:text-gray-300">Starting password</span>
-                <input type="text" value={addForm.password} onChange={e => setAddForm(f => ({ ...f, password: e.target.value }))} minLength={6} className={`${inputClass} mt-1`} required />
-              </label>
-            </div>
-            {addError && <p className="text-sm text-red-600 dark:text-red-400">{addError}</p>}
-            {addNotice && <p className="text-sm text-green-700 dark:text-green-300">{addNotice}</p>}
-          </div>
-          <div className="flex justify-end gap-2 px-5 py-3 border-t border-gray-100 dark:border-slate-700">
-            <button type="button" onClick={() => setAdding(false)} disabled={addingBusy} className={btn('secondary')}>Close</button>
-            <button type="submit" disabled={addingBusy} className={btn('primary')}>
-              {addingBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4" />}
-              Create account
-            </button>
-          </div>
-        </form>
-      </DetailModal>
     </div>
   );
 }

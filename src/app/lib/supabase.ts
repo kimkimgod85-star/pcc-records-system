@@ -104,23 +104,6 @@ export const supabase = isSupabaseConfigured
     })
   : null;
 
-/** A separate login client that never writes to the admin's saved session. */
-export function createIsolatedClient() {
-  const memory = new Map<string, string>();
-  return createClient(url, anonKey, {
-    auth: {
-      persistSession: false,
-      autoRefreshToken: false,
-      detectSessionInUrl: false,
-      storage: {
-        getItem: key => memory.get(key) ?? null,
-        setItem: (key, value) => { memory.set(key, value); },
-        removeItem: key => { memory.delete(key); },
-      },
-    },
-  });
-}
-
 export function requireSupabase() {
   if (!supabase) {
     throw new Error('Supabase is not configured. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to .env.local');

@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { Users, Clock, Calendar, CreditCard, ChevronRight, Trash2 } from 'lucide-react';
-import { resetAllRecords } from '../../lib/adminTools';
+import { Users, Clock, Calendar, CreditCard, ChevronRight } from 'lucide-react';
 import { btn } from '../../lib/ui';
 import { Link, useNavigate } from 'react-router';
 import { fetchRequests, subscribeRequests } from '../../lib/requests';
@@ -50,10 +49,6 @@ const Initial = ({ name }: { name: string }) => (
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
-  const [resetting, setResetting] = useState(false);
-  const [resetWord, setResetWord] = useState('');
-  const [resetError, setResetError] = useState('');
-  const [resetDone, setResetDone] = useState(false);
   const [totalRequests, setTotalRequests] = useState(0);
   const [pending, setPending] = useState(0);
   const [completed, setCompleted] = useState(0);
@@ -301,59 +296,6 @@ export default function AdminDashboard() {
             </table>
           </div>
         )}
-      </div>
-
-      <div className="mt-6 bg-white dark:bg-slate-800 rounded-2xl border border-red-200 dark:border-red-900/50 shadow-sm p-5">
-        <div className="flex items-start gap-3">
-          <span className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-300 flex items-center justify-center flex-shrink-0">
-            <Trash2 className="w-5 h-5" />
-          </span>
-          <div className="min-w-0 flex-1">
-            <p className="font-semibold text-gray-900 dark:text-white" style={{ fontFamily: 'Poppins, sans-serif' }}>Reset all records</p>
-            <p className="text-sm text-gray-600 dark:text-gray-300 mt-1 leading-snug">
-              Permanently deletes every request, payment, pickup booking and notification. Student accounts, document fees and the schedule stay.
-            </p>
-            {!resetting ? (
-              <button type="button" onClick={() => { setResetWord(''); setResetError(''); setResetDone(false); setResetting(true); }} className={`${btn('dangerOutline')} mt-3`}>
-                <Trash2 className="w-4 h-4" />
-                Reset records
-              </button>
-            ) : (
-              <div className="mt-3 space-y-2 max-w-md">
-                <p className="text-sm text-red-700 dark:text-red-300">Type <span className="font-mono font-semibold">RESET</span> to confirm. This cannot be undone.</p>
-                <input
-                  value={resetWord}
-                  onChange={e => setResetWord(e.target.value)}
-                  placeholder="RESET"
-                  className="w-full h-10 px-3 rounded-lg border border-gray-200 dark:border-slate-600 bg-gray-50 dark:bg-slate-900 text-sm font-mono"
-                />
-                {resetError && <p className="text-sm text-red-600 dark:text-red-400">{resetError}</p>}
-                {resetDone && <p className="text-sm text-green-700 dark:text-green-300">Records deleted. The lists above will clear in a moment.</p>}
-                <div className="flex gap-2">
-                  <button type="button" onClick={() => setResetting(false)} className={btn('secondary')}>Cancel</button>
-                  <button
-                    type="button"
-                    disabled={resetWord !== 'RESET'}
-                    onClick={async () => {
-                      setResetError('');
-                      try {
-                        await resetAllRecords();
-                        setResetDone(true);
-                        setResetWord('');
-                      } catch (err) {
-                        setResetError(err instanceof Error ? err.message : 'Could not reset the records.');
-                      }
-                    }}
-                    className={btn('danger')}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    Delete everything
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
       </div>
     </div>
   );
