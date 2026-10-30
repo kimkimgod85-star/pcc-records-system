@@ -189,7 +189,7 @@ export default function AdminPayments() {
   };
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8">
+    <div className="p-3 sm:p-6 lg:p-8 max-w-full">
       <div className="mb-6">
         <h1 className="text-gray-900 dark:text-white" style={{ fontFamily: 'Poppins, sans-serif', fontSize: '1.5rem', fontWeight: 600 }}>
           Payment Verification
@@ -274,7 +274,7 @@ export default function AdminPayments() {
                   key={pay.id}
                   type="button"
                   onClick={() => select(pay.id)}
-                  className={`relative w-full h-[4.75rem] text-left px-4 flex items-center gap-3 transition-colors ${
+                  className={`relative w-full min-h-[4.75rem] text-left px-3 py-2.5 flex items-center gap-2 transition-colors ${
                     active ? 'bg-blue-50 dark:bg-blue-900/20' : 'hover:bg-gray-50 dark:hover:bg-slate-700/40'
                   }`}
                 >

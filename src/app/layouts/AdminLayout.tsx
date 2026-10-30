@@ -44,7 +44,7 @@ export default function AdminLayout() {
     <OverduePickupsProvider enabled={isAdmin}>
       <div className="admin-readable flex h-dvh bg-gray-50 dark:bg-slate-950 overflow-hidden">
         <AdminSidebar />
-        <main className="flex-1 min-w-0 overflow-y-auto pt-14 lg:pt-0 safe-area-pb">
+        <main className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden pt-14 lg:pt-0 safe-area-pb">
           <div key={location.pathname} className="page-enter">
             <Outlet />
           </div>

@@ -206,7 +206,6 @@ export default function PaymentPage() {
       setReqIdPreview('');
       return;
     }
-    setReqIdPreview('');
     reqIdProofDataUrl(reqIdProofInput)
       .then(url => {
         if (!cancelled) setReqIdPreview(url);
@@ -217,7 +216,14 @@ export default function PaymentPage() {
     return () => {
       cancelled = true;
     };
-  }, [reqIdProofInput, paymentMethod]);
+  }, [
+    paymentMethod,
+    reqIdProofInput?.requestId,
+    reqIdProofInput?.studentName,
+    reqIdProofInput?.studentId,
+    reqIdProofInput?.documentName,
+    reqIdProofInput?.amountLabel,
+  ]);
 
   const canSubmit =
     paymentMethod === 'gcash'
@@ -617,7 +623,7 @@ export default function PaymentPage() {
                       <img
                         src={reqIdPreview}
                         alt={`REQ ID form for ${req.id}`}
-                        className="w-full max-w-sm mx-auto rounded-lg shadow-sm border border-slate-200 dark:border-slate-700"
+                        className="block w-full max-w-[17rem] h-auto mx-auto rounded-lg border border-slate-200 dark:border-slate-700"
                       />
                     ) : (
                       <p className="text-sm text-gray-500 dark:text-gray-400">Preparing official form…</p>

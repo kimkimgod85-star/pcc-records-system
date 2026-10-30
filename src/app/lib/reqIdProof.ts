@@ -34,6 +34,7 @@ function loadLogo(): Promise<HTMLImageElement | null> {
     logoPromise = new Promise(resolve => {
       const img = new Image();
       img.decoding = 'async';
+      img.crossOrigin = 'anonymous';
       img.onload = () => resolve(img);
       img.onerror = () => resolve(null);
       img.src = withBase('PCC%20LOGO.png');
@@ -85,25 +86,45 @@ function hLine(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, c
 }
 
 export async function buildReqIdProofCanvas(input: ReqIdProofInput): Promise<HTMLCanvasElement> {
+  await document.fonts?.ready;
+  const logo = await loadLogo();
+  const rows: { label: string; value: string }[] = [
+    { label: 'Student name', value: input.studentName || 'Student' },
+    ...(input.studentId ? [{ label: 'School ID', value: input.studentId }] : []),
+    { label: 'Document', value: input.documentName },
+    { label: 'Amount to pay', value: input.amountLabel },
+    {
+      label: 'Date generated',
+      value: new Date().toLocaleString('en-PH', { dateStyle: 'medium', timeStyle: 'short' }),
+    },
+    { label: 'Payment method', value: 'Pay in Person' },
+  ];
+  const steps = [
+    'Show this form at the PCC New Building Cashier',
+    'Pay the amount and keep your Official Receipt',
+    'Bring the receipt and this REQ ID to the Registrar',
+  ];
+  const headerH = 120;
+  const reqBoxH = 112;
+  const stepRowH = 32;
+  const stepsBoxH = 40 + steps.length * stepRowH + 14;
+  const tableH = rows.length * ROW_H;
+  const height = PAD + headerH + 28 + 16 + 20 + reqBoxH + 24 + tableH + 22 + stepsBoxH + 48 + PAD;
+
   const canvas = document.createElement('canvas');
   canvas.width = W;
-  canvas.height = H;
+  canvas.height = height;
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('Could not create REQ ID proof.');
 
-  const logo = await loadLogo();
-
   // Dark blue frame
   ctx.fillStyle = BLUE_DEEP;
-  ctx.fillRect(0, 0, W, H);
+  ctx.fillRect(0, 0, W, height);
 
-  // Paper card
-  roundRect(ctx, PAD, PAD, W - PAD * 2, H - PAD * 2, 16);
+  roundRect(ctx, PAD, PAD, W - PAD * 2, height - PAD * 2, 16);
   ctx.fillStyle = '#ffffff';
   ctx.fill();
 
-  // Header bar (flat, no overlapping white)
-  const headerH = 132;
   roundRect(ctx, PAD, PAD, W - PAD * 2, headerH, 16);
   ctx.fillStyle = BLUE;
   ctx.fill();
@@ -136,7 +157,7 @@ export async function buildReqIdProofCanvas(input: ReqIdProofInput): Promise<HTM
   ctx.fillText('PCC RECORDS', titleX, PAD + 58);
   ctx.font = '600 14px Inter, system-ui, sans-serif';
   ctx.fillStyle = '#bfdbfe';
-  ctx.fillText('Philippine College of Commerce', titleX, PAD + 84);
+  ctx.fillText('Pagadian Capitol Colleges', titleX, PAD + 84);
   ctx.font = '500 13px Inter, system-ui, sans-serif';
   ctx.fillStyle = '#93c5fd';
   ctx.fillText('Pay in Person · Official Request Proof', titleX, PAD + 108);
@@ -151,9 +172,7 @@ export async function buildReqIdProofCanvas(input: ReqIdProofInput): Promise<HTM
   y += 18;
   hLine(ctx, CONTENT_X, y, CONTENT_W, '#94a3b8');
 
-  // REQ ID box
   y += 22;
-  const reqBoxH = 108;
   roundRect(ctx, CONTENT_X, y, CONTENT_W, reqBoxH, 12);
   ctx.fillStyle = BLUE_SOFT;
   ctx.fill();
@@ -176,36 +195,23 @@ export async function buildReqIdProofCanvas(input: ReqIdProofInput): Promise<HTM
   ctx.font = '500 12px Inter, system-ui, sans-serif';
   ctx.fillText('Present this ID to the Cashier and Registrar', CONTENT_X + 22, y + 94);
 
-  // Details table — fixed equal row heights so lines stay aligned
-  y += reqBoxH + 28;
-  const rows: { label: string; value: string }[] = [
-    { label: 'Student name', value: input.studentName || 'Student' },
-    ...(input.studentId ? [{ label: 'Student ID', value: input.studentId }] : []),
-    { label: 'Document', value: input.documentName },
-    { label: 'Amount to pay', value: input.amountLabel },
-    {
-      label: 'Date generated',
-      value: new Date().toLocaleString('en-PH', {
-        dateStyle: 'medium',
-        timeStyle: 'short',
-      }),
-    },
-    { label: 'Payment method', value: 'Pay in Person (Cashier)' },
-  ];
-
-  // Details table: fills → borders → text (keeps every line pantay)
+  y += reqBoxH + 24;
   const tableTop = y;
-  const tableH = rows.length * ROW_H;
   const colX = CONTENT_X + LABEL_W;
 
+  ctx.save();
+  roundRect(ctx, CONTENT_X, tableTop, CONTENT_W, tableH, 10);
+  ctx.clip();
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(CONTENT_X, tableTop, CONTENT_W, tableH);
   rows.forEach((_, i) => {
     if (i % 2 === 1) {
       ctx.fillStyle = '#f1f5f9';
       ctx.fillRect(CONTENT_X, tableTop + i * ROW_H, CONTENT_W, ROW_H);
     }
   });
+  ctx.restore();
 
-  roundRect(ctx, CONTENT_X, tableTop, CONTENT_W, tableH, 10);
   ctx.strokeStyle = '#94a3b8';
   ctx.lineWidth = 1.5;
   roundRect(ctx, CONTENT_X, tableTop, CONTENT_W, tableH, 10);
@@ -235,16 +241,7 @@ export async function buildReqIdProofCanvas(input: ReqIdProofInput): Promise<HTM
     ctx.fillText(value, colX + 18, midY);
   });
 
-  // Steps box
-  y = tableTop + tableH + 28;
-  const steps = [
-    'Present this form at the PCC New Building Cashier',
-    'Pay the amount and keep your Official Receipt',
-    'Bring your Official Receipt and this REQ ID to the Registrar',
-    'Wait for the Registrar to verify your payment',
-  ];
-  const stepRowH = 34;
-  const stepsBoxH = 44 + steps.length * stepRowH + 12;
+  y = tableTop + tableH + 22;
   roundRect(ctx, CONTENT_X, y, CONTENT_W, stepsBoxH, 12);
   ctx.fillStyle = '#f8fafc';
   ctx.fill();
@@ -272,7 +269,7 @@ export async function buildReqIdProofCanvas(input: ReqIdProofInput): Promise<HTM
 
     ctx.fillStyle = INK;
     ctx.font = '500 14px Inter, system-ui, sans-serif';
-    ctx.fillText(step, CONTENT_X + 52, sy);
+    ctx.fillText(fitText(ctx, step, CONTENT_W - 72, ctx.font), CONTENT_X + 52, sy);
   });
 
   // Footer
@@ -282,7 +279,7 @@ export async function buildReqIdProofCanvas(input: ReqIdProofInput): Promise<HTM
   ctx.fillText(
     'Official form from PCC Records  ·  Valid only for the request ID shown above',
     W / 2,
-    H - PAD - 18,
+    height - PAD - 16,
   );
   ctx.textAlign = 'left';
 

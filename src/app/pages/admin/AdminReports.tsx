@@ -248,7 +248,7 @@ export default function AdminReports() {
       console.error(err);
       setExportError(err instanceof Error ? err.message : 'Could not create the file. Please try again.');
     } finally {
-      setExporting(false);
+    setExporting(false);
     }
   };
 
@@ -257,15 +257,15 @@ export default function AdminReports() {
     .join(' · ');
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8">
+    <div className="p-3 sm:p-6 lg:p-8 max-w-full">
       <div className="mb-6">
-        <h1 className="text-gray-900 dark:text-white" style={{ fontFamily: 'Poppins, sans-serif', fontSize: '1.5rem', fontWeight: 600 }}>
+          <h1 className="text-gray-900 dark:text-white" style={{ fontFamily: 'Poppins, sans-serif', fontSize: '1.5rem', fontWeight: 600 }}>
           Registrar Reports
-        </h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+          </h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
           Choose a period, review the numbers, then download a printable report.
-        </p>
-      </div>
+          </p>
+        </div>
 
       {/* Period */}
       <section className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm mb-5">
@@ -326,7 +326,7 @@ export default function AdminReports() {
               <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
                 {readyTerms.length ? savedDatesText : 'Not set yet. Semester filters stay locked until you add the dates.'}
               </p>
-            </div>
+      </div>
             <ChevronDown className={`w-4 h-4 text-gray-400 flex-shrink-0 transition-transform ${datesOpen ? 'rotate-180' : ''}`} />
           </button>
           {datesOpen && (
@@ -393,7 +393,7 @@ export default function AdminReports() {
               </div>
             </div>
           )}
-        </div>
+          </div>
       </section>
 
       {/* Key numbers */}
@@ -453,8 +453,8 @@ export default function AdminReports() {
                 <YAxis tick={{ fontSize: 12 }} axisLine={false} tickLine={false} tickFormatter={v => `₱${v}`} width={52} />
                 <Tooltip contentStyle={{ fontSize: '13px', borderRadius: '10px' }} formatter={(value: number) => [peso(value), 'Collected']} />
                 <Line type="monotone" dataKey="revenue" stroke="#2563EB" strokeWidth={2.5} dot={{ r: 3.5, fill: '#2563EB' }} />
-              </LineChart>
-            </ResponsiveContainer>
+            </LineChart>
+          </ResponsiveContainer>
           )}
         </Card>
       </div>
@@ -590,7 +590,7 @@ export default function AdminReports() {
             <div className="p-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 flex items-start gap-2">
               <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0 text-red-500" />
               <p className="text-sm text-red-700 dark:text-red-300">{exportError}</p>
-            </div>
+        </div>
           )}
 
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-4 border-t border-gray-100 dark:border-slate-700">

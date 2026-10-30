@@ -101,7 +101,7 @@ export default function AdminDashboard() {
     return () => stops.forEach(stop => stop());
   }, []);
   return (
-    <div className="p-4 sm:p-6 lg:p-8">
+    <div className="p-3 sm:p-6 lg:p-8 max-w-full">
       {/* Page Header */}
       <div className="mb-8">
         <h1 className="text-gray-900 dark:text-white" style={{ fontFamily: 'Poppins, sans-serif', fontSize: '1.5rem', fontWeight: 600 }}>
